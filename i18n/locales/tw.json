@@ -1,0 +1,10 @@
+{"navigation":{
+    "home" : "Rumah",
+    "about": "Abouts",
+    "contact" : "Contact"
+},
+"email" : "电邮",
+"password" : "密码",
+
+"committees": "委员会"
+}
