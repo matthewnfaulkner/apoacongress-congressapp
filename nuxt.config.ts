@@ -48,6 +48,7 @@ export default defineNuxtConfig({
 		'@nuxt/icon',
 		'@nuxtjs/color-mode',
 		'@nuxtjs/seo',
+		'@nuxtjs/tailwindcss'
 		'@nuxt/ui',
 		'@primevue/nuxt-module',
 		'@pinia/nuxt',
