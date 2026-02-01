@@ -8,6 +8,8 @@ const user = ref(null);
 const isLoggedIn = ref(false);
 const redirect = route.query.redirect as string;
 
+const runtimeConfig = useRuntimeConfig();
+const loginurl = runtimeConfig.public.loginUrl || '';
 
 const checkLoginStatus = async () => {
   try {
@@ -18,6 +20,7 @@ const checkLoginStatus = async () => {
     console.log(redirect);
 
     if(redirect) navigateTo(redirect);
+    else navigateTo('/');
     
   } catch (error) {
     isLoggedIn.value = false;
@@ -36,7 +39,7 @@ onMounted(async () => {
     // User is now authenticated in the SDK state
   } catch (err) {
     console.log(err);
-    navigateTo('http://localhost:8055/auth/login/moodle?redirect=http://localhost:3000/login', {external: true});
+    navigateTo(loginurl, {external: true});
     // This will error if they aren't logged in yet; 
     // you can redirect them to the SSO login link here
   }

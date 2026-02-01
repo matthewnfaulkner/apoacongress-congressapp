@@ -60,8 +60,10 @@ export default defineNuxtConfig({
 			siteUrl: process.env.NUXT_PUBLIC_SITE_URL as string,
 			directusUrl: process.env.DIRECTUS_URL as string,
 			enableVisualEditing: process.env.NUXT_PUBLIC_ENABLE_VISUAL_EDITING !== 'false',
-			congressId: process.env.CONGRESS_ID as string,
 			siteId: process.env.SITE_ID as string,
+			loginUrl: process.env.LOGIN_URL as string,
+			logoutUrl: process.env.LOGOUT_URL as string 
+			
 		},
 		directusServerToken: process.env.DIRECTUS_SERVER_TOKEN,
 	},

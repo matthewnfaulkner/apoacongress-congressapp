@@ -95,7 +95,7 @@
 			
 			<UButton
 				v-else
-				href="http://localhost:8055/auth/login/moodle?redirect=http://localhost:3000/login" 
+				:href="logouturl" 
 				label="Log In"
 				color="accent"
 				variant="outline"
@@ -127,7 +127,7 @@
   </UHeader>
 </template>
 <script setup lang="ts">
-	
+
 import { computed } from 'vue';
 import { useAuthStore } from '~/stores/auth';
 import { getDirectusAssetURL } from '@@/server/utils/directus-utils';
@@ -160,7 +160,7 @@ const props = defineProps<{
 
 
 const runtimeConfig = useRuntimeConfig();
-
+const logouturl = runtimeConfig.public.logoutUrl || '';
 // Logo URLs
 const lightLogoUrl = computed(() =>
   props.site?.logo ? `${runtimeConfig.public.directusUrl}/assets/${props.site.logo}` : '/images/logo.svg'
