@@ -187,7 +187,7 @@ const config: Config = {
 		'lg:col-span-2',
 		'lg:col-span-3',
 		'lg:col-span-4'
-	]
+	],
 	plugins: [tailwindcssAnimate, typography],
 };
 
