@@ -49,7 +49,6 @@ export default defineNuxtConfig({
 		'@nuxtjs/color-mode',
 		'@nuxtjs/seo',
 		'@nuxt/ui',
-		'@nuxt/content',
 		'@primevue/nuxt-module',
 		'@pinia/nuxt',
 		'@nuxtjs/i18n',
