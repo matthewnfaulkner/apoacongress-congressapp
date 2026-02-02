@@ -66,9 +66,9 @@ onMounted(() => {
 		/>
 		<NuxtPage class="min-h-lvh"/>
 		<Footer
-			v-if="siteData?.footerNavigation"
+			v-if="siteData?.footerNavigation[0]"
 			ref="footerRef"
-			:navigation="siteData.footerNavigation"
+			:navigation="siteData.footerNavigation[0]"
 			:site="siteData.site"
 			:organiser="(siteData.site.congress && siteData.site.congress.length > 0) ? siteData.site.congress[0]?.organiser : null"
 		/>
