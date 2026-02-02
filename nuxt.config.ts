@@ -1,9 +1,6 @@
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineNuxtConfig({
-	nitro: {
-    	preset: 'aws-amplify'
-  	},
 	components: [
 		{ path: '~/components', pathPrefix: false },
 		{ path: '~/components/block', pathPrefix: false },
