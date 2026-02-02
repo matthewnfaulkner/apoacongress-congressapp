@@ -306,7 +306,7 @@ const assignmentCount = computed(() => state.assignments.length)
             <UTree :items="state.assignments" :nested="false" ref="tree">
                 <template #item="{item, index}">
                     <RoleSelectMenu :default-value="item.role" size="lg" @value-updated="(updatedItem) => {item.role = updatedItem}"/>
-                    <PersonSelectMenu :default-value="item.person" size="lg" @value-updated="(updatedItem) => {item.person = updatedItem}"/> 
+                    <PersonSelectMenu :allow-add="true" :default-value="item.person" size="lg" @value-updated="(updatedItem) => {item.person = updatedItem}"/> 
                     <UButton 
                     icon="i-lucide-trash" 
                     variant="outline" 

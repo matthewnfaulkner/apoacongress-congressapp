@@ -1325,6 +1325,7 @@ export interface DirectusUser {
 	/** @description Blog posts this user has authored. */
 	posts?: Post[] | string[];
 	policies?: DirectusAccess[] | string[];
+	person?: Person | string | null;
 }
 
 export interface DirectusWebhook {
