@@ -26,7 +26,7 @@ import {
         uploadFiles
     } from "@directus/sdk";
 
-const directus = createDirectus("http://localhost:8055").with(authentication("session", { credentials: "include", autoRefresh: true })).with(rest({ credentials: "include"}));
+const directus = createDirectus("https://admin.congress.apoaonline.com").with(authentication("session", { credentials: "include", autoRefresh: true })).with(rest({ credentials: "include"}));
 
 const isAuthenticated = async () => {
     try {
@@ -112,7 +112,7 @@ const logout = async () => {
     await directus.logout()
     const auth = useAuthStore()
     auth.reset()
-    navigateTo('http://192.168.1.87:8080/auth/saml2/idp/slo.php?redirect=http://localhost:3000/login', { external: true})
+    navigateTo('https://apoaonline.com/auth/saml2/idp/slo.php?redirect=http://localhost:3000/login', { external: true})
 }
 
 export default defineNuxtPlugin(() => {

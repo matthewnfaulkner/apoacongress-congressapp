@@ -9,12 +9,10 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     const authenticated = await $isAuthenticated().then((result) => {auth.setAuth(result)});
     
     //auth.setAuth(authenticated)
-    console.log(from.fullPath, to.fullPath);
     if (!auth.isAuthenticated && auth.checked) {
          if (to.name.startsWith("login") || to.name.startsWith("admin_login")) {
             return;
         }
-        console.log('here');
         return navigateTo("/login?redirect=" + to.fullPath)
     } else {
             // Login and register pages are not protected
@@ -25,5 +23,4 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
         return;
     }
 
-    return;
 });

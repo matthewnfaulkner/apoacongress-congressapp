@@ -6,15 +6,22 @@ import type { TableColumn, TableRow } from '@nuxt/ui'
 import { readMe, updateMe } from '@directus/sdk';
 import * as z from 'zod'
 import type { FormError, FormSubmitEvent } from '@nuxt/ui'
+import { ConfirmationModal } from "~/components/ui/modal";
+import { useToast } from '@nuxt/ui/runtime/composables/useToast.js';
 
+
+
+const toast = useToast();
 const route = useRoute();
-const { enabled, state } = useLivePreview();
 const { isVisualEditingEnabled, apply, setAttr } = useVisualEditing();
 const personUrl = useRequestURL();
 const { t } = useI18n();
 const previousRoute = useState<string | null>('previousRoute')
 const { $directus } = useNuxtApp();
 const config = useRuntimeConfig();
+
+const overlay = useOverlay()
+const confirmationModal = overlay.create(ConfirmationModal);
 
 const auth = await useAuthStore();
 
@@ -284,7 +291,8 @@ if (!data.value) {
 	throw createError({ statusCode: 404, statusMessage: 'Person not found', fatal: true });
 }
 
-const person = computed(() => data.value?.person);
+const person = ref<Person | null>();
+person.value = data.value?.person as Person;
 
 
 const person_events = computed(() => person.value ? 
@@ -399,7 +407,12 @@ function onSelect(e: Event, row: TableRow<EventEntry>) {
 }
 const rowSelection = ref<Record<string, boolean>>({})
 
-
+const state = reactive({
+    person: {
+        id: undefined,
+        name: undefined
+    }
+})
 const schema = z.object({
     person: z.object({
                 id: z.string(),
@@ -419,20 +432,58 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
             }
         ))
 
-        person.value = response;
+        reloadNuxtApp();
+
     } catch (error){
         console.log(error)
     }
 }
 
+
+const disassociatePerson = async () => {
+    if (person.value){
+        const instance = confirmationModal.open({
+        title: "Confirm.",
+        helpMessage: "This action will unlink your profile from ",
+        helpMessageData: `${person.value?.first_name} ${person.value?.last_name}`,
+        })
+
+        
+        await instance.result.then(
+            (result: boolean) =>  {
+                if(result) {
+                try{
+                    const response = $directus.request(updateMe(
+                        {
+                            person: null
+                        }
+                    ))
+
+                    person.value = null
+                    
+                    toast.add({ title: 'Success', description: 'Person Unlinked', color: 'accent'})
+
+                } catch (e) {
+                    console.log(e)
+                }
+                }
+            }
+        )
+    }
+    return;
+}
+
+
 </script>
 <template>
-    
 	<div  ref="wrapperRef">
 		<Container class="py-12">
             <Headline headline="Congress Profile" class="text-accent text-center"/>
             <div v-if="person" >
-            <UPageCard
+                <div class="w-full flex flex-col justify-center">
+                    <UButton label="Not You?" color="accent" class="w-30 m-auto justify-center text-xl" @click="disassociatePerson"/>
+                </div>
+                <UPageCard
                     v-if="person"
 					:key="person.id"
 					highlight-color="accent"
@@ -502,15 +553,19 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
                     </UTable>
                 </div>
             </div>
-            <div v-else class="text-center text-xl">
-                No Congress Profile Attached to your account.
-                <small></small>
-                <UForm @submit="handleSubmit">
-                    <UFormField name="person" label="Select" >
-                        <PersonSelectMenu :allow-add=false :default-value="null" size="lg"/> 
-                         <UButton type="submit" color="accent" variant="solid" label="Save">
-                        </UButton>
+            <div v-else class="text-center text-xl flex-column">
+                <p>No Congress Profile link with your account.</p>
+                <small >
+                    You can link your user profile with a facaulty profile. <br>
+                    That way you'll be able to track any events you are participating in. <br>
+                    Find your self in the list below, and click "Link Profile".
+                </small>
+                <UForm :state="state" :schema="schema"  @submit="handleSubmit" class="m-10">
+                    <UFormField name="person" class="w-50 m-auto" orientation="horizontal">
+                        <PersonSelectMenu :allow-add=false :default-value="null" size="lg" @value-updated="(updatedItem) => {state.person = updatedItem}"/> 
                     </UFormField>
+                    <UButton type="submit" color="accent" variant="solid" label="Link Profile" class="m-2">
+                    </UButton>
                 </UForm>
             </div>
 

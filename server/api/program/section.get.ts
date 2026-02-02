@@ -222,7 +222,7 @@ export default defineEventHandler(async (event) => {
                                 _filter: {
                                     congress: {
                                         site:{
-                                            _eq: "config.public.siteId"
+                                            _eq: config.public.siteId
                                         }
                                     }
                                 }
