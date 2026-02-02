@@ -250,7 +250,6 @@ const tabs = reactive(
           })) || [],
           startTime: day.starttime,
           endTime: day.endtime,
-          timeSubDivision: day.time_subdivision,
           numCols:
             Math.ceil(minutesBetween(day.starttime, day.endtime) / day?.time_subdivision) || 0
         }

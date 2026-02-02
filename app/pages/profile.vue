@@ -3,7 +3,7 @@ import type { Person, DirectusUser } from '#shared/types/schema';
 import { removeSeconds } from '@/utils/time-utils';
 import BaseEventType from '~/components/eventTypes/BaseEventType.vue';
 import type { TableColumn, TableRow } from '@nuxt/ui'
-import { readMe } from '@directus/sdk';
+import { readMe, updateMe } from '@directus/sdk';
 import * as z from 'zod'
 import type { FormError, FormSubmitEvent } from '@nuxt/ui'
 
@@ -413,14 +413,13 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
 	try {
         const formData = submission.data as Schema;
         
-        const response = await $directus.request(updateItem(
-            'directus_users',
-            auth.isAuthenticated.id,
+        const response = await $directus.request(updateMe(
             {
                 person: formData?.person?.id,
             }
         ))
 
+        person.value = response;
     } catch (error){
         console.log(error)
     }
