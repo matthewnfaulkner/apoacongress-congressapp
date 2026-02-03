@@ -37,6 +37,7 @@ interface MainHeroProps {
 		headline: string;
 		description: string;
 		countdown: boolean | null;
+		bgcolor: string | null;
 		image: string;
 		button_group?: {
 			buttons: Array<{
@@ -103,15 +104,17 @@ const buttons = button_group?.buttons.map((button) => ({
 </script>
 
 <template>
-	<div class="relative pt-0 pb-12 bg-black xl:pt-30 sm:pb-16 lg:pb-32 xl:pb-48 2xl:pb-56">
-
+	<div class="relative pt-0 pb-12 xl:pt-30 sm:pb-16 lg:pb-32 xl:pb-48 2xl:pb-56" 
+		:style="{ '--herobg-color': data.bgcolor }"
+		:class="`bg-[var(--herobg-color)]`">
+			
 			<div class="absolute inset-0">
 				<DirectusImage class="object-cover w-full h-full" :uuid="props.data.image"/>
 			</div>
 
 			<div class="relative">
 				<div class="px-6 mx-auto sm:px-8 lg:px-12 max-w-7xl">
-					<div class="w-full lg:w-2/3 xl:w-1/2 bg-accent/70 p-5 lg:p-10">
+					<div class="w-full lg:w-2/3 xl:w-1/2 bg-accent/80 p-5 lg:p-10">
 						<p class="tracking-tighter text-white mt-0 lg:mt-0">
 							<span class=" font-heading text-3xl ">
 								{{ props.data.tagline }}
@@ -120,8 +123,8 @@ const buttons = button_group?.buttons.map((button) => ({
 								{{ props.data.headline }}
 							</span>
 						</p>
-						<p class="mt-12 font-sans text-base font-normal leading-7 text-white text-opacity-70"></p>
-						<p class="mt-8 font-sans text-xl font-normal text-white">{{ formattedStartDate }} - {{formattedEndDate}}</p>
+						<p class="mt-12 font-sans text-base font-normal leading-7 text-white text-opacity-70 w-70 text-xl" v-html="data.description"></p>
+						<p class="mt-8 font-sans text-xl font-bold text-white">{{ formattedStartDate }} - {{formattedEndDate}}</p>
 
 						<div
 							v-if="data.button_group?.buttons?.length"

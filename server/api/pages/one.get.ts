@@ -92,6 +92,7 @@ const pageFields = [
 						'description',
 						'countdown',
 						'image',
+						'bgcolor',
 						{
 							button_group: [
 								'id',

@@ -206,6 +206,7 @@ export interface BlockMainHero {
 	user_created?: DirectusUser | string | null;
 	date_updated?: string | null;
 	user_updated?: DirectusUser | string | null;
+	bgColor: string | null;
 }
 
 export interface BlockPost {
