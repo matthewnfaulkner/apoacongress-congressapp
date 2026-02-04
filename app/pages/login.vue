@@ -15,10 +15,11 @@ const checkLoginStatus = async () => {
   try {
     // readMe() is the standard way to fetch the current authenticated user
     const response = await $isAuthenticated();
-    isLoggedIn.value = true;
-    if(redirect) navigateTo(redirect);
-    else navigateTo('/');
-    
+    if(response) {
+          isLoggedIn.value = true;
+          if(redirect) navigateTo(redirect);
+          else navigateTo('/');
+    }
   } catch (error) {
     isLoggedIn.value = false;
     user.value = null;
