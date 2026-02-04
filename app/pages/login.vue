@@ -2,7 +2,6 @@
 import { readProviders, customEndpoint, readMe } from '@directus/sdk'
 const { $directus, $isAuthenticated } = useNuxtApp()
 
-const isAuthenticated = $isAuthenticated();
 const route = useRoute();
 const user = ref(null);
 const isLoggedIn = ref(false);
@@ -15,10 +14,15 @@ const checkLoginStatus = async () => {
   try {
     // readMe() is the standard way to fetch the current authenticated user
     const response = await $isAuthenticated();
+    console.log(response);
     if(response) {
           isLoggedIn.value = true;
           if(redirect) navigateTo(redirect);
           else navigateTo('/');
+    
+    }
+    else {
+      navigateTo(loginurl, {external: true});
     }
   } catch (error) {
     isLoggedIn.value = false;
