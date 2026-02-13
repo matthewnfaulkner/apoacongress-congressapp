@@ -205,10 +205,8 @@ const rowSelection = ref<Record<string, boolean>>({})
                         </UPageList>
                         
                     </template>
-						
-                        <DirectusImage v-if="person.image"
-							:uuid="person.image"
-						/>
+						<ProfileImage v-if="person.image" :image="person.image" />
+
                         <UIcon v-else name="i-lucide-square-user-round" size="300px" class="text-accent-800"/>
 
 				</UPageCard>

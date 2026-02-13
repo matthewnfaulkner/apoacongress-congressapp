@@ -81,12 +81,25 @@ const people = computed<PersonCard[]>(() =>
 					class="text-center h-full justify-center ring-0"
 					:to="`/people/${person.id}`"
 					:ui="{
-						wrapper: 'items-center'
+						wrapper: 'items-center',
+						body: 'flex-0',
+						footer: 'mt-0'
 					}"
 				>
 					<template #header>
+						
+					</template>
+
+					<template #body>
+						<DirectusImage
+							class="h-50"
+							
+							:uuid="person.image"
+						/>
+					</template>
+					<template #footer >
 						<Tagline
-							class="text-xs w-full font-heading"
+							class="text-xs w-full font-heading "
 							:tagline="person.title"
 						/>
 						<Text
@@ -97,17 +110,8 @@ const people = computed<PersonCard[]>(() =>
 							:country-codes="person?.country?.countryCodes"
 							:locale="person?.country?.locale"
 						/>
-					</template>
-
-					<template #body>
-						<DirectusImage
-							class="h-50"
-							:uuid="person.image"
-						/>
-					</template>
-					<template #footer >
 						<div class="text-accent" v-if="person.extratitle">{{ person.extratitle }}</div>
-						<div v-if="person.extratopic">{{ person.extratopic }}</div>
+						<div v-if="person.extratopic" class="font-bold">{{ person.extratopic }}</div>
 					</template>
 				</UPageCard>
 			</UPageGrid>

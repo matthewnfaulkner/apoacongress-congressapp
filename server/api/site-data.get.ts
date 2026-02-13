@@ -19,6 +19,11 @@ export default defineEventHandler(async (event) => {
 							'congress' : [
 								'*',
 								{
+									'venue' : [
+										'title'
+									]
+								},
+								{
 									'organiser' : [
 										'id',
 										'name',

@@ -74,7 +74,6 @@ const state = reactive({
   last_name: undefined,
   title: '',
   qualifications: [],
-  affiliations: '',
   country: undefined,
   bio: '',
   image: undefined,
@@ -92,7 +91,6 @@ const schema = z.object({
     country: z.object({
         code: z.string()
     }),
-    affiliations: z.string().nullable(),
     bio: z.string().max(500, 'Bio Too Long').nullable(),
     image: z.optional(z.instanceof(File, {
         message: 'File is required',
@@ -114,7 +112,7 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
             const uploadFormData = new FormData();
             uploadFormData.append('folder', "7c6a3599-82ce-4bda-92d3-d42f4ba09116");
             uploadFormData.append('file', blob, image.name);
-
+            
             const uploadedFile = (await $directus.request(uploadFiles(uploadFormData))) as {
                 id?: string;
             };
@@ -133,7 +131,6 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
             }),
             title: formData.title,
             qualifications: JSON.stringify(formData.qualifications),
-            affiliations: formData.affiliations,
             bio: formData.bio,
             image: file,
         }
@@ -159,7 +156,6 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
 </script>
 
 <template>
-    {{ state.assignments }}
   <UForm :state="state" class="space-y-4" @submit="handleSubmit($event)" :schema="schema">
     <UFormField name="id" hidden>
       <UInput hidden v-model="state.id" />
@@ -181,9 +177,6 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
         </UFormField>
     </div>
      <div class="flex flex-col md:flex-row justify-between">
-        <UFormField label="Affiliations" name="afilliations" class="w-full lg:w-50">
-            <UInput v-model="state.affiliations"/>
-        </UFormField>
         <UFormField label="Country" class="w-full lg:w-50" name="country" required>
             <CountrySelectMenu v-model="state.country" />
         </UFormField>

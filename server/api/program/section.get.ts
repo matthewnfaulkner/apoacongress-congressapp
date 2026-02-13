@@ -76,6 +76,10 @@ const sectionFields = [
                                 'id',
                                 'topic'
                                 ],
+                                discussions: [
+                                        'id',
+                                        'topic'
+                                        ],
                                 symposiums: [
                                 '*'
                                 ],

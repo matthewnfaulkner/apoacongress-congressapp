@@ -134,6 +134,12 @@ const pageFields = [
 							],
 						},
 					],
+					block_chargetable: [
+						'id',
+						'type',
+						'headline',
+						'category'
+					],	
 					block_people: [
 						'id',
 						'tagline',
@@ -230,6 +236,40 @@ const pageFields = [
 
 									}
 								}
+							]
+						}
+					],
+					block_messages: [
+						'id',
+						'tagline',
+						'headline',
+						{
+							messages: [
+								'id',
+								'tagline',
+								'content',
+								{
+									people: [
+										'id',
+										'extra',
+										{
+											person: [
+												'id',
+												'first_name',
+												'last_name',
+												'image'
+											]
+										}
+									]
+								},
+								{
+									button_group: [
+										'id',
+										{
+											buttons: ['id', 'label', 'variant', 'url', 'type', { page: ['permalink'] }, { post: ['slug'] }],
+										},
+									],
+								},
 							]
 						}
 					],

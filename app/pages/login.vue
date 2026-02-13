@@ -19,7 +19,6 @@ const checkLoginStatus = async () => {
           isLoggedIn.value = true;
           if(redirect) navigateTo(redirect);
           else navigateTo('/');
-    
     }
     else {
       navigateTo(loginurl, {external: true});

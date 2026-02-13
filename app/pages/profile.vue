@@ -22,6 +22,7 @@ const config = useRuntimeConfig();
 
 const overlay = useOverlay()
 const confirmationModal = overlay.create(ConfirmationModal);
+const ready = ref(false);
 
 const auth = await useAuthStore();
 
@@ -37,7 +38,6 @@ const personFields = [
     '*',
     {
         person : [
-            'title',
             'id',
             'country',
             'first_name',
@@ -214,85 +214,82 @@ const items = computed(() => {
   return crumbs
 })
 
-const id = route.params.id as string;
-
-const wrapperRef = ref<HTMLElement | null>(null);
+const profile = ref<DirectusUser>();
 
 const {
 	public: { directusUrl },
 } = useRuntimeConfig();
 
-// Handle Live Preview adding version=main which is not required when fetching the main version.
-const version = route.query.version === 'main' ? undefined : (route.query.version as string);
-
-
-const { data } = await useAsyncData <DirectusUser>('profile', async() => {
-      return await $directus.request<DirectusUser>(readMe(
-        {   
-            fields: personFields,
-            deep: {
-                    person: {
-                        _limit: 1,
-                        committee_positions: {
-                            _filter: {
-                                committee_positions_id: {
-                                    committee: {
-                                        congress: {
-                                            site:{
-                                                _eq: config.public.siteId
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        },
-                        assignments: {
-                            _filter: {
-                                event: {
-                                    _or: [
-                                        {
-                                    session: {
-                                        schedule: {
-                                            day: {
-                                                congress: {
-                                                    site:{
-                                                         _eq: config.public.siteId
-                                                        }
-                                                    }
-                                            }
-                                        },
-                                    }},
-                                    {parent: {
-                                        session: {
-                                            schedule: {
-                                                day: {
-                                                    congress: {
-                                                        site:{
-                                                         _eq: config.public.siteId
-                                                            }
-                                                        }
+watch(
+  ready,
+  async (ready) => {
+    if (!ready) return
+    const { data } = await useAsyncData <DirectusUser>('profile', async() => {
+        return await $directus.request<DirectusUser>(readMe(
+            {   
+                fields: personFields,
+                deep: {
+                        person: {
+                            _limit: 1,
+                            committee_positions: {
+                                _filter: {
+                                    committee_positions_id: {
+                                        committee: {
+                                            congress: {
+                                                site:{
+                                                    _eq: config.public.siteId
                                                 }
                                             }
                                         }
                                     }
                                 }
-                                ]
-                                }
+                            },
+                            assignments: {
+                                _filter: {
+                                    event: {
+                                        _or: [
+                                            {
+                                        session: {
+                                            schedule: {
+                                                day: {
+                                                    congress: {
+                                                        site:{
+                                                            _eq: config.public.siteId
+                                                            }
+                                                        }
+                                                }
+                                            },
+                                        }},
+                                        {parent: {
+                                            session: {
+                                                schedule: {
+                                                    day: {
+                                                        congress: {
+                                                            site:{
+                                                            _eq: config.public.siteId
+                                                                }
+                                                            }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    ]
+                                    }
+                            }
                         }
-                    }
-                    }
-                    }
-          
-        }
-    ))})
-
-
-if (!data.value) {
-	throw createError({ statusCode: 404, statusMessage: 'Person not found', fatal: true });
-}
+                        }
+                        }
+            
+            }
+        ))})
+        
+    profile.value = data.value;
+    person.value = profile.value?.person as Person;
+})
 
 const person = ref<Person | null>();
-person.value = data.value?.person as Person;
+
 
 
 const person_events = computed(() => person.value ? 
@@ -474,12 +471,19 @@ const disassociatePerson = async () => {
 }
 
 
+onMounted(async () => {
+  // if your store has a fetch method, call it here
+  ready.value = true
+})
+
 </script>
 <template>
+    {{ profile?.person }}
+    {{ person }}
 	<div  ref="wrapperRef">
 		<Container class="py-12">
             <Headline headline="Congress Profile" class="text-accent text-center"/>
-            <div v-if="person" >
+            <div v-if="profile?.person" >
                 <div class="w-full flex flex-col justify-center">
                     <UButton label="Not You?" color="accent" class="w-30 m-auto justify-center text-xl" @click="disassociatePerson"/>
                 </div>

@@ -74,12 +74,9 @@ const positionsWithSpan = computed(() =>
 						>
 						<template #header class="mx-auto">
 							<UBadge :label="position.title" color="accent" class="text-xs mx-auto"></UBadge>
-						</template>
+						</template>	
 
-						<DirectusImage
-						class="h-40 mx-auto"
-						:uuid="person.persons_id.image"
-						/>
+						<ProfileImage class="h-40 mx-auto" :image="person.persons_id.image" />
 						<p class="font-heading">
 						{{ person.persons_id.first_name }} {{ person.persons_id.last_name }}
 						</p>
@@ -103,7 +100,8 @@ const positionsWithSpan = computed(() =>
 					:ui="{
 						root: 'items-baseline',
 						container: 'p-0',
-						wrapper: 'mx-auto'
+						wrapper: 'mx-auto',
+						body:'flex-0'
 					}"
 				>
 					<template #title>
@@ -111,7 +109,7 @@ const positionsWithSpan = computed(() =>
 					</template>
 					
 					<h2 class="text-center text-xl font-heading">
-						<UBadge :label="position.title" color="accent" class="text-lg"></UBadge>
+						<UBadge :label="position.title" color="accent" class="text-sm"></UBadge>
 					</h2>
 					<div
 						class="grid gap-6"
@@ -122,11 +120,8 @@ const positionsWithSpan = computed(() =>
 							:key="person.persons_id.id"
 							class="text-center ring-0"
 							:to="`/people/${person.persons_id.id}`"
-						>
-							<DirectusImage
-							class="h-40 mx-auto"
-							:uuid="person.persons_id.image"
-							/>
+						>	
+							<ProfileImage class="h-40 mx-auto" :image="person.persons_id.image" />
 							<p class="font-heading">
 							{{ person.persons_id.first_name }} {{ person.persons_id.last_name }}
 							</p>

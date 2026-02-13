@@ -76,7 +76,7 @@ export function toStringFromTotalMinutes(time: number) : string {
     return `${Math.floor(time/60)}:${time % 60}`
 }
 
-export function dateStringToHumanString(dateStr: string | Date | null | undefined ) : string {
+export function dateStringToHumanStringBack(dateStr: string | Date | null | undefined ) : string {
 
   if(dateStr == null || dateStr == undefined){
 		return '';
@@ -102,4 +102,32 @@ export function dateStringToHumanString(dateStr: string | Date | null | undefine
   }
 
   return `${ordinal(dt.day)} ${dt.toFormat("LLLL yyyy")}`;
+}
+
+export function dateStringToHumanString(dateStr: string | Date | null | undefined ) : string {
+
+  if(dateStr == null || dateStr == undefined){
+		return '';
+	}
+
+  // 1️⃣ Parse the string
+  const dt = DateTime.fromFormat(dateStr, "yyyy-MM-dd");
+
+  // 2️⃣ Format as "5th April 2027"
+  const formatted = dt.toFormat("d'th' LLLL");
+
+  // ⚠️ Problem: "d'th'" will literally print "th"
+  // Luxon doesn’t automatically add ordinal suffixes, so we need a helper:
+
+  function ordinal(day: number) {
+    if (day > 3 && day < 21) return `${day}th`;
+    switch (day % 10) {
+      case 1: return `${day}st`;
+      case 2: return `${day}nd`;
+      case 3: return `${day}rd`;
+      default: return `${day}th`;
+    }
+  }
+
+  return `${ordinal(dt.day)}`;
 }

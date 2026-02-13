@@ -101,7 +101,7 @@ const isAuthenticatedWithPolicy = async (policy : string) => {
             }
         ));
 
-        return me.policies ? me : me;
+        return me.policies ? me : false;
     } catch (error) {
         console.error(error)
         return error;
@@ -112,6 +112,7 @@ const logout = async () => {
     await directus.logout()
     const auth = useAuthStore()
     auth.reset()
+    
     navigateTo('http://192.168.1.87:8080/auth/saml2/idp/slo.php?redirect=http://localhost:3000/login', { external: true})
 }
 

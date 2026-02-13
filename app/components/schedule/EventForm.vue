@@ -37,6 +37,7 @@ const props = defineProps<{
     event: CongressEvent | null,
     timeSubDivison: number,
     mode: EditEventMode,
+    tags: [],
 }>()
 
 const isSubEvent = props.parent == null ? false : true;
@@ -81,7 +82,8 @@ const state = reactive({
     role: undefined,
     person: undefined,
     sort: 0,
-  }]
+  }],
+  tags: props.tags
 })
 
 
@@ -92,6 +94,9 @@ const schema = z.object({
     eventType: z.string('Select an Event Type'),
     eventSubType: z.any(),
     duration: z.number().gte(0, 'Duration Must be greater than 0'),
+    tags: z.array(
+        z.string(),
+    ),
     assignments: z.array(
         z.object({
             role: z.object({
@@ -291,6 +296,9 @@ const assignmentCount = computed(() => state.assignments.length)
     <div class="flex flex-col md:flex-row justify-between">
         <UFormField label="Event Title" name="title" class="w-full lg:w-50" required>
             <UInput v-model="state.title"/>
+        </UFormField>
+        <UFormField label="Event Tags" name="tags" class="w-full lg:w-50">
+            <UInputTags v-model="state.tags"/>
         </UFormField>
     </div>
     <div class="flex flex-col md:flex-row justify-between">

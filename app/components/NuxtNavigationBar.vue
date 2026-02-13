@@ -95,7 +95,7 @@
 			
 			<UButton
 				v-else
-				:href="logouturl" 
+				:href="loginUrl" 
 				label="Log In"
 				color="accent"
 				variant="outline"
@@ -160,7 +160,7 @@ const props = defineProps<{
 
 
 const runtimeConfig = useRuntimeConfig();
-const logouturl = runtimeConfig.public.logoutUrl || '';
+const loginUrl = runtimeConfig.public.loginUrl || '';
 // Logo URLs
 const lightLogoUrl = computed(() =>
   props.site?.logo ? `${runtimeConfig.public.directusUrl}/assets/${props.site.logo}` : '/images/logo.svg'

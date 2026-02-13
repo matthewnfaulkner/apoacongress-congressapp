@@ -56,6 +56,10 @@ const dayFields = [
                                         'id',
                                         'topic'
                                         ],
+                                        discussion: [
+                                        'id',
+                                        'topic'
+                                        ],
                                         symposiums: [
                                         '*'
                                         ],

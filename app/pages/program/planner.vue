@@ -24,6 +24,10 @@ let observer: IntersectionObserver | null = null
 
 const isAuthenticated = await $isAuthenticatedWithPolicy('Schedule - Editor');
 
+const isLoggedIn = computed(() =>
+  isAuthenticated !== false
+)
+
 const loading = ref(true);
 
 onMounted(async() => {
@@ -366,8 +370,8 @@ async function openSession(gridItem : scheduleGridItem) {
               isResizable: true,
               isDraggable: true,
               type: GridItemTypes.Session,
-              color: gridItem.session.section?.color,
-              session: response,
+              color: gridItem.session?.section?.color,
+              session: {...response, section: gridItem?.session?.section },
               events: null,
               maxW: 1,
         }
@@ -777,11 +781,27 @@ function hToTime(row: number) : number{
 </script>
 
 <template>
-   <div v-if="loading" class="text-black w-full h-full flex items-center justify-center">
-      <UProgress color="secondary" size="xl" :v-model="null" class="flex justify-center py-10 w-50"/>
-   </div>
+  <UError
+    v-if="isLoggedIn"
+    :clear="{
+      color: 'neutral',
+      size: 'xl',
+      icon: 'i-lucide-arrow-left',
+      class: 'rounded-full'
+    }"
+    :error="{
+      statusCode: 404,
+      statusMessage: 'Permission Denied',
+      message: 'You don\'t Have permission to view this page'
+    }"
+  />
+  <div v-else>
+    <div v-if="loading" class="text-black w-full h-full flex items-center justify-center">
+        <UProgress color="secondary" size="xl" :v-model="null" class="flex justify-center py-10 w-50"/>
+    </div>
     <div v-else>
       <UNavigationMenu  
+        v-if="isAuthenticated"
         color="accent" 
         v-model="currentMode" 
         :items="toolbarItems" 
@@ -937,6 +957,7 @@ function hToTime(row: number) : number{
   </template>
       </UTabs>
     </div>
+  </div>
 </template>
 
 

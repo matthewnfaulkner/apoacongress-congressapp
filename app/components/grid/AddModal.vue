@@ -17,7 +17,10 @@ const editEventModal = overlay.create(EditEventModal);
 
 const confirmationModal = overlay.create(ConfirmationModal);
 
-const { $directus } = useNuxtApp();
+const { $directus, $isAuthenticatedWithPolicy } = useNuxtApp();
+
+const isAuthenticated = await $isAuthenticatedWithPolicy('Schedule - Editor');
+
 const toast = useToast();
 
 const props = defineProps<{
@@ -227,7 +230,8 @@ interface EventEntry {
 
 
 const columns: TableColumn<EventEntry>[] = [
-  {
+  ...(isAuthenticated ? [
+    {
     id: 'actions',
     meta: {
       class: {
@@ -254,6 +258,8 @@ const columns: TableColumn<EventEntry>[] = [
       )
     }
   },
+  ] : []),
+  
 	{
 		accessorKey: 'startTime',
 		header: 'Time',
@@ -288,10 +294,7 @@ const columns: TableColumn<EventEntry>[] = [
       )
 		}
 	},
-  {
-    accessorKey: 'title',
-    header: 'Title'
-  },
+
 	{
 		accessorKey: 'topic',
 		header: 'Topic',

@@ -23,18 +23,26 @@ export interface CongressAbstracts {
 	user_updated?: DirectusUser | string | null;
 	congress?: Congress | string | null;
 	submission_deadline?: string | null;
-	reviewers?: AbstractReviewers[] | string[] | null;
+	reviewers?: DirectusUser[] | string[] | null;
 	description?: string | null;
 	categories?: string | null;
 	submissions?: AbstractSubmission[] | string[] | null;
 	limit?: number | null;
+	acceptance_limit?: number;
+	required_reviewers?: number;
 }
 
-export interface AbstractReviewers {
-	id: number;
-	users: DirectusUser[] | string[] | null;
-	abstracts: CongressAbstracts[] | string[] | null;
+export interface AbstractReview {
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	submission: AbstractSubmission | string | null;
+	reviewer?: DirectusUser | string | null;
+	score?: number;
 }
+
 
 export interface AbstractSubmission {
 	/** @primaryKey */
@@ -48,8 +56,9 @@ export interface AbstractSubmission {
 	/** @description Form structure and input fields */
 	/** @description Received form responses. */
 	congress_abstract?: CongressAbstracts | string | null;
-	submission_values?: AbstractSubmissionValue[] | string[];
-	reviewer?: DirectusUser | string | null;
+	submission_values?: AbstractSubmissionValue[] | string[]
+	reviews?: AbstractReview[] | string | null;
+	submitter: DirectusUser | string | null;
 }
 
 export interface AbstractSubmissionValue {
@@ -153,6 +162,20 @@ export interface BlockGallery {
 	items?: DirectusFile[] | string[] | null;
 }
 
+export interface BlockChargeTable {
+	/** @description Larger main headline for this page section. */
+	headline?: string | null;
+	/** @primaryKey */
+	id: string;
+	/** @description Smaller copy shown above the headline to label a section or add extra context. */
+	type?: 'table' | 'card';
+	category?: 'congress' | 'accomodation';
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+}
+
 export interface BlockGalleryItem {
 	/** @primaryKey */
 	id: string;
@@ -207,6 +230,48 @@ export interface BlockMainHero {
 	date_updated?: string | null;
 	user_updated?: DirectusUser | string | null;
 	bgColor: string | null;
+}
+
+export interface BlockMessages {
+	/** @description Larger main headline for this page section. */
+	headline?: string | null;
+	/** @primaryKey */
+	id: string;
+	/** @description Action buttons that show below headline and description. */
+	button_group?: BlockButtonGroup | string | null;
+	/** @description Supporting copy that shows below the headline. */
+	description?: string | null;
+	/** @description Smaller copy shown above the headline to label a section or add extra context. */
+	tagline?: string | null;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+}
+
+export interface BlockMessagesMessage {
+	/** @description Larger main headline for this page section. */
+	tagline?: string | null;
+	block: BlockMessages | string | null;
+	/** @primaryKey */
+	id: string;
+	/** @description Action buttons that show below headline and description. */
+	button_group?: BlockButtonGroup | string | null;
+	/** @description Supporting copy that shows below the headline. */
+	content?: string | null;
+	/** @description Smaller copy shown above the headline to label a section or add extra context. */
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	people: BlockMessagesMessagePerson[] | string[] | null;
+}
+
+export interface BlockMessagesMessagePerson {
+	/** @primaryKey */
+	id: number;
+	message: BlockMessagesMessage | string | null;
+	person: Person | string | null
 }
 
 export interface BlockPost {
@@ -404,6 +469,29 @@ export interface Congress {
 	sponsors?: Sponsor[] | string[] | null;
 	sponsor_tiers?: CongressSponsorTier[] | string | null;
 	abstracts?: CongressAbstracts[] | string[] | null;
+	registration_charges?: RegistrationCharge[];
+	accomodation_charges?: AccomodationCharge[];
+}
+
+export interface RegistrationCharge {
+	delegate: string;
+	category: string;
+	price: string;
+	cutoff?: [{
+		date: string;
+		name?: string
+	}]
+}
+
+export interface AccomodationCharge {
+	delegate: string;
+	category: string;
+	price: string;
+	details?: {
+		category: string;
+		check_in: string;
+		check_out: string;
+	}
 }
 
 export interface CongressSchedule {
@@ -523,7 +611,7 @@ export interface CongressEvent {
 export interface CongressEventType {
 	id: string;
 	congress_events_id: string;
-	item?: Plenary | Workshop | Symposium | Talk | string | null;
+	item?: Plenary | Workshop | Symposium | Talk | Discussion | string | null;
 	/** @description The collection (type of block). */
 	collection?: string | null;
 }
@@ -845,7 +933,7 @@ export interface PageBlock {
 	/** @description The id of the page that this block belongs to. */
 	page?: Page | string | null;
 	/** @description The data for the block. */
-	item?: BlockHero | BlockMainHero | BlockRichtext | BlockForm | BlockPost | BlockGallery | BlockPricing | BlockPeople | string | null;
+	item?: BlockHero | BlockMainHero | BlockRichtext | BlockForm | BlockPost | BlockGallery | BlockPricing | BlockPeople | BlockMessages | BlockChargeTable | string | null;
 	/** @description The collection (type of block). */
 	collection?: string | null;
 	/** @description Temporarily hide this block on the website without having to remove it from your page. */
@@ -881,6 +969,17 @@ export interface Page {
 }
 
 export interface Plenary {
+	id: string;
+	/** @description Smaller copy shown above the headline to label a section or add extra context. */
+	topic?: string,
+	sort?: string | null;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+}
+
+export interface Discussion {
 	id: string;
 	/** @description Smaller copy shown above the headline to label a section or add extra context. */
 	topic?: string,
@@ -1483,6 +1582,9 @@ export interface Schema {
 	block_gallery_items: BlockGalleryItem[];
 	block_hero: BlockHero[];
 	block_mainhero: BlockMainHero[];
+	block_messages: BlockMessages[];
+	block_messages_messages: BlockMessagesMessage[];
+	block_messages_message_persons: BlockMessagesMessagePerson[];
 	block_people: BlockPeople[];
 	block_people_people: BlockPeoplePeople[];
 	block_posts: BlockPost[];
@@ -1505,6 +1607,7 @@ export interface Schema {
 	congress_sessions: CongressSession[];
 	congress_sponsors: CongressSponsor[];
 	congress_sponsors_tiers: CongressSponsorTier[];
+	discussions: Discussion[];
 	form_fields: FormField[];
 	forms: Form[];
 	form_submissions: FormSubmission[];
@@ -1568,6 +1671,9 @@ export enum CollectionNames {
 	block_gallery_items = 'block_gallery_items',
 	block_hero = 'block_hero',
 	block_mainhero = 'block_mainhero',
+	block_messages = 'block_messages',
+	block_messages_message = 'block_messages_message',
+	block_messages_message_person = 'block_messages_message_person',
 	block_people = 'block_people',
 	block_people_people = 'block_people_people',
 	block_posts = 'block_posts',
@@ -1590,6 +1696,7 @@ export enum CollectionNames {
 	congress_sessions = 'congress_sessions',
 	congress_sponsors = 'congress_sponsors',
 	congress_sponsor_tiers = 'congress_sponsor_tiers',
+	disucssions = 'discussions',
 	form_fields = 'form_fields',
 	forms = 'forms',
 	form_submissions = 'form_submissions',

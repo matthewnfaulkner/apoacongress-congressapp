@@ -89,7 +89,7 @@ defineProps<PricingCardProps>();
 				"
 			>
 				<li v-for="(feature, index) in card.features" :key="index" class="flex items-center gap-3 text-regular">
-					<CheckCircle2 class="w-4 h-4 text-gray-muted mt-1" />
+					
 					<p class="leading-relaxed">{{ feature }}</p>
 				</li>
 			</ul>

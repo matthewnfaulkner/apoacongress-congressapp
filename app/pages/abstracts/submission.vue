@@ -22,13 +22,14 @@ const isLoggedIn = computed(() =>
   auth.isAuthenticated !== false
 )
 
+
 const congressAbstract = ref<CongressAbstracts | null>(null);
 const submissions = ref<AbstractSubmission[] | string[] | null>(null)
 const storeReady = ref(false)
 const categories = ref([]);
 const guideLines = ref<AccordionItem>([]);
 
-const { data } = await useAsyncData <CongressAbstracts[]>('abstracts', async() => {
+const { data } = await useAsyncData <CongressAbstracts[]>('abstract_submit', async() => {
       return await $directus.request<CongressAbstracts[]>(readItems(
         'abstracts',
         {   
@@ -45,6 +46,7 @@ const { data } = await useAsyncData <CongressAbstracts[]>('abstracts', async() =
 if(!data.value) {
     throw new Error('No Congress Abstract');
 }
+
 data.value = data.value as CongressAbstracts[];
 
 congressAbstract.value = data.value[0];
@@ -68,6 +70,7 @@ watch(
       return await $directus.request<AbstractSubmission[]>(readItems(
         'abstract_submissions',
         {
+          limit: -1,
           fields: [
                     'id',
                     'status',
@@ -85,6 +88,9 @@ watch(
             congress_abstract: {
                 _eq: congressAbstract?.value?.id
             },
+            submitter: {
+              _eq: "$CURRENT_USER"
+            }
           },
         }
       ))
@@ -119,11 +125,11 @@ watch(
 type Submission = {
   id: string
   submitted: string
-  status: 'pending' | 'approved' | 'rejected'
+  status: 'submitted' | 'invited' | 'accepted' | 'reviewed' | 'waitingList' | 'rejected'
   title: string,
   abstract: string,
   category: string,
-  authors: string,
+  authors: string[],
 }
 
 
@@ -148,9 +154,13 @@ const columns: TableColumn<Submission>[] = [
     header: 'Status',
     cell: ({ row }) => {
       const color = {
-        approved: 'success' as const,
+        submitted: 'neutral' as const,
         rejected: 'error' as const,
-        pending: 'neutral' as const
+        waitingList: 'warning' as const,
+        invited: 'info' as const,
+        accepted: 'success' as const,
+        reviewed: 'secondary' as const,
+
       }[row.getValue('status') as string]
 
       return h(UBadge, { class: 'capitalize', variant: 'subtle', color }, () =>
@@ -268,6 +278,7 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
         }
         const payload = {
             congress_abstract: congressAbstract.value?.id || null,
+            submitter: auth.isAuthenticated.id,
             submission_values: [
                 {
                     value: formData.category,
@@ -295,9 +306,9 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
 
             submissionsTable.value.push({
                 id: response.id,
-                title: state.title,
-                submitted: response.date_created,
-                status: response.status || 'pending',
+                title: state.title || '',
+                submitted: response.date_created || '',
+                status: response.status || 'submitted',
             }
         );
         } else{
@@ -308,10 +319,10 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
             const updatedRow = submissionsTable.value.find(row => row.id == state.id)
             
             if(updatedRow) {
-                updatedRow.abstract = state.abstract;
-                updatedRow.authors = state.authors;
+                updatedRow.abstract = state.abstract || '';
+                updatedRow.authors = state.authors || [];
                 updatedRow.status = response.status;
-                updatedRow.title = state.title;
+                updatedRow.title = state.title || '';
             }
         }
         resetState();
@@ -345,13 +356,32 @@ const deletionError = ref();
 
 onMounted(async () => {
   // if your store has a fetch method, call it here
-  storeReady.value = true
+  if(isLoggedIn.value) {
+    storeReady.value = true
+  }
+  
 })
 
 </script>
 
 <template>
-	<div class="relative my-5">
+    <UError
+      v-if="!isLoggedIn"
+      redirect="/login"
+      :clear="{
+        color: 'neutral',
+        size: 'xl',
+        trailingIcon: 'i-lucide-arrow-right',
+        class: 'rounded-full',
+        label: 'Log In',
+      }"
+      :error="{
+        statusCode: 404,
+        statusMessage: 'Sign In Required',
+        message: 'You need to sign in to access this page.'
+      }"
+    />
+	<div  v-else class="relative my-5">
         <ClientOnly>
             <UModal v-model:open="openConfirmation" title="Confirm Delete?">
                 <template #body>
@@ -429,7 +459,7 @@ onMounted(async () => {
                                     @click="state.authors.push({ name: '', institution: '' })"/>
                             </UFormField>
                             <UFormField  class="pb-5" name="consent">
-                                <UCheckbox v-model="state.consent" label="I Consent" color="accent"/>
+                                <UCheckbox v-model="state.consent" label="I hereby agree to the terms and conditions of abstract submission." color="accent"/>
                             </UFormField>
                             <div>
                                 
