@@ -104,7 +104,7 @@ const buttons = button_group?.buttons.map((button) => ({
 </script>
 
 <template>
-	<div class="relative pt-0 pb-12 xl:pt-10 sm:pb-16 lg:pb-32 xl:pb-48 2xl:pb-56" 
+	<div class="relative pt-0 pb-12 xl:pt-10 sm:pb-16 lg:pb-32 xl:pb-48 2xl:pb-56 min-h-lvh" 
 		:style="{ '--herobg-color': data.bgcolor }"
 		:class="`bg-[var(--herobg-color)]`">
 			
@@ -113,18 +113,18 @@ const buttons = button_group?.buttons.map((button) => ({
 			</div>
 
 			<div class="relative">
-				<div class="px-6 mx-auto sm:px-8 lg:px-12 xl:px-50 max-w-8xl flex justify-end-safe">
-					<div class="w-full lg:w-2/3 xl:w-2/3 p-5 bg-secondary/80 sm:bg-transparent lg:p-10 text-right">
+				<div class="px-6 mx-auto sm:px-8 lg:px-12 xl:px-50 max-w-8xl flex justify-end-safe ">
+					<div class="w-full lg:w-2/3 xl:w-2/3 p-5 bg-secondary/60 sm:bg-transparent lg:p-10 text-right text-shadow-black text-shadow-lg">
 						<p class="tracking-tighter text-white mt-0 lg:mt-0">
-							<span class=" font-heading text-2xl">{{ props.data.tagline }}
+							<span class=" font-heading text-md sm:text-2xl">{{ props.data.tagline }}
 							</span><br />
-							<span class="font-heading italic font-normal text-8xl">
+							<span class="font-heading italic font-normal text-7xl md:text-8xl">
 								<NuxtImg src="/images/apoalogo.png" class="inline h-25"/>{{ props.data.headline }}
 							</span>
 						</p>
-						<i class="mt-2 font-sans text-base font-normal leading-7 text-white text-opacity-70 text-md font-italic" v-html="data.description"></i>
-						<p class="mt-2 font-sans text-xl font-bold text-white">April {{ formattedStartDate }} - {{formattedEndDate}}</p>
-						<p class="mt-2 leading-7 text-accent-400  text-3xl font-heading font-bold ">{{ venue }}</p>
+						<i class="mt-2 font-sans text-base font-normal leading-7 text-white text-opacity-70 text-sm sm:text-lg font-italic" v-html="data.description"></i>
+						<p class="mt-2 font-sans text-xl lg:text-2xl font-bold text-white">April {{ formattedStartDate }} - {{formattedEndDate}}</p>
+						<p class="mt-2 leading-7 text-accent-400 text-2xl sm:text-3xl font-heading font-bold ">{{ venue }}</p>
 						<div
 							v-if="data.button_group?.buttons?.length"
 							class="mt-6 flex justify-end image_left my-3">
@@ -140,23 +140,23 @@ const buttons = button_group?.buttons.map((button) => ({
 							/>
 						</div>
 						<ClientOnly v-if="data.countdown && secondsUntil"> 
-								<vue-countdown  :time="secondsUntil * 1000" v-slot="{ days, hours, minutes, seconds }">
-								<UBadge class="p-2 m-2 text-3xl text-center text-secondary flex-col w-20" variant="solid" color="primary">{{days}}
+								<vue-countdown  :time="secondsUntil * 1000" v-slot="{ days, hours, minutes, seconds }" class="text-shadow-none">
+								<UBadge class="p-2 m-1 lg:m-2 text-lg lg:text-3xl text-center text-secondary flex-col w-14 lg:w-20" variant="solid" color="primary">{{days}}
 									<template #trailing>
 										<p class="text-xs">Days</p>
 									</template>
 								</UBadge>
-								<UBadge class="p-2 m-2 text-3xl text-center text-secondary flex-col w-20" variant="solid" color="primary">{{hours}}
+								<UBadge class="p-2 m-1 lg:m-2 text-lg lg:text-3xl text-center text-secondary flex-col w-14 lg:w-20" variant="solid" color="primary">{{hours}}
 									<template #trailing>
 										<p class="text-xs">Hours</p>
 									</template>
 								</UBadge>
-								<UBadge class="p-2 m-2 text-3xl text-center text-secondary flex-col w-20" variant="solid" color="primary">{{minutes}}
+								<UBadge class="p-2 m-1 lg:m-2 text-lg lg:text-3xl text-center text-secondary flex-col w-14 lg:w-20" variant="solid" color="primary">{{minutes}}
 									<template #trailing>
 										<p class="text-xs">Minutes</p>
 									</template>
 								</UBadge>
-								<UBadge class="p-2 m-2 text-3xl text-center text-secondary flex-col w-20" variant="solid" color="primary">{{seconds}}
+								<UBadge class="p-2 m-1 lg:m-2 text-lg lg:text-3xl text-center text-secondary flex-col w-14 lg:w-20" variant="solid" color="primary">{{seconds}}
 									<template #trailing>
 										<p class="text-xs">Seconds</p>
 									</template>

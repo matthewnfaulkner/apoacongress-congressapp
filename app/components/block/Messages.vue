@@ -51,20 +51,24 @@ const props = defineProps<MessagesProps>();
 		class="max-w-screen" 
 		:autoplay="{ delay: 2000 }"
 		:overlay="false"
+		arrows
+		loop
 		:items="data.messages"
 		v-slot="{ item }"
 		:ui="{
-			root: 'group relative flex items-center overflow-hidden gap-0',
-			item: 'md:basis-1/2 min-h-fit',
-			container: 'pb-10'
+			root: 'group relative flex items-center overflow-hidden gap-0 ',
+			item: 'md:basis-1/2 min-h-fit h-[-webkit-fill-available]',
+			container: 'pb-10',
+			dot: 'bg-accent size-5'
 		}">
 			<UPageCard
 					:key="item.id"
-					class="text-center ring-0 flex flex-row"
+					class="text-center ring-0 flex flex-row h-full "
 					:ui="{
 						container: 'gap-y-0 p-10 shadow-xl h-inherit',
 						wrapper: 'mx-auto border-accent ',
-						body: 'p-5 ',
+						header: 'w-full',
+						body: 'p-5 w-full',
 						footer: 'w-full'
 					}"
 				>
@@ -72,7 +76,7 @@ const props = defineProps<MessagesProps>();
 					<Tagline :tagline="item.tagline"/>
 				</template>	
 				<template #body>
-					<div v-html="item.content" class="text-left h-60">
+					<div v-html="item.content" class="text-left lg:h-60">
 
 					</div>
 					<div class="flex flex-row justify-around">
