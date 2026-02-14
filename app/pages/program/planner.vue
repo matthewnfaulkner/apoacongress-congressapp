@@ -25,7 +25,7 @@ let observer: IntersectionObserver | null = null
 const isAuthenticated = await $isAuthenticatedWithPolicy('Schedule - Editor');
 
 const isLoggedIn = computed(() =>
-  isAuthenticated !== false
+  isAuthenticated ? true: false
 )
 
 const loading = ref(true);
@@ -782,7 +782,7 @@ function hToTime(row: number) : number{
 
 <template>
   <UError
-    v-if="isLoggedIn"
+    v-if="!isLoggedIn"
     :clear="{
       color: 'neutral',
       size: 'xl',

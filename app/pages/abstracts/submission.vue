@@ -10,16 +10,16 @@ const config = useRuntimeConfig();
 
 const route = useRoute();
 const pageUrl = useRequestURL();
-const { $directus, $isAuthenticated } = useNuxtApp();
+const { $directus, $isAuthenticatedWithPolicy } = useNuxtApp();
 
 const { locale, locales, defaultLocale } = useI18n();
 const path = withoutTrailingSlash(withLeadingSlash(route.path));
 const permalink = locale.value === defaultLocale ?  path : '/';
 
-const isAuthenticated = await $isAuthenticated();
+const isAuthenticated = await $isAuthenticatedWithPolicy('Abstracts - Submit');
 
 const isLoggedIn = computed(() =>
-  isAuthenticated !== false
+  isAuthenticated ? true: false
 )
 
 

@@ -23,7 +23,7 @@ const permalink = locale.value === defaultLocale ?  path : '/';
 const isAuthenticated = await $isAuthenticatedWithPolicy('Abstracts - Admin');
 
 const isLoggedIn = computed(() =>
-  isAuthenticated !== false
+  isAuthenticated ? true: false
 )
 
 
@@ -378,7 +378,7 @@ const columnFilters = ref([
 
 <template>
   <UError
-    v-if="isLoggedIn"
+    v-if="!isLoggedIn"
     :clear="{
       color: 'neutral',
       size: 'xl',
