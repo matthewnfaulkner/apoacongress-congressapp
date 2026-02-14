@@ -169,7 +169,7 @@ export interface BlockChargeTable {
 	id: string;
 	/** @description Smaller copy shown above the headline to label a section or add extra context. */
 	type?: 'table' | 'card';
-	category?: 'congress' | 'accomodation';
+	category?: 'congress' | 'accommodation';
 	date_created?: string | null;
 	user_created?: DirectusUser | string | null;
 	date_updated?: string | null;
@@ -470,7 +470,7 @@ export interface Congress {
 	sponsor_tiers?: CongressSponsorTier[] | string | null;
 	abstracts?: CongressAbstracts[] | string[] | null;
 	registration_charges?: RegistrationCharge[];
-	accomodation_charges?: AccomodationCharge[];
+	accommodation_charges?: AccommodationCharge[];
 }
 
 export interface RegistrationCharge {
@@ -483,7 +483,7 @@ export interface RegistrationCharge {
 	}]
 }
 
-export interface AccomodationCharge {
+export interface AccommodationCharge {
 	delegate: string;
 	category: string;
 	price: string;
