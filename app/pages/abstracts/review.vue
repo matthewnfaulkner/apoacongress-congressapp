@@ -40,7 +40,9 @@ const categories = ref([]);
 
 onMounted(async () => {
   // if your store has a fetch method, call it here
-  storeReady.value = true
+  if(isLoggedIn.value) {
+    storeReady.value = true
+  }
 })
 
 
@@ -48,6 +50,7 @@ const congressAbstract = ref<CongressAbstracts | null>(null);
 const reviewTable = ref<AbstractReviewable[]>([]);
 const reviewerId = ref(0);
 let required_reviewers = 3;
+
 watch(
   storeReady,
   async (ready) => {
