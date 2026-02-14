@@ -60,7 +60,9 @@ watch(
               ],
               filter: {
                 congress: {
-                    _eq: config.public.congressId
+                  site: {
+                    _eq: config.public.siteId
+                  }
                 },
             },
           }

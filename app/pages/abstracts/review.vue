@@ -52,7 +52,7 @@ watch(
   storeReady,
   async (ready) => {
     if (!ready) return
-    const { data } = await useAsyncData <CongressAbstracts[]>('abstracts', async() => {
+    const { data } = await useAsyncData <CongressAbstracts[]>('abstract_review', async() => {
         return await $directus.request<CongressAbstracts[]>(readItems(
           'abstracts',
           {   
@@ -66,7 +66,9 @@ watch(
               ],
               filter: {
                 congress: {
-                    _eq: config.public.congressId
+                  site: {
+                    _eq: config.public.siteId
+                  }
                 },
             },
           }

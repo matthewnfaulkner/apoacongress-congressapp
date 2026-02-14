@@ -16,10 +16,10 @@ const { locale, locales, defaultLocale } = useI18n();
 const path = withoutTrailingSlash(withLeadingSlash(route.path));
 const permalink = locale.value === defaultLocale ?  path : '/';
 
-const auth = await useAuthStore();
+const isAuthenticated = await $isAuthenticated();
 
 const isLoggedIn = computed(() =>
-  auth.isAuthenticated !== false
+  isAuthenticated !== false
 )
 
 
@@ -280,7 +280,7 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
         }
         const payload = {
             congress_abstract: congressAbstract.value?.id || null,
-            submitter: auth.isAuthenticated.id,
+            submitter: isAuthenticated.id,
             submission_values: [
                 {
                     value: formData.category,
