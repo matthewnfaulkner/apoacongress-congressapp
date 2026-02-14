@@ -4,7 +4,7 @@ import  ButtonGroup  from '@/components/base/ButtonGroup.vue';
 import { dateStringToHumanStringBack } from '~/utils/time-utils';
 import { readItem } from '@directus/sdk';
 import PricingCard from './PricingCard.vue';
-import ChargeTableAccomodation from './ChargeTableAccomodation.vue';
+import ChargeTableAccommodation from './ChargeTableAccommodation.vue';
 import ChargeTableRegistration from './ChargeTableRegistration.vue';
 
 
@@ -13,7 +13,7 @@ interface ChargeTableProps {
 		id: string;
 		headline: string,
 		type: 'table' | 'cards'
-		category: 'congress' | 'accomodation'
+		category: 'congress' | 'accommodation'
 	};
 }
 
@@ -24,7 +24,7 @@ const type = props.data.type;
 const category = props.data.category;
 
 const components: Record<string, any> = {
-	accomodation: ChargeTableAccomodation,
+	accommodation: ChargeTableAccommodation,
 	congress: ChargeTableRegistration
 }
 
