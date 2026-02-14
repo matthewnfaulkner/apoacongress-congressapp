@@ -37,7 +37,9 @@ const { data } = await useAsyncData <CongressAbstracts[]>('abstract_submit', asy
             fields: ['id', 'categories', 'submission_deadline', 'description'],
             filter: {
             congress: {
-                _eq: config.public.congressId
+                site:{
+                  _eq: config.public.siteId
+                }
             },
           },
         }
