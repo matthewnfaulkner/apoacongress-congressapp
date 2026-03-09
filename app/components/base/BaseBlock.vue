@@ -8,6 +8,8 @@ import Form from '~/components/block/FormBlock.vue';
 import People from '~/components/block/People.vue';
 import MainHero from '~/components/block/MainHero.vue';
 import Sponsors from '../block/Sponsors.vue';
+import Messages from '../block/Messages.vue';
+import ChargeTable from '../block/ChargeTable.vue';
 
 interface BaseBlockProps {
 	block: {
@@ -25,11 +27,13 @@ const components: Record<string, any> = {
 	block_mainhero: MainHero,
 	block_richtext: RichText,
 	block_gallery: Gallery,
+	block_messages: Messages,
 	block_pricing: Pricing,
 	block_posts: Posts,
 	block_form: Form,
 	block_people: People,
-	block_sponsors: Sponsors
+	block_sponsors: Sponsors,
+	block_chargetable: ChargeTable
 };
 
 const Component = computed(() => components[props.block.collection] || null);

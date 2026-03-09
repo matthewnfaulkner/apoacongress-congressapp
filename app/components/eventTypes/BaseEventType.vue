@@ -4,6 +4,7 @@ import Symposiums from './Symposiums.vue';
 import Plenaries from './Plenaries.vue';
 import Talks from './Talks.vue';
 import Workshops from './Workshops.vue';
+import Discussions from './Discussions.vue';
 
 interface BaseEventTypeProps {
 	type: {
@@ -21,7 +22,8 @@ const components: Record<string, any> = {
     symposiums: Symposiums,
     plenaries: Plenaries,
     talks: Talks,
-    workshops: Workshops
+    workshops: Workshops,
+	discussions: Discussions
 };
 
 const Component = computed(() => components[props.type.collection] || null);

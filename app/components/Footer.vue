@@ -117,7 +117,7 @@ const darkLogoUrl = computed(() =>
 			</div>
 		</Container>
 		<template #right> 
-			<Container class="text-white">
+			<Container class="text-white" v-if="props.organiser">
 				<div class="flex flex-col md:flex-row justify-between items-start gap-8 pt-8">
 					<div class="flex flex-col items-start flex-1">
 						<Tagline tagline="Conference Scretariat" class="text-white"> </Tagline>

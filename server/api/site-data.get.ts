@@ -15,9 +15,15 @@ export default defineEventHandler(async (event) => {
 						'description', 
 						'logo',
 						'social_links',
+						'preview',
 						{
 							'congress' : [
 								'*',
+								{
+									'venue' : [
+										'title'
+									]
+								},
 								{
 									'organiser' : [
 										'id',
@@ -50,7 +56,7 @@ export default defineEventHandler(async (event) => {
 							}
 						}
 						
-					]
+						]
 					},
 					fields: [
 						'id',
@@ -115,7 +121,24 @@ export default defineEventHandler(async (event) => {
 			),
 
 			directusServer.request(
-				readItem('navigation', '719fd32a-8961-4947-963d-a0115db8ca77', {
+				readItems('navigation', {
+					limit: 1,
+					filter: {
+						_and: [
+						{
+							'key' : {
+								_eq : 'footer'}
+						},
+						{
+							'site': {
+								'id': {
+									_eq: config.public.siteId
+								}
+							}
+						}
+						
+						]
+					},
 					fields: [
 						'id',
 						'title',

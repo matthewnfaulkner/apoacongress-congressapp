@@ -89,7 +89,7 @@ type Schema = typeof schema
 const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
 	try {
         const formData = submission.data as Schema;
-        console.log(formData);
+   
         if(formData.id) {
             const payload = {
                 name: formData.name,

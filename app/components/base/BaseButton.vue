@@ -67,6 +67,7 @@ const linkComponent = computed(() => {
 		:as="linkComponent"
 		:href="href"
 		:target="target"
+		:type="type == 'submit' ? type: undefined"
 		v-bind="$attrs">
 		<span class="flex items-center space-x-2">
 			<component :is="Icon" v-if="Icon && iconPosition === 'left'" class="size-4 shrink-0" />

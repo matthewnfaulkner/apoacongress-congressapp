@@ -14,6 +14,7 @@ const loading = ref(false)
 
 const siteDataStore = useSiteDataStore();
 const siteData = siteDataStore.siteData;
+const config = useRuntimeConfig();
 
 const schema = z.object({
   email: z.string().email('Invalid email'),
@@ -32,7 +33,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     console.log(event);
     const data = event.data;
     try {
-        const response = await $directus.request(passwordRequest(data.email, 'http://localhost:3000/reset_password'));
+        const response = await $directus.request(passwordRequest(data.email, config.public.siteUrl + '/reset_password'));
         console.log(response);
         toast.add({ title: 'Success', description: 'The form has been submitted.', color: 'success' })
     } catch (error) {

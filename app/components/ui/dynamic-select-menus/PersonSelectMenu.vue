@@ -13,6 +13,7 @@ const fetchKey = `roles-${Math.random().toString(36).slice(2)}`
 
 const props = defineProps<{
   defaultValue?: Person;
+  allowAdd? : Boolean
 }>()
 
 const emit = defineEmits<{ 
@@ -166,6 +167,7 @@ const selectedPerson = ref<PersonItem>();
 
       <div class="p-2">
         <UButton 
+                v-if="allowAdd"
                 type="button" 
                 variant="outline" 
                 color="accent" 

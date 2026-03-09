@@ -13,9 +13,9 @@ import type { Page, PageBlock, BlockPost, Post } from '#shared/types/schema';
 const pageFields = [
 	'title',
 	'id',
+	'seo',
 	{
-		// SEO fields for search engine optimization
-		seo: ['title', 'meta_description', 'og_image'],
+		
 		// Content blocks
 		blocks: [
 			'id',
@@ -92,6 +92,7 @@ const pageFields = [
 						'description',
 						'countdown',
 						'image',
+						'bgcolor',
 						{
 							button_group: [
 								'id',
@@ -133,6 +134,44 @@ const pageFields = [
 							],
 						},
 					],
+					block_chargetable: [
+						'id',
+						'headline',
+						'tagline',
+						'category',
+						{
+							tabs: [
+								'id',
+								'label',
+								'type',
+								{
+									cards: [
+										'id',
+										'sort',
+										'title',
+										'description',
+										'category',
+										'is_highlighted',
+										{
+											button: ['id', 'label', 'variant', 'url', 'type', { page: ['permalink'] }, { post: ['slug'] }],
+										},
+										{
+											badge: ['id', 'label', 'variant', 'url', 'type', { page: ['permalink'] }, { post: ['slug'] }],
+										},
+										{
+											congress_charges: [
+												{
+													congress_charge: [
+														'*'
+													]
+												}
+											]
+										}
+									],
+								},
+							]
+						}
+					],	
 					block_people: [
 						'id',
 						'tagline',
@@ -229,6 +268,41 @@ const pageFields = [
 
 									}
 								}
+							]
+						}
+					],
+					block_messages: [
+						'id',
+						'tagline',
+						'headline',
+						'type',
+						{
+							messages: [
+								'id',
+								'tagline',
+								'content',
+								{
+									people: [
+										'id',
+										'extra',
+										{
+											person: [
+												'id',
+												'first_name',
+												'last_name',
+												'image'
+											]
+										}
+									]
+								},
+								{
+									button_group: [
+										'id',
+										{
+											buttons: ['id', 'label', 'variant', 'url', 'type', { page: ['permalink'] }, { post: ['slug'] }],
+										},
+									],
+								},
 							]
 						}
 					],

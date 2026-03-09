@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ZoomIn, ArrowLeft, ArrowRight, X } from 'lucide-vue-next';
-
+import { Dialog } from '#components';
 interface GalleryItem {
 	id: string;
 	directus_file: string;
@@ -119,7 +119,6 @@ onUnmounted(() => {
 				</div>
 			</div>
 		</div>
-
 		<Dialog v-model:open="isLightboxOpen">
 			<DialogContent
 				class="flex max-w-full max-h-full items-center justify-center p-2 bg-transparent border-none z-50"

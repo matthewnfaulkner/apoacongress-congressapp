@@ -42,10 +42,12 @@ defineProps<PricingCardProps>();
 				{{ card.title }}
 			</h3>
 			<div class="flex-shrink-0">
-				<Badge
+				<UBadge
 					v-if="card.badge"
-					:variant="card.is_highlighted ? 'secondary' : 'default'"
+					:variant="card.is_highlighted ? 'solid' : 'outline'"
+					color= "secondary"
 					class="text-xs font-medium uppercase"
+					to="/"
 					:data-directus="
 						setAttr({
 							collection: 'block_pricing_cards',
@@ -56,7 +58,7 @@ defineProps<PricingCardProps>();
 					"
 				>
 					{{ card.badge }}
-				</Badge>
+				</UBadge>
 			</div>
 		</div>
 
@@ -89,7 +91,7 @@ defineProps<PricingCardProps>();
 				"
 			>
 				<li v-for="(feature, index) in card.features" :key="index" class="flex items-center gap-3 text-regular">
-					<CheckCircle2 class="w-4 h-4 text-gray-muted mt-1" />
+					
 					<p class="leading-relaxed">{{ feature }}</p>
 				</li>
 			</ul>

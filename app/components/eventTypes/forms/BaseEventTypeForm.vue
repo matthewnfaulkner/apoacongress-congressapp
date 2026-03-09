@@ -2,6 +2,7 @@
 import SymposiumsForm from './SymposiumsForm.vue';
 import TalksForm from './TalksForm.vue';
 import PlenariesForm from './PlenariesForm.vue';
+import DiscussionsForm from './DiscussionsForm.vue';
 
 interface BaseEventTypeProps {
 	defaultValue: object,
@@ -23,6 +24,7 @@ const components: Record<string, any> = {
 	symposiums: SymposiumsForm,
 	talks: TalksForm,
 	plenaries: PlenariesForm,
+	discussions: DiscussionsForm
 };
 
 const Component = computed(() => components[props.type.collection] || null);

@@ -11,9 +11,14 @@ const congress = congresses ? congresses[0] : null;
 const timezone = congress?.timezone;
 const startDate = congress?.startdate;
 const endDate = congress?.enddate;
+const venue = congress?.venue?.title;
+const dt = DateTime.fromFormat(startDate, "yyyy-MM-dd");
 
+// 2️⃣ Format as "5th April 2027"
+const month = dt.toFormat("LLLL");
 const formattedStartDate = dateStringToHumanString(startDate);
 const formattedEndDate = dateStringToHumanString(endDate);
+const date = `${month} ${formattedStartDate} - ${formattedEndDate}`;
 
 // Parse the date in the given timezone and set time to 08:00
 const target = DateTime
@@ -37,6 +42,7 @@ interface MainHeroProps {
 		headline: string;
 		description: string;
 		countdown: boolean | null;
+		bgcolor: string | null;
 		image: string;
 		button_group?: {
 			buttons: Array<{
@@ -103,29 +109,84 @@ const buttons = button_group?.buttons.map((button) => ({
 </script>
 
 <template>
-	<div class="relative pt-0 pb-12 bg-black xl:pt-30 sm:pb-16 lg:pb-32 xl:pb-48 2xl:pb-56">
-
+	<div class="relative pt-0 pb-12 xl:pt-10 sm:pb-16 lg:pb-32 xl:pb-48 2xl:pb-56 min-h-lvh" 
+		:style="{ '--herobg-color': data.bgcolor }"
+		:class="`bg-[var(--herobg-color)]`">
+			
 			<div class="absolute inset-0">
-				<DirectusImage class="object-cover w-full h-full" :uuid="props.data.image"/>
+				<DirectusImage 
+					class="object-cover w-full h-full object-top-left" 
+					:uuid="props.data.image"
+					:data-directus="
+						setAttr({ 
+							collection: 'block_mainhero', 
+							item: data?.id, 
+							fields: 'image', 
+							mode: 'modal' })
+					"/>
 			</div>
 
 			<div class="relative">
-				<div class="px-6 mx-auto sm:px-8 lg:px-12 max-w-7xl">
-					<div class="w-full lg:w-2/3 xl:w-1/2 bg-accent/70 p-5 lg:p-10">
+				<div class="px-6 mx-auto sm:px-8 lg:px-12 xl:px-50 max-w-8xl flex justify-end-safe ">
+					<div class="w-full lg:w-2/3 xl:w-2/3 p-5 bg-secondary/60 sm:bg-transparent lg:p-10 text-right text-shadow-black text-shadow-lg h-lvh sm:h-auto">
 						<p class="tracking-tighter text-white mt-0 lg:mt-0">
-							<span class=" font-heading text-3xl ">
-								{{ props.data.tagline }}
-							</span><br />
-							<span class="font-heading italic font-normal text-8xl">
-								{{ props.data.headline }}
-							</span>
+							<Text class=" font-heading text-md sm:text-xl" 
+							:content="data.tagline" 
+							:data-directus="
+									setAttr({ 
+										collection: 'block_mainhero', 
+										item: data.id, 
+										fields: 'tagline', 
+										mode: 'modal' })">{{ props.data.tagline }}
+							</Text><br/>
+							<div class="flex flex-row justify-end">
+								<NuxtImg src="/images/apoalogo.png" class="inline h-25"/>
+								<Text class="font-heading italic font-normal text-7xl md:text-8xl inline"
+									:content="data.headline"
+									:item-id="data.id"
+									:data-directus="
+										setAttr({ 
+											collection: 'block_mainhero', 
+											item: data.id, 
+											fields: 'headline', 
+											mode: 'modal' })"
+								/>
+							</div>
 						</p>
-						<p class="mt-12 font-sans text-base font-normal leading-7 text-white text-opacity-70"></p>
-						<p class="mt-8 font-sans text-xl font-normal text-white">{{ formattedStartDate }} - {{formattedEndDate}}</p>
-
+						<Label 
+							class="mt-2 font-sans text-base font-normal leading-7 text-white text-opacity-70 text-sm sm:text-lg italic" 
+							:data-directus="
+										setAttr({ 
+											collection: 'block_mainhero', 
+											item: data.id, 
+											fields: 'description', 
+											mode: 'modal' })">
+							{{ data.description }}
+						</Label>
+						<Text 
+							class="mt-2 font-sans text-xl lg:text-2xl font-bold text-white" 
+							:content="date"
+							:data-directus="
+								setAttr({ 
+									collection: 'congress', 
+									item: congress?.id, 
+									fields: 'startdate, enddate', 
+									mode: 'modal' })"
+						/>
+						<Label class="mt-2 leading-7 text-accent-400 text-2xl sm:text-3xl font-heading font-bold " 
+							:label="congress?.venue?.title"
+							key="venue"
+							:item-id="congress?.venue.id"
+							:data-directus="
+								setAttr({ 
+									collection: 'congress', 
+									item: congress?.id, 
+									fields: 'venue', 
+									mode: 'modal' })"
+						>{{ venue }}</Label>
 						<div
 							v-if="data.button_group?.buttons?.length"
-							class="mt-6 flex justify-start image_left my-3">
+							class="mt-6 flex justify-end image_left my-3">
 							<ButtonGroup
 								:buttons="buttons"
 								:data-directus="
@@ -137,24 +198,32 @@ const buttons = button_group?.buttons.map((button) => ({
 								"
 							/>
 						</div>
-						<ClientOnly v-if="data.countdown && secondsUntil"> 
-								<vue-countdown  :time="secondsUntil * 1000" v-slot="{ days, hours, minutes, seconds }">
-								<UBadge class="p-2 m-2 text-3xl text-center" variant="solid" color="neutral">{{days}}
+						<ClientOnly v-if="data.countdown && secondsUntil"
+							:data-directus="
+									setAttr({ 
+										collection: 'block_mainhero', 
+										item: data?.id, 
+										fields: 'countdown', 
+										mode: 'modal' })
+								"
+						> 
+								<vue-countdown  :time="secondsUntil * 1000" v-slot="{ days, hours, minutes, seconds }" class="text-shadow-none">
+								<UBadge class="p-2 m-1 lg:m-2 text-lg lg:text-3xl text-center text-secondary flex-col w-14 lg:w-20" variant="solid" color="primary">{{days}}
 									<template #trailing>
 										<p class="text-xs">Days</p>
 									</template>
 								</UBadge>
-								<UBadge class="p-2 m-2 text-3xl text-center" variant="solid" color="neutral">{{hours}}
+								<UBadge class="p-2 m-1 lg:m-2 text-lg lg:text-3xl text-center text-secondary flex-col w-14 lg:w-20" variant="solid" color="primary">{{hours}}
 									<template #trailing>
 										<p class="text-xs">Hours</p>
 									</template>
 								</UBadge>
-								<UBadge class="p-2 m-2 text-3xl text-center" variant="solid" color="neutral">{{minutes}}
+								<UBadge class="p-2 m-1 lg:m-2 text-lg lg:text-3xl text-center text-secondary flex-col w-14 lg:w-20" variant="solid" color="primary">{{minutes}}
 									<template #trailing>
 										<p class="text-xs">Minutes</p>
 									</template>
 								</UBadge>
-								<UBadge class="p-2 m-2 text-3xl text-center" variant="solid" color="neutral">{{seconds}}
+								<UBadge class="p-2 m-1 lg:m-2 text-lg lg:text-3xl text-center text-secondary flex-col w-14 lg:w-20" variant="solid" color="primary">{{seconds}}
 									<template #trailing>
 										<p class="text-xs">Seconds</p>
 									</template>
@@ -162,7 +231,9 @@ const buttons = button_group?.buttons.map((button) => ({
 								</vue-countdown>
 						</ClientOnly>
 					</div>
+					
 				</div>
+				
     		</div>
 		</div>
 </template>

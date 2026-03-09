@@ -18,6 +18,7 @@ export interface scheduleGridItem {
   isResizable?: boolean;
   isDraggable?: boolean;
   color?: string | null;
+  session?: CongressSession | string | null;
 }
 
 export interface scheduleTabItem extends TabsItem {

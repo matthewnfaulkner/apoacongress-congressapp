@@ -15,7 +15,6 @@ const { isVisualEditingEnabled, apply, setAttr } = useVisualEditing();
 import { withLeadingSlash, withoutTrailingSlash } from 'ufo';
 const personUrl = useRequestURL();
 
-const id = route.params.id as string;
 
 const permalink = withoutTrailingSlash(withLeadingSlash(route.path));
 const whichday = permalink.split('/').at(-1);
@@ -28,7 +27,7 @@ const {
 const version = route.query.version === 'main' ? undefined : (route.query.version as string);
 
 const { data, error, refresh } = await useFetch<CongressDay>(() => `/api/program/day`, {
-	key: `day-${id}`,
+	key: `day-${permalink}`,
 	query: {
 		preview: enabled.value ? true : undefined,
 		token: enabled.value ? state.token : undefined,
