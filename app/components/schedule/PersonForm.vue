@@ -136,7 +136,7 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
         }
 
         
-        console.log(payload);
+        console.log(payload);``
         if(!payload) return;
 
         const response = await $directus.request<Person>(createItem(

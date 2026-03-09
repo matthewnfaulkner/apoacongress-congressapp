@@ -73,6 +73,7 @@ const handleSubmit = async (data: Record<string, any>) => {
 			</p>
 		</div>
 		<DynamicForm
+			v-if="!isSubmitted"
 			:fields="form.fields"
 			:onSubmit="handleSubmit"
 			:submitLabel="form.submit_label || 'Submit'"

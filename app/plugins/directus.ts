@@ -104,7 +104,7 @@ const isAuthenticatedWithPolicy = async (policy : string) => {
         return me.policies ? me : false;
     } catch (error) {
         console.error(error)
-        return error;
+        return false;
     }
 }
 

@@ -1,9 +1,5 @@
 <script setup lang="ts">
-import type { DirectusFile } from '@directus/sdk';
-import  ButtonGroup  from '@/components/base/ButtonGroup.vue';
-import { dateStringToHumanStringBack } from '~/utils/time-utils';
-import { readItem } from '@directus/sdk';
-import PricingCard from './PricingCard.vue';
+
 import ChargeTableAccommodation from './ChargeTableAccommodation.vue';
 import ChargeTableRegistration from './ChargeTableRegistration.vue';
 
@@ -36,6 +32,7 @@ const componentData = computed(() => type);
 
 <template>
 	<Headline :headline="headline" />
+	{{ data }}
 	<div ref="blockRef" class="relative">
 		<component :is="Component" v-if="Component" :id="`block-${data.id}`" :data="componentData" />
 	</div>

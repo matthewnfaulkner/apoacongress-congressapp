@@ -32,6 +32,7 @@ const isLoggedIn = computed(() =>
   isAuthenticated ? true: false
 )
 
+const loading = ref(true);
 
 const table = useTemplateRef('table')
 const submissions = ref<AbstractSubmission[] | null>(null)
@@ -40,6 +41,7 @@ const categories = ref([]);
 
 onMounted(async () => {
   // if your store has a fetch method, call it here
+  loading.value = false;
   if(isLoggedIn.value) {
     storeReady.value = true
   }
@@ -180,7 +182,7 @@ watch(
                     review: reviewed ? reviewed.id : null,
                     reviewer: reviewed ? reviewed.reviewer : null,
                     reviews: reviews ? +reviews.count : 0,
-                    reviewable: reviews ? reviews.count < required_reviewers || reviewed : true,
+                    reviewable: reviews ? reviews.count < required_reviewers : true,
                     score: reviewed ? reviewed.score : null,
                     submitted: submission.date_created,
                     ...valuesObj
@@ -210,6 +212,7 @@ const state = reactive<Partial<AbstractReviewable>>({
   category: undefined,
   status: undefined,
   score: 0,
+  
 })
 
 function resetState() {
@@ -236,6 +239,11 @@ type AbstractReviewable = {
   reviewable: boolean,
   reviews:  number,
 }
+
+const columnVisibility = ref({
+  review: false,
+  reviewable: false,
+})
 
 const columns: TableColumn<AbstractReviewable>[] = [
   /*{
@@ -268,6 +276,32 @@ const columns: TableColumn<AbstractReviewable>[] = [
       )
     }
   },*/
+  {
+    accessorKey: 'review',
+    filterFn: (row, columnId, filterValue) => {
+      const value = row.getValue(columnId)
+
+      const isEmpty =
+        value === null ||
+        value === undefined ||
+        value === ''
+
+      if (!filterValue) return true
+
+      if (filterValue === 'hasValue') {
+        return !isEmpty
+      }
+
+      if (filterValue === 'empty') {
+        return isEmpty
+      }
+
+    return true
+  }
+  },
+    {
+    accessorKey: 'reviewable',
+  },
   {
      accessorKey: 'reviews',
      meta:{
@@ -364,7 +398,7 @@ const columns: TableColumn<AbstractReviewable>[] = [
 
 const rowSelection = ref<Record<string, boolean>>({})
 
-function onSelect(e: Event, row: TableRow<Payment>) {
+function onSelect(e: Event, row: TableRow<AbstractReviewable>) {
   /* If you decide to also select the column you can do this  */
 
   openSubmissionForm.value = true;
@@ -496,33 +530,52 @@ const onPageChange = (newPage: number) => {
 
 };
 
-const columnFilters = ref([
+const myReviewsFilterValues = [
   {
-    id: 'status',
-    value: ''
+    label: "I've Reviewed",
+    value: 'hasValue'
+  },
+  {
+    label: "I Haven't Reviewed",
+    value: 'empty'
   }
-])
+]
+
+const reviewableFilterValues = [
+  {
+    label: 'Fully Reviewed',
+    value: false
+  },
+  {
+    label: 'Pending Review',
+    value: true
+  }
+]
+
 
 </script>
 
 
 <template>
+    <div v-if="loading" class="text-black w-full h-lvh flex items-center justify-center">
+        <UProgress color="secondary" size="xl" :v-model="null" class="flex justify-center py-10 w-50"/>
+    </div>  
     <UError
-    v-if="!isLoggedIn"
-    :clear="{
-      color: 'neutral',
-      size: 'xl',
-      icon: 'i-lucide-arrow-left',
-      class: 'rounded-full'
-    }"
-    :error="{
-      statusCode: 404,
-      statusMessage: 'Permission Denied',
-      message: 'You don\'t Have permission to view this page'
-    }"
-  />
-  <div v-else class="w-full space-y-4 pb-4 max-w-300 m-auto lg:mt-10">
-      <Headline headline="Abstract Review"/> 
+      v-if="!isLoggedIn && !loading"
+      :clear="{
+        color: 'neutral',
+        size: 'xl',
+        icon: 'i-lucide-arrow-left',
+        class: 'rounded-full'
+      }"
+      :error="{
+        statusCode: 404,
+        statusMessage: 'Permission Denied',
+        message: 'You don\'t Have permission to view this page'
+      }"
+    />
+  <div v-else-if="!loading" class="w-full space-y-4 p-4 m-auto lg:mt-10">
+    <Headline headline="Abstract Review"/> 
     <div class="flex px-4 py-3.5 border-b border-accented" >
       <UInput v-model="globalFilter" class="max-w-sm" placeholder="Filter..." />
     </div>
@@ -596,7 +649,7 @@ const columnFilters = ref([
         clear
         :items="categories"
         :model-value="table?.tableApi?.getColumn('category')?.getFilterValue() as string"
-        class="max-w-sm"
+        class="max-w-sm mx-1"
         placeholder="Filter Categories..."
         @update:model-value="table?.tableApi?.getColumn('category')?.setFilterValue($event)"
       />
@@ -604,11 +657,25 @@ const columnFilters = ref([
         :multiple="false"
         :search-input="false"
         clear
-        :items="['accepted', 'invited' , 'reviewed', 'submitted', 'waiting list', 'rejected']"
-        :model-value="table?.tableApi?.getColumn('status')?.getFilterValue() as string"
-        class="max-w-sm"
+        :items="myReviewsFilterValues"
+        value-key="value"
+        label-key="label"
+        :model-value="table?.tableApi?.getColumn('review')?.getFilterValue() as string"
+        class="max-w-sm mx-1"
+        placeholder="Filter My Reviews..."
+        @update:model-value="table?.tableApi?.getColumn('review')?.setFilterValue($event)"
+      />
+    <USelectMenu
+        :multiple="false"
+        :search-input="false"
+        clear
+        :items="reviewableFilterValues"
+        value-key="value"
+        label-key="label"
+        :model-value="table?.tableApi?.getColumn('reviewable')?.getFilterValue() as number"
+        class="max-w-sm mx-1"
         placeholder="Filter Status..."
-        @update:model-value="table?.tableApi?.getColumn('status')?.setFilterValue($event)"
+        @update:model-value="table?.tableApi?.getColumn('reviewable')?.setFilterValue($event)"
       />
     <UTable
       ref="table"
@@ -618,6 +685,7 @@ const columnFilters = ref([
       v-model:global-filter="globalFilter"
       :data="reviewTable"
       :columns="columns"
+      :column-visibility="columnVisibility"
       :pagination-options="{
         getPaginationRowModel: getPaginationRowModel()
       }"

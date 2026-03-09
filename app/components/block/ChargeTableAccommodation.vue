@@ -42,80 +42,34 @@ if(!data.value) {
 
 const charges = data.value?.accommodation_charges || [];
 
-if(type == 'table') {
-	const grouped: GroupedData = charges.reduce<GroupedData>((acc, item, index) => {
-	const delegate = item.delegate;
-	const category = item.category;
-	acc[delegate] ??= {
+const grouped: GroupedData = charges.reduce<GroupedData>((acc, item, index) => {
+const delegate = item.delegate;
+const category = item.category;
+acc[delegate] ??= {
+};
+
+item.details.forEach((detail) => {
+
+	const header = detail.category;
+	acc[delegate][category] ??= {
+		category: category
 	};
-
-	item.details.forEach((detail) => {
-
-		const header = detail.category;
-		acc[delegate][category] ??= {
-			category: category
-		};
-		acc[delegate][category][header] = item.price
-	});
+	acc[delegate][category][header] = item.price
+});
 
 
 
-	return acc;
-	}, {})
+return acc;
+}, {})
 
 
-	tabs.value = Object.entries(grouped).map(([label, subObj]) => ({
-	label,
-	items: Object.values(subObj),
-	}));
-}
+tabs.value = Object.entries(grouped).map(([label, subObj]) => ({
+label,
+items: Object.values(subObj),
+}));
 
 
-if(type === 'cards') {
-	const grouped2: GroupedData = charges.reduce<GroupedData>((acc, item, index) => {
-	const delegate = item.delegate as string;
-	const category = item.category as string;
-	acc[delegate] ??= {
-	};
-	
-	if(item.details) {
-		item.details.forEach((detail : AccomodationDetails) => {
 
-			const detailCat = detail.category;
-			const checkin = dateStringToHumanStringBack(detail.check_in);
-			const checkout = dateStringToHumanStringBack(detail.check_out);
-			const description = `${checkin} - ${checkout}`;
-			acc[delegate][detailCat] ??= {
-				price: detailCat,
-				category: detailCat,
-				description: description,
-				hasPrice: false,
-				features: [],
-				button: {
-					label: 'Register Now',
-					color: 'accent',
-					variant: 'solid'
-				}
-			};
-			const feature = `${category} - ${item.price}`;
-			acc[delegate][detailCat].features.push(feature)
-		});
-	}
-
-
-	return acc;
-	}, {})
-
-
-	tabs.value = Object.entries(grouped2).map(([label, subObj]) => ({
-		label,
-		pricing_cards:  Object.values(subObj),
-		button: {
-			label: 'Register Now'
-		}
-	
-	}));
-}
 
 interface AccomodationDetails {
 	category: string,
@@ -141,28 +95,30 @@ type GroupedData = {
 
 
 <template>
-	<div v-if="type == 'table'">
-		<UProgress v-if="loading"></UProgress>
-		<UTabs
-			v-else
-			:items="tabs"
-			labelKey="label"
-			color="accent"
-			v-model="activeTab"
-			>
-			<template #content="{ item }">
-				<UTable 
-					:data="item.items"
-					:ui="{
-						th: 'text-wrap bg-secondary-400 text-white',
-						td: 'w-5'
-					}"
-				/>
-			</template>
-		</UTabs>
-	</div>
-	
-	<Pricing v-else :data="{tabs: tabs}">
-
-	</Pricing>
+	{{ props }}
+	<UProgress v-if="loading"></UProgress>
+	<UTabs
+		v-else
+		:items="tabs"
+		labelKey="label"
+		color="accent"
+		v-model="activeTab"
+		>
+		<template #content="{ item }">
+			<UTable 
+				:data="item.items"
+				:meta="{
+					class: {
+						tr: (row) => 
+							'text-wrap'
+					},
+				}"
+				:ui="{
+					th: 'text-wrap bg-secondary-400 text-white',
+					td: 'w-5 max-w-5 text-wrap whitespace-normal',
+					tr: 'text-wrap'
+				}"
+			/>
+		</template>
+	</UTabs>
 </template>

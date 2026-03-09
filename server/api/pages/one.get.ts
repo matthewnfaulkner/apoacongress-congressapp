@@ -13,9 +13,9 @@ import type { Page, PageBlock, BlockPost, Post } from '#shared/types/schema';
 const pageFields = [
 	'title',
 	'id',
+	'seo',
 	{
-		// SEO fields for search engine optimization
-		seo: ['title', 'meta_description', 'og_image'],
+		
 		// Content blocks
 		blocks: [
 			'id',
@@ -136,9 +136,41 @@ const pageFields = [
 					],
 					block_chargetable: [
 						'id',
-						'type',
 						'headline',
-						'category'
+						'tagline',
+						'category',
+						{
+							tabs: [
+								'id',
+								'label',
+								'type',
+								{
+									cards: [
+										'id',
+										'sort',
+										'title',
+										'description',
+										'category',
+										'is_highlighted',
+										{
+											button: ['id', 'label', 'variant', 'url', 'type', { page: ['permalink'] }, { post: ['slug'] }],
+										},
+										{
+											badge: ['id', 'label', 'variant', 'url', 'type', { page: ['permalink'] }, { post: ['slug'] }],
+										},
+										{
+											congress_charges: [
+												{
+													congress_charge: [
+														'*'
+													]
+												}
+											]
+										}
+									],
+								},
+							]
+						}
 					],	
 					block_people: [
 						'id',
@@ -243,6 +275,7 @@ const pageFields = [
 						'id',
 						'tagline',
 						'headline',
+						'type',
 						{
 							messages: [
 								'id',

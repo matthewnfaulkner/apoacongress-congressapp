@@ -56,6 +56,7 @@ const positionsWithSpan = computed(() =>
 				class="max-w-screen" 
 				pause-on-hover
 				reverse
+				:repeat="6"
 				:overlay="false"
 				:ui="{
 					root: 'group relative flex items-center overflow-hidden gap-0',

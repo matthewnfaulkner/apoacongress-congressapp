@@ -164,8 +164,7 @@ const { data } = await useAsyncData <CongressEvent[]>('congress_events', async()
 
 
 if(!data.value) {
-    console.log("No Events")
-    
+    console.log("No Events")  
 }
 const events = ref<CongressEvent[]>([])
 

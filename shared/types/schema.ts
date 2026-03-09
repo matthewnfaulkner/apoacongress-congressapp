@@ -165,16 +165,91 @@ export interface BlockGallery {
 export interface BlockChargeTable {
 	/** @description Larger main headline for this page section. */
 	headline?: string | null;
+	/** @description Smaller copy shown above the headline to label a section or add extra context. */
+	tagline?: string | null;
 	/** @primaryKey */
 	id: string;
 	/** @description Smaller copy shown above the headline to label a section or add extra context. */
-	type?: 'table' | 'card';
-	category?: 'congress' | 'accommodation';
 	date_created?: string | null;
 	user_created?: DirectusUser | string | null;
 	date_updated?: string | null;
 	user_updated?: DirectusUser | string | null;
 }
+
+export interface BlockChargeTableTab {
+	/** @description Larger main headline for this page section. */
+	label?: string | null;
+	type?: 'table' | 'card';
+	/** @description Smaller copy shown above the headline to label a section or add extra context. */
+	title?: string | null;
+	/** @primaryKey */
+	id: string;
+	/** @description Smaller copy shown above the headline to label a section or add extra context. */
+	charge_table: BlockChargeTable | string | null;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+}
+
+export interface BlockChargeTableCard {
+	/** @primaryKey */
+	id: string;
+	/** @description Name of the pricing plan. Shown at the top of the card. */
+	title?: string | null;
+	/** @description Short, one sentence description of the pricing plan and who it is for. */
+	description?: string | null;
+	/** @description Price and term for the pricing plan. (ie `$199/mo`) */
+	button?: BlockButton | string | null;
+	/** @description Badge that displays at the top of the pricing plan card to add helpful context. */
+	badge?: BlockButton | string | null;
+	/** @description The id of the pricing block this card belongs to. */
+	tab?: BlockPricingTab | string | null;
+	/** @description Add highlighted border around the pricing plan to make it stand out. */
+	category?: 'registration' | 'accommodation';
+	is_highlighted?: boolean | null;
+	sort?: number | null;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	congress_charges: BlockChargeTableCardCharge[] | string[] | null;
+}
+
+export interface BlockChargeTableCardCharge {
+	/** @primaryKey */
+	id: number;
+	block_chargetable_card: BlockChargeTableCard | string | null;
+	congress_charge: CongressCharge | string | null;
+}
+
+export interface CongressCharge {
+	/** @primaryKey */
+	id: string;
+	sort?: number | null;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	congress?: Congress | string | null;
+	delegate?: string | null;
+	category?: string | null; 
+	sub_category?: string | null;
+	price?: string | null;
+	details: RegistrationChargeDetail[] | AccommodationChargeDetail[] | null;
+}
+
+export interface RegistrationChargeDetail {
+	cutoff_date: string;
+	cutoff_description?: string | null;
+}
+
+export interface AccommodationChargeDetail {
+	check_in: string;
+	check_out: string;
+	stay_length?: string | null;
+}
+
 
 export interface BlockGalleryItem {
 	/** @primaryKey */
@@ -237,6 +312,7 @@ export interface BlockMessages {
 	headline?: string | null;
 	/** @primaryKey */
 	id: string;
+	type: string;
 	/** @description Action buttons that show below headline and description. */
 	button_group?: BlockButtonGroup | string | null;
 	/** @description Supporting copy that shows below the headline. */
@@ -850,6 +926,7 @@ export interface Site {
 	pages?: Page[];
 	navigations?: Navigation[]
 	organisations?: SiteOrganisations[] | string[] | null;
+	preview?: boolean;
 }
 
 export interface Navigation {

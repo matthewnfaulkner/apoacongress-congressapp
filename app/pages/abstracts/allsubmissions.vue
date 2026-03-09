@@ -13,7 +13,7 @@ const toast = useToast();
 const config = useRuntimeConfig();
 
 const route = useRoute();
-const pageUrl = useRequestURL();
+const overlay = useOverlay();
 const { $directus, $isAuthenticatedWithPolicy, $hasPolicy } = useNuxtApp();
 
 const { locale, locales, defaultLocale } = useI18n();
@@ -26,6 +26,7 @@ const isLoggedIn = computed(() =>
   isAuthenticated ? true: false
 )
 
+const loading = ref(true);
 
 const table = useTemplateRef('table')
 const submissions = ref<AbstractSubmission[] | null>(null)
@@ -34,6 +35,7 @@ const categories = ref([]);
 
 onMounted(async () => {
   // if your store has a fetch method, call it here
+  loading.value = false;
   if(isLoggedIn.value) {
     storeReady.value = true
   }
@@ -104,6 +106,8 @@ watch(
             'reviews.submission',
             {
               reviewers:[
+                'id',
+                'score',
                 {
                   'reviewer': [
                     'id',
@@ -154,7 +158,7 @@ watch(
                 }, {} as Record<string, any>);
                 
                 const reviews = submission.reviews && submission.reviews.length > 0 ? submission.reviews[0] : null;
-                const reviewers = submission.reviewers && submission.reviewers.length > 0 ? submission.reviewers : null;
+                const reviewers = submission.reviewers && submission.reviewers.length > 0 ? submission.reviewers as Reviewer[] : null;
                 // Merge with status and submitted
                 return {
                     id: submission.id,
@@ -173,18 +177,18 @@ watch(
   }// run immediately if storeReady is already true
 )
 
-
+interface Reviewer {
+  id: string,
+  score: number,
+  reviewer:{
+    id: string
+    first_name: string
+    last_name: string
+  }
+}
 
 interface AbstractSubmissionWithReviews extends  Omit<AbstractSubmission, 'reviews'>  {
-  reviewers: [
-    {
-      reviewer: {
-        id: string
-        first_name: string
-        last_name: string
-      }
-    }
-  ],
+  reviewers: Reviewer[],
   reviews: [
       {
         id: string
@@ -202,6 +206,12 @@ type AbstractSummary = {
   category: string
   date: number
   abstract: string
+  authors: [
+    {
+      name: string,
+      institution: string,
+    }
+  ]
   reviews: string
   reviewers: [
     { 
@@ -223,7 +233,7 @@ const columns: TableColumn<AbstractSummary>[] = [
     header: 'Status',
     meta:{
       class:{
-        td: 'max-w-5'
+        td: 'w-5'
       }
     },
     cell: ({ row }) => {
@@ -293,7 +303,7 @@ const columns: TableColumn<AbstractSummary>[] = [
       return h(UButton, {
         color: 'neutral',
         variant: 'ghost',
-        label: 'Average Score',
+        label: 'Avg Score',
         icon: isSorted
           ? isSorted === 'asc'
             ? 'i-lucide-arrow-up-narrow-wide'
@@ -303,24 +313,6 @@ const columns: TableColumn<AbstractSummary>[] = [
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc')
       })
     },
-  },
-  {
-    accessorKey: 'submitted',
-    header: 'Date',
-    meta:{
-      class:{
-        td: 'max-w-5'
-      }
-    },
-    cell: ({ row }) => {
-      return new Date(row.getValue('submitted')).toLocaleString('en-US', {
-        day: 'numeric',
-        month: 'short',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-      })
-    }
   },
   {
     accessorKey: 'category',
@@ -336,20 +328,60 @@ const columns: TableColumn<AbstractSummary>[] = [
     accessorKey: 'title',
     header: 'Title',
   },
-
-]
-
-function getRowItems(row: Row<AbstractReviewable>) {
-  return [
     {
-      label: 'Review',
-      icon: 'i-lucide-eye',
-      onSelect() {
-        openSubmissionForm.value = true;
+    accessorKey: 'submitted',
+    header: 'Date',
+    meta:{
+      class:{
+        td: 'max-w-5 text-wrap whitespace-normal'
       }
     },
-  ]
+    cell: ({ row }) => {
+      return new Date(row.getValue('submitted')).toLocaleString('en-US', {
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      })
+    }
+  },
+]
+
+const state = reactive<Partial<AbstractSummary>>({
+  id: undefined,
+  title: undefined,
+  abstract: undefined,
+  category: undefined,
+  status: undefined,
+  authors: undefined,
+  score: undefined,
+  reviewers: undefined
+})
+
+function resetState() {
+  state.id = undefined,
+  state.title = undefined;
+  state.abstract = undefined;
+  state.category = undefined;
+  state.status = undefined;
+  state.authors = undefined;
+  state.reviewers = undefined;
 }
+
+function onSelect(e: Event, row: TableRow<AbstractSummary>) {
+  /* If you decide to also select the column you can do this  */
+
+  openSubmissionForm.value = true;
+  state.id = row.original.id;
+  state.abstract = row.original.abstract;
+  state.category = row.original.category;
+  state.title = row.original.title;
+  state.authors = JSON.parse(row.original.authors)
+  state.score = row.original.avgscore
+  state.reviewers = row.original.reviewers
+}
+
 
 const pagination = ref({
   pageIndex: 0,
@@ -377,8 +409,11 @@ const columnFilters = ref([
 
 
 <template>
+  <div v-if="loading" class="text-black w-full h-full flex items-center justify-center">
+        <UProgress color="secondary" size="xl" :v-model="null" class="flex justify-center py-10 w-50"/>
+  </div>
   <UError
-    v-if="!isLoggedIn"
+    v-if="!isLoggedIn && !loading"
     :clear="{
       color: 'neutral',
       size: 'xl',
@@ -391,8 +426,55 @@ const columnFilters = ref([
       message: 'You don\'t Have permission to view this page'
     }"
   />
-  <div v-else class="w-full space-y-4 pb-4 max-w-300 m-auto lg:mt-10">
-      <Headline headline="All Abstracts"/> 
+  <div v-else-if="!loading" class="w-full space-y-4 pb-4 max-w-300 m-auto lg:mt-10">
+        <UModal  
+        scrollable 
+        v-model:open="openSubmissionForm"
+        :ui="{
+            content: 'max-w-none',
+            body: 'p-5 m-auto'
+        }"
+        :close="{
+            color: 'accent',
+            variant: 'solid',
+            class: 'rounded-full'
+            }">
+        <template #body>
+            <div >
+                <Headline headline="Reviewing Abstract Submission"/>
+                <UForm 
+                      :state="state">
+                      <UInput type="hidden" v-model="state.id"/>
+                      <UFormField required label="Category" name="category" size="xl"  class="pb-5">
+                          <UInput disabled :value="state.category" v-model="state.category" class="w-75 :w-100 md:w-100 lg:w-100 mx-auto" color="secondary" variant="subtle"/>
+                      </UFormField>
+                      <UFormField required label="Title" name="title"  size="xl"  class="pb-5">
+                          <UInput disabled v-model="state.title" class="w-75 md:w-100 lg:w-200" color="secondary" variant="subtle"  />
+                      </UFormField>
+                      <UFormField required label="Abstract" name="abstract"  size="xl"  class="pb-5">
+                          <UTextarea disabled v-model="state.abstract" class="w-75 md:w-100 lg:w-200" :rows=15 color="secondary" variant="subtle"/>
+                      </UFormField> 
+                      <UFormField required label="Authors" name="authors" size="xl" class="text-center pb-5" >
+                        <div v-for="(author, index) in state.authors" :key="index" class="flex lg:gap-2 mb-2">
+                            <UInput disabled v-model="author.name" placeholder="Name" class="lg:w-95" color="secondary" variant="subtle"/>
+                            <UInput disabled v-model="author.institution" placeholder="Institution" class="lg:w-95" color="secondary" variant="subtle"/>
+                        </div>
+                    </UFormField>
+                    <UFormField required label="Average Score" name="score" size="xl" class="mx-auto" :ui="{labelWrapper: 'justify-center', root: 'text-center'}"> 
+                          <UInput disabled color="accent" :value="state.score || 0" v-model="state.score" />
+                    </UFormField>
+                    <UFormField label="Reviewers" name="reviewers" size="xl" class="mx-auto">
+                        <div v-for="(reviewer, index) in state.reviewers" :key="index" class="flex lg:gap-2 mb-2">
+                          <UFormField :label="`${reviewer.reviewer.first_name} ${reviewer.reviewer.last_name} - Score :`" orientation="horizontal">
+                            <UInput disabled  v-model="reviewer.score" placeholder="score" class="" color="secondary" variant="subtle"/>
+                          </UFormField>
+                        </div>
+                    </UFormField>
+                  </UForm>
+            </div>
+        </template>
+    </UModal>
+    <Headline headline="All Abstracts"/> 
     <div class="flex px-4 py-3.5 border-b border-accented" >
       <UInput v-model="globalFilter" class="max-w-sm" placeholder="Filter..." />
     </div>
@@ -420,6 +502,7 @@ const columnFilters = ref([
       ref="table"
       v-model:pagination="pagination"
       v-model:global-filter="globalFilter"
+      @select="onSelect"
       :data="reviewTable"
       :columns="columns"
       :pagination-options="{

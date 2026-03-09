@@ -64,7 +64,7 @@
 
 
 
-  --color-background: oklch(0.356 0.142 274.08);
+  --color-background: oklch(0.972 0.003 247.8);
   --color-background-50: oklch(0.932 0.023 283.3);
   --color-background-100: oklch(0.873 0.044 284.05);
   --color-background-200: oklch(0.747 0.09 282.58);
@@ -106,7 +106,6 @@ h3 { font-size: 1.5rem; font-weight: bold; margin-bottom: 15px; margin-top: 15px
     --ui-bg-elevated: var(--ui-color-neutral-100);
     --ui-bg-accented: var(--ui-color-neutral-200);
     --ui-bg-inverted: var(--ui-color-neutral-900);
-
 
 }
 

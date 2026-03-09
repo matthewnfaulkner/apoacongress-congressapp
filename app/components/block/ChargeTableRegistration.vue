@@ -91,6 +91,8 @@ if(type == 'cards') {
 				description: header,
 				features: [],
 				hasPrice: false,
+				is_highlighted: true,
+				badge: 'How do I Become an APOA Member?',
 				button: {
 					label: 'Register Now',
 					color: 'accent',

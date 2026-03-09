@@ -1,4 +1,6 @@
 <script setup lang="ts">
+
+
 const {
 	data: siteData,
 	error: siteError,

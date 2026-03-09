@@ -82,6 +82,7 @@ const onSubmitForm = handleSubmit(async (formValues) => {
 </script>
 
 <template>
+
 	<form
 		v-if="schema"
 		:validation-schema="schema"
@@ -98,12 +99,14 @@ const onSubmitForm = handleSubmit(async (formValues) => {
 	>
 		<div class="flex flex-wrap gap-4">
 			<BaseFormField v-for="field in validFields" :key="field.id" :field="field" :model-value="values[field.name]" />
+
 			<div class="w-full">
 				<div>
 					<BaseButton
 						:id="`submit-${submitLabel.replace(/\s+/g, '-').toLowerCase()}`"
 						type="submit"
 						:label="submitLabel"
+						variant="solid"
 						:disabled="isSubmitting"
 						icon="arrow"
 						icon-position="right"

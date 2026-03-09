@@ -23,6 +23,8 @@ const isLoggedIn = computed(() =>
 )
 
 
+const loading = ref(true);
+
 const congressAbstract = ref<CongressAbstracts | null>(null);
 const submissions = ref<AbstractSubmission[] | string[] | null>(null)
 const storeReady = ref(false)
