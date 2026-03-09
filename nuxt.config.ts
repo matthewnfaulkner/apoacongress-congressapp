@@ -1,5 +1,3 @@
-//import tailwindcss from "@tailwindcss/vite";
-
 export default defineNuxtConfig({
 	components: [
 		{ path: '~/components', pathPrefix: false },
@@ -122,11 +120,6 @@ export default defineNuxtConfig({
 	vue: {
 		propsDestructure: true,
 	},
-	/*vite: {
-		plugins: [
-		tailwindcss(),
-		],
-	},*/
 	sitemap: {
 		sources: ['/api/sitemap'],
 	},
