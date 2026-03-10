@@ -17,16 +17,15 @@ export default defineEventHandler(async (event) => {
                 fields: ['preview']
             })
             )
-
+        
         const redirectPath = '/preview'
 
         // Skip redirect if toggle is off or already at target
         if (!site?.preview || event.path === redirectPath) return
-
+        
         // Do the actual HTTP redirect
         return sendRedirect(event, redirectPath, 302)
 	} catch (error){
-        console.log(error);
 		throw createError({ statusCode: 500, statusMessage: 'Internal Server Error' });
 	}
 });

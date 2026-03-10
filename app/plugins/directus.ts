@@ -1,86 +1,77 @@
 import { 
-        createDirectus, 
-        rest, 
-        readItems, 
-        authentication, 
-        readProviders, 
-        refresh, 
-        readMe, 
-        login, 
-        generateTwoFactorSecret, 
-        enableTwoFactor,
-        passwordRequest,
-        passwordReset,
-        createItem,
-        deleteItem,
-        withToken,
-        updateItem,
-        updateMe,
-        readPolicy,
-        readPolicies,
-        readRoles,
-        readField,
-        readFields,
-        readRelation,
-        readRelationByCollection,
-        uploadFiles
-    } from "@directus/sdk";
+    createDirectus, 
+    rest, 
+    readItems, 
+    authentication, 
+    readProviders, 
+    refresh, 
+    readMe, 
+    login, 
+    generateTwoFactorSecret, 
+    enableTwoFactor,
+    passwordRequest,
+    passwordReset,
+    createItem,
+    deleteItem,
+    withToken,
+    updateItem,
+    updateMe,
+    readField,
+    readFields,
+    readRelation,
+    readRelationByCollection,
+    uploadFiles
+} from "@directus/sdk";
 
-const directus = createDirectus("http://localhost:8055").with(authentication("session", { credentials: "include", autoRefresh: true })).with(rest({ credentials: "include"}));
+export default defineNuxtPlugin(() => {
 
-const isAuthenticated = async () => {
-    try {
-        const me = await directus.request(readMe(
-            {
+    // ✅ NOW Nuxt context exists
+    const config = useRuntimeConfig();
+
+    const directus = createDirectus(config.public.directusUrl)
+        .with(authentication("session", { credentials: "include", autoRefresh: true }))
+        .with(rest({ credentials: "include" }));
+
+
+    const isAuthenticated = async () => {
+        try {
+            const me = await directus.request(readMe({
                 fields: ['id', 'email', 'first_name', 'last_name']
-            }
-        ));
-        return me as DirectusUser;
-    } catch (error) {
-        console.error(error)
-        return false;
-    }
-};
+            }));
+            return me;
+        } catch (error) {
+            console.error(error);
+            return false;
+        }
+    };
 
-const isAuthenticatedWithPolicy = async (policy : string) => {
-    try {
-        const me = await directus.request<DirectusUser>(readMe(
-            {
+    const isAuthenticatedWithPolicy = async (policy: string) => {
+        try {
+            const me = await directus.request(readMe({
                 fields: [
-                    'id', 
-                    'email', 
-                    'first_name', 
-                    'last_name', 
+                    'id',
+                    'email',
+                    'first_name',
+                    'last_name',
                     {
-                        'policies': [
-                            {
-                                'policy' :[
-                                    'name'
-                                ]
-                            }
-                        ]
+                        policies: [{
+                            policy: ['name']
+                        }]
                     },
-                {
-                    'role' : [
-                        {
-                            'policies': [
-                                {
-                                    'policy' :[
-                                        'name'
-                                    ]
-                                }
-                            ]
-                        }
-                    ]
-                    }],
+                    {
+                        role: [{
+                            policies: [{
+                                policy: ['name']
+                            }]
+                        }]
+                    }
+                ],
                 filter: {
-                    _or:[
+                    _or: [
                         {
                             policies: {
                                 policy: {
-                                        name: {
-                                            _eq: policy
-                                        }
+                                    name: { _eq: policy }
                                 }
                             }
                         },
@@ -88,47 +79,46 @@ const isAuthenticatedWithPolicy = async (policy : string) => {
                             role: {
                                 policies: {
                                     policy: {
-                                            name: {
-                                                _eq: policy
-                                            }
+                                        name: { _eq: policy }
                                     }
                                 }
                             }
-                        },
+                        }
                     ]
                 }
+            }));
 
-            }
-        ));
+            return me.policies ? me : false;
+        } catch (error) {
+            console.error(error);
+            return false;
+        }
+    };
 
-        return me.policies ? me : false;
-    } catch (error) {
-        console.error(error)
-        return false;
-    }
-}
+    const logout = async () => {
+        await directus.logout();
 
-const logout = async () => {
-    await directus.logout()
-    const auth = useAuthStore()
-    auth.reset()
-    
-    navigateTo('http://192.168.1.87:8080/auth/saml2/idp/slo.php?redirect=http://localhost:3000/login', { external: true})
-}
+        const auth = useAuthStore(); // ✅ allowed inside plugin runtime
+        auth.reset();
 
-export default defineNuxtPlugin(() => {
+        navigateTo(
+            config.public.logoutUrl,
+            { external: true }
+        );
+    };
+
     return {
-        provide: { 
-            directus, 
-            readItems, 
-            readProviders, 
-            refresh, 
-            readMe, 
-            isAuthenticated, 
+        provide: {
+            directus,
+            readItems,
+            readProviders,
+            refresh,
+            readMe,
+            isAuthenticated,
             isAuthenticatedWithPolicy,
-            login, 
+            login,
             logout,
-            generateTwoFactorSecret, 
+            generateTwoFactorSecret,
             enableTwoFactor,
             passwordRequest,
             passwordReset,
@@ -142,6 +132,6 @@ export default defineNuxtPlugin(() => {
             readRelation,
             readRelationByCollection,
             uploadFiles
-        },
+        }
     };
 });

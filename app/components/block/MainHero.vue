@@ -16,9 +16,10 @@ const dt = DateTime.fromFormat(startDate, "yyyy-MM-dd");
 
 // 2️⃣ Format as "5th April 2027"
 const month = dt.toFormat("LLLL");
+const year = dt.toFormat("yyyy");
 const formattedStartDate = dateStringToHumanString(startDate);
 const formattedEndDate = dateStringToHumanString(endDate);
-const date = `${month} ${formattedStartDate} - ${formattedEndDate}`;
+const date = `${month} ${formattedStartDate} - ${formattedEndDate} ${year}`;
 
 // Parse the date in the given timezone and set time to 08:00
 const target = DateTime
