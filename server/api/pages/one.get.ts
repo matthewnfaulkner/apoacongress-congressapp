@@ -134,7 +134,7 @@ const pageFields = [
 							],
 						},
 					],
-					block_chargetable: [
+					/*block_chargetable: [
 						'id',
 						'headline',
 						'tagline',
@@ -331,7 +331,7 @@ const pageFields = [
 								}
 							]
 						}
-					]
+					]*/
 				},
 			},
 		],

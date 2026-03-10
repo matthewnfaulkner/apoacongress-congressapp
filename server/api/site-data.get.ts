@@ -16,6 +16,7 @@ export default defineEventHandler(async (event) => {
 						'logo',
 						'social_links',
 						'preview',
+						'favicon',
 						{
 							'congress' : [
 								'*',

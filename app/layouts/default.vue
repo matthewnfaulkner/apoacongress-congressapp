@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useSiteDataStore } from "~/stores/site-data";
-import { useAuthStore } from "~/stores/auth";
+import { getDirectusAssetURL } from '@@/server/utils/directus-utils';
+
 const {
 	data: siteData,
 	error: siteError,
@@ -32,8 +33,6 @@ if(siteData.value?.site.preview) {
 }
 
 
-
-
 useHead({
 	style: [
 		{
@@ -44,11 +43,12 @@ useHead({
 	bodyAttrs: {
 		class: 'antialiased font-sans',
 	},
+	link: [{ rel: 'icon', href: siteData.value?.site.favicon ? getDirectusAssetURL(siteData.value?.site.favicon) : '/favicon.png' }],
 });
 
 useSeoMeta({
-	titleTemplate: `%s / ${unref(siteData)?.globals.title}`,
-	ogSiteName: unref(siteData)?.globals.title,
+	titleTemplate: `%s / ${unref(siteData)?.site.title}`,
+	ogSiteName: unref(siteData)?.site.title,
 });
 
 onMounted(() => {
@@ -88,6 +88,7 @@ function onSubmit() {
 			<template #links><div></div></template>
 	</UError>
 	<div v-else-if="siteData?.site.preview && !canPreview">
+		
 		<NuxtPage/>
 	</div>
 	<div  v-else>
@@ -97,6 +98,7 @@ function onSubmit() {
 			:navigation="siteData.headerNavigation[0]"
 			:site="siteData.site"
 		/>
+		<UAlert v-if="siteData?.site.preview " title="This site is in Preview Mode" color="accent" class="rounded-none"></UAlert>
 		<NuxtPage class="min-h-lvh"/>
 		<UPopover :ui="{ content: 'sm:max-w-3xl sm:h-[28rem]' }" class="fixed bottom-10 right-10 z-100 h-4">
 			<UChip color="accent" size="xl">

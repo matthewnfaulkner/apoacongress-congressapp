@@ -1,4 +1,4 @@
-//import tailwindcss from "@tailwindcss/vite";
+import tailwindcss from "@tailwindcss/vite";
 
 export default defineNuxtConfig({
 	components: [
@@ -18,9 +18,16 @@ export default defineNuxtConfig({
 	future: {
 		compatibilityVersion: 4,
 	},
+	routeRules: {
+		// dynamic redirect
+		'/': { isr: true },
+
+		// CMS pages
+		'/preview': { isr: true },
+	},
 	$production: {
 		routeRules: {
-		'/**': { isr: true },
+		'/**': { isr: 60 },
 		},
 	},
 	ui: {
@@ -121,11 +128,11 @@ export default defineNuxtConfig({
 	vue: {
 		propsDestructure: true,
 	},
-	/*vite: {
+	vite: {
 		plugins: [
 		tailwindcss(),
 		],
-	},*/
+	},
 	sitemap: {
 		sources: ['/api/sitemap'],
 	},

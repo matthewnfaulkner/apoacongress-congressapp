@@ -3,13 +3,8 @@ import * as locales from '@nuxt/ui/locale'
 
 const { locale } = useI18n()
 
-const siteDataStore = useSiteDataStore();
-const siteData = siteDataStore.getSiteData() as Site;
-const route = useRoute()
-
 useHead({
 	meta: [{ charset: 'utf-8' }, { name: 'viewport', content: 'width=device-width, initial-scale=1' }],
-	link: [{ rel: 'icon', href: '/favicon.ico' }],
 	htmlAttrs: { lang: 'en' },
 });
 

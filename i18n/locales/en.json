@@ -1,16 +1,1 @@
-{
-    "navigation": {
-        "home" : "Shop",
-        "about": "About",
-        "contact" : "Contact"
-    },
-    "index": {
-        "hero" :{
-            "title" : "Custom Hand-Carved Malaysian Made Stamps"
-        }
-    },
-    "email" : "Email",
-    "password" : "Password",
-
-    "committees": "committees"
-}
+{}

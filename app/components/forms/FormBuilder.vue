@@ -72,12 +72,14 @@ const handleSubmit = async (data: Record<string, any>) => {
 				{{ form.success_message || 'Your form has been submitted successfully.' }}
 			</p>
 		</div>
-		<DynamicForm
-			v-if="!isSubmitted"
-			:fields="form.fields"
-			:onSubmit="handleSubmit"
-			:submitLabel="form.submit_label || 'Submit'"
-			:formId="form.id"
-		/>
+		<ClientOnly>
+			<DynamicForm
+				v-if="!isSubmitted"
+				:fields="form.fields"
+				:onSubmit="handleSubmit"
+				:submitLabel="form.submit_label || 'Submit'"
+				:formId="form.id"
+			/>
+		</ClientOnly>
 	</div>
 </template>

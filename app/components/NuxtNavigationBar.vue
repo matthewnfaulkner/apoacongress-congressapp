@@ -68,6 +68,7 @@
 			</template>
 		</UNavigationMenu>
 		<div v-if="storeReady">
+			<ClientOnly>
 			<UDropdownMenu
 				v-if=" auth.isAuthenticated" 
 				:items="items"
@@ -101,6 +102,8 @@
 				variant="outline"
 				class="mx-3"/>
 
+				
+			</ClientOnly>
 				
 		</div>
 		<NuxtLink v-for="locale in availableLocales" :key="locale.code" :to="switchLocalePath(locale.code)">

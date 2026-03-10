@@ -77,6 +77,11 @@ onMounted(() => {
 
 <template>
 	<div class="relative">
+		<UError v-if="error || !page"  :error="{
+			statusCode: 404,
+			statusMessage: 'Page not found',
+			message: 'The page you are looking for does not exist.'
+			}"></UError>
 		<PageBuilder v-if="pageBlocks" :sections="pageBlocks" />
 		<div
 			v-if="isVisualEditingEnabled && page"
