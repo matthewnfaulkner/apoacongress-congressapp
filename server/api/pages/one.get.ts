@@ -52,7 +52,17 @@ const pageFields = [
 								'id',
 								'label',
 								{
-									pricing_cards: ['*']
+									pricing_cards: [
+										'id',
+										'sort',
+										'title',
+										'description',
+										'price',
+										'features',
+										'is_highlighted',
+										'use_congress_charges',
+										'category'
+												   ]
 								},
 							]
 						}
