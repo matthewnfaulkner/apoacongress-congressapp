@@ -64,8 +64,15 @@ const pageFields = [
 										'category',
 										'badge',
 										{
-											button: ['id', 'url'],
+											congress_charges: [
+												{
+													charge: [
+														'*'
+													]
+												}
+											]
 										},
+										'button'
 									]
 								},
 							]
