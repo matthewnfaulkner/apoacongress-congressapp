@@ -64,7 +64,7 @@ const pageFields = [
 										'category',
 										'badge',
 										{
-											button: ['*'],
+											button: ['id', 'label', 'variant', 'url', 'type'],
 										},
 									]
 								},
