@@ -25,11 +25,6 @@ export default defineNuxtConfig({
 		// CMS pages
 		'/preview': { isr: true },
 	},
-	$production: {
-		routeRules: {
-		'/**': { isr: 60 },
-		},
-	},
 	ui: {
 		colorMode: false,
 		fonts: true,
