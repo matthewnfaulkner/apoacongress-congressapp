@@ -43,6 +43,43 @@ const pageFields = [
 						}
 					],
 					block_gallery: ['id', 'tagline', 'headline', { items: ['id', 'directus_file', 'sort'] }],
+					block_pricing: [
+						'id',
+						'tagline',
+						'headline',
+						{
+							tabs: [
+								'id',
+								'label',
+								{
+									pricing_cards: [
+										'id',
+										'sort',
+										'title',
+										'description',
+										'price',
+										'badge',
+										'features',
+										'is_highlighted',
+										'use_congress_charges',
+										'category',
+										{
+											congress_charges: [
+												{
+													charge: [
+														'*'
+													]
+												}
+											]
+										},
+										{
+											button: ['id', 'label', 'variant', 'url', 'type', { page: ['permalink'] }, { post: ['slug'] }],
+										},
+									],
+								},
+							]
+						}
+					],
 					block_hero: [
 						'id',
 						'tagline',
