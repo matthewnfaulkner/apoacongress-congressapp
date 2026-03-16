@@ -64,15 +64,6 @@ const pageFields = [
 										'use_congress_charges',
 										'category',
 										{
-											congress_charges: [
-												{
-													charge: [
-														'*'
-													]
-												}
-											]
-										},
-										{
 											button: ['id', 'label', 'variant', 'url', 'type', { page: ['permalink'] }, { post: ['slug'] }],
 										},
 									],
