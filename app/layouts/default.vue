@@ -87,7 +87,7 @@ function onSubmit() {
 			}">
 			<template #links><div></div></template>
 	</UError>
-	<div v-else-if="siteData?.site.preview && !canPreview">
+	<div v-else-if="siteData?.site.preview && false">
 		
 		<NuxtPage/>
 	</div>
