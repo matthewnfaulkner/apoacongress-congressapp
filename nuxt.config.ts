@@ -20,14 +20,14 @@ export default defineNuxtConfig({
 	},
 	routeRules: {
 		// dynamic redirect
-		'/': { isr: true },
+		'/': { ssr: false },
 
 		// CMS pages
-		'/preview': { isr: true },
+		'/preview': { ssr: false },
 	},
 	$production: {
 		routeRules: {
-		'/**': { isr: 60 },
+		'/**': { ssr: false },
 		},
 	},
 	ui: {
