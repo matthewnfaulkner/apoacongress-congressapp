@@ -461,8 +461,7 @@ export default defineEventHandler(async (event) => {
 		}
 
 		return page;
-	} catch (error) {
-		console.log(error)
+	} catch  {
 		throw createError({ statusCode: 500, statusMessage: 'Page not found' });
 	}
 });
