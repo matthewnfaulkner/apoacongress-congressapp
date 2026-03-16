@@ -18,21 +18,18 @@ const permalink = computed(() => {
 const version = route.query.version === 'main' ? undefined : (route.query.version as string);
 
 const {
-    data: page,
-    error,
-    refresh,
-} = await useFetch<Page>(() => '/api/pages/one', { // Use a factory function for the URL
-    // Ensure the key is fully unique to the path
-    key: `pages-${route.fullPath}`, 
-    query: {
-        permalink, // Nuxt will unwrap this computed automatically
-        preview: enabled.value ? true : undefined,
-        token: enabled.value ? state.token : undefined,
-        id: route.query.id as string,
-        version,
-    },
-    // CRITICAL: Watch the permalink so the fetch re-runs on navigation
-    watch: [permalink, () => route.query.version] 
+	data: page,
+	error,
+	refresh,
+} = await useFetch<Page>('/api/pages/one', {
+	key: `pages-${permalink.value}`,
+	query: {
+		permalink,
+		preview: enabled.value ? true : undefined,
+		token: enabled.value ? state.token : undefined,
+		id: route.query.id as string,
+		version,
+	},
 });
 
 if (!page.value || error.value) {
