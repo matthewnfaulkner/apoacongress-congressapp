@@ -38,6 +38,7 @@
 		"vue-tsc": "2.2.8"
 	},
 	"dependencies": {
+		"@ai-sdk/anthropic": "^3.0.58",
 		"@ai-sdk/gateway": "^3.0.46",
 		"@ai-sdk/vue": "^3.0.86",
 		"@chenfengyuan/vue-countdown": "^2.1.3",

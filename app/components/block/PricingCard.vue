@@ -3,13 +3,21 @@ import Button from '../base/BaseButton.vue';
 import { CheckCircle2 } from 'lucide-vue-next';
 
 interface PricingCardProps {
-	card: {
+	card: PricingCard
+}
+
+interface PricingCard {
 		id: string;
+		use_congress_charges?: boolean;
 		title: string;
 		description?: string;
 		price?: string;
-		badge?: string;
-		features?: string[];
+		badge?: Array<{label: string, link?: string}> | null;
+		features?: string[] | Feature[];
+		category?: 'registration' | 'accommodation';
+		congress_charges?: Array<{
+			charge: CongressCharge
+		}>
 		button?: {
 			id: string;
 			label: string | null;
@@ -17,12 +25,93 @@ interface PricingCardProps {
 			url: string | null;
 		};
 		is_highlighted?: boolean;
-	};
+};
+
+interface Feature {
+	price: string,
+	details: RegistrationChargeDetail[] | AccommodationChargeDetail[] | string[];
 }
 
 const { setAttr } = useVisualEditing();
 
-defineProps<PricingCardProps>();
+const props = defineProps<PricingCardProps>();
+
+const card = ref<PricingCard>(props.card);
+
+watchEffect(() => {
+	if(!card.value.use_congress_charges) return;
+
+	const topCharge = ref<CongressCharge>();
+
+	// charges is now reactive
+	const charges = computed(() =>
+		props.card.congress_charges?.slice() ?? []
+	);
+
+	const now = new Date();
+
+	const localCharges = [...charges.value]; // mutable copy
+	
+	if (props.card.category === 'accommodation') {
+
+		const top = localCharges.shift();
+		topCharge.value = top?.charge;
+
+		const details = top?.charge.details as AccommodationChargeDetail[];
+
+		const detail = details?.[0];
+
+		card.value = {
+			id: props.card.id,
+			category: 'accommodation',
+			title: top?.charge.sub_category || '',
+			price: top?.charge.price || '',
+			description: `${dateStringToHumanStringBack(detail?.check_in)} - ${dateStringToHumanStringBack(detail?.check_out)}`,
+			badge: props.card.badge,
+			button: props.card.button,
+			use_congress_charges: true,
+			features: localCharges.flatMap(c => {
+				return `${c.charge.price} - ${c.charge.sub_category}`;
+			})
+		};
+
+	} else if (props.card.category === 'registration') {
+
+		const filteredCharges = localCharges.filter(charge => {
+			if(!charge.charge.details) return
+
+			const details =
+				charge.charge.details[0] as RegistrationChargeDetail;
+
+			const cutoff = new Date(details.cutoff_date);
+			return now < cutoff;
+		});
+
+		const top = filteredCharges.shift();
+		topCharge.value = top?.charge;
+
+		const details =
+		top?.charge.details as RegistrationChargeDetail[];
+
+		const detail = details?.[0] as RegistrationChargeDetail;
+
+		card.value = {
+			id: props.card.id,
+			category: 'registration',
+			title: top?.charge.sub_category || '',
+			price: top?.charge.price || '',
+			description: `${detail?.cutoff_description || ''} ${dateStringToHumanStringBack(detail?.cutoff_date)}`,
+			badge: props.card.badge,
+			button: props.card.button,
+			use_congress_charges: true,
+			features: filteredCharges.flatMap(c => {
+				return `<b>${c.charge.price}</b> - ${detail.cutoff_description} ${dateStringToHumanStringBack(detail?.cutoff_date)}`
+
+			})
+		};
+	}
+});
+
 </script>
 
 <template>
@@ -36,18 +125,44 @@ defineProps<PricingCardProps>();
 			<h3
 				class="text-2xl font-heading text-foreground"
 				:data-directus="
+					card.use_congress_charges
+						? setAttr({
+							collection: 'block_pricing_cards',
+							item: card.id,
+							fields: ['congress_charges'],
+							mode: 'popover'
+						}) :
 					setAttr({ collection: 'block_pricing_cards', item: card.id, fields: ['title'], mode: 'popover' })
 				"
 			>
 				{{ card.title }}
 			</h3>
-			<div class="flex-shrink-0">
+			<div class="flex-shrink-0 w-50"
+				v-if="card.badge"
+				v-for="badge in card.badge">
+				<UButton v-if="badge.link"
+				:variant="card.is_highlighted ? 'solid' : 'outline'"
+					color= "secondary"
+					class="text-xs font-medium uppercase"
+					:to="badge.link"
+					:data-directus="
+						
+						setAttr({
+							collection: 'block_pricing_cards',
+							item: card.id,
+							fields: ['badge'],
+							mode: 'popover',
+						})
+					"
+				>
+					{{ badge.label}}
+					
+				</UButton>
 				<UBadge
-					v-if="card.badge"
+					v-else
 					:variant="card.is_highlighted ? 'solid' : 'outline'"
 					color= "secondary"
 					class="text-xs font-medium uppercase"
-					to="/"
 					:data-directus="
 						setAttr({
 							collection: 'block_pricing_cards',
@@ -57,15 +172,28 @@ defineProps<PricingCardProps>();
 						})
 					"
 				>
-					{{ card.badge }}
+					{{ badge.label}}
 				</UBadge>
 			</div>
 		</div>
-
 		<p
 			v-if="card.price"
 			class="text-h2 text-4xl text-accent mt-2 font-semibold"
-			:data-directus="setAttr({ collection: 'block_pricing_cards', item: card.id, fields: ['price'], mode: 'popover' })"
+			:data-directus="
+				card.use_congress_charges
+					? setAttr({
+						collection: 'block_pricing_cards',
+						item: card.id,
+						fields: ['congress_charges'],
+						mode: 'popover'
+					})
+					: setAttr({
+						collection: 'block_pricing_cards',
+						item: card.id,
+						fields: ['price'],
+						mode: 'popover'
+					})
+				"
 		>
 			{{ card.price }}
 		</p>
@@ -85,14 +213,21 @@ defineProps<PricingCardProps>();
 		<div class="flex-grow">
 			<ul
 				v-if="card.features"
-				class="space-y-4"
+				class="space-y-4 list-disc"
 				:data-directus="
+					card.use_congress_charges
+					? setAttr({
+						collection: 'block_pricing_cards',
+						item: card.id,
+						fields: ['congress_charges'],
+						mode: 'popover'
+					}) :
 					setAttr({ collection: 'block_pricing_cards', item: card.id, fields: ['features'], mode: 'popover' })
 				"
 			>
 				<li v-for="(feature, index) in card.features" :key="index" class="flex items-center gap-3 text-regular">
 					
-					<p class="leading-relaxed">{{ feature }}</p>
+					<p class="leading-relaxed" v-html="feature"></p>
 				</li>
 			</ul>
 		</div>

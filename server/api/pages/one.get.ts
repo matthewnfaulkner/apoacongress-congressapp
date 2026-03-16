@@ -61,6 +61,17 @@ const pageFields = [
 										'badge',
 										'features',
 										'is_highlighted',
+										'use_congress_charges',
+										'category',
+										{
+											congress_charges: [
+												{
+													'charge': [
+														'*'
+													]
+												}
+											]
+										},
 										{
 											button: ['id', 'label', 'variant', 'url', 'type', { page: ['permalink'] }, { post: ['slug'] }],
 										},
@@ -134,43 +145,11 @@ const pageFields = [
 							],
 						},
 					],
-					/*block_chargetable: [
+					block_chargetable: [
 						'id',
 						'headline',
 						'tagline',
 						'category',
-						{
-							tabs: [
-								'id',
-								'label',
-								'type',
-								{
-									cards: [
-										'id',
-										'sort',
-										'title',
-										'description',
-										'category',
-										'is_highlighted',
-										{
-											button: ['id', 'label', 'variant', 'url', 'type', { page: ['permalink'] }, { post: ['slug'] }],
-										},
-										{
-											badge: ['id', 'label', 'variant', 'url', 'type', { page: ['permalink'] }, { post: ['slug'] }],
-										},
-										{
-											congress_charges: [
-												{
-													congress_charge: [
-														'*'
-													]
-												}
-											]
-										}
-									],
-								},
-							]
-						}
 					],	
 					block_people: [
 						'id',
@@ -331,7 +310,7 @@ const pageFields = [
 								}
 							]
 						}
-					]*/
+					]
 				},
 			},
 		],

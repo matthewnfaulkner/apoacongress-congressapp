@@ -27,6 +27,26 @@ interface PricingProps {
 }
 const { setAttr } = useVisualEditing();
 defineProps<PricingProps>();
+
+import { nextTick } from 'vue'
+
+onMounted(async () => {
+  await nextTick()
+
+  window.dispatchEvent(
+    new CustomEvent('directus:refresh')
+  )
+})
+
+const onTabChange = async () => {
+  await nextTick()
+  // give Vue time to paint DOM
+  requestAnimationFrame(() => {
+    window.dispatchEvent(
+      new CustomEvent('directus:refresh')
+    )
+  })
+}
 </script>
 
 <template>
@@ -56,7 +76,7 @@ defineProps<PricingProps>();
 			"
 		/>
 
-		<UTabs :items="data.tabs" color="accent" size="xl" class="mt-4">
+		<UTabs :items="data.tabs" color="accent" size="xl" class="mt-4" :unmountOnHide="false" @update:modelValue="onTabChange">
 			<template #content="{item}">
 				<PricingTab :tab="item"></PricingTab>
 			</template>

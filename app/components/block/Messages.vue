@@ -11,6 +11,7 @@ interface MessagesProps {
 		messages: [{
 			id: string,
 			people: [{
+				id: string
 				extra: string
 				person: {
 					id: string,
@@ -46,7 +47,16 @@ const props = defineProps<MessagesProps>();
 
 
 <template>
-	<Headline :headline="data.headline" />
+	<Headline 
+		:headline="data.headline"
+		:data-directus="
+				setAttr({
+					collection: 'block_messages',
+					item: data.id,
+					fields: 'headline',
+					mode: 'popover',
+				})
+			" />
 	<div v-if="data.messages">
 		<UCarousel 
 			v-if="data.type == 'carousel'"
@@ -75,23 +85,59 @@ const props = defineProps<MessagesProps>();
 						}"
 					>
 					<template #header class="mx-auto">
-						<Tagline :tagline="item.tagline"/>
+						<Tagline 
+							:tagline="item.tagline"
+							:data-directus="
+								setAttr({
+									collection: 'block_messages_message',
+									item: item.id,
+									fields: 'tagline',
+									mode: 'popover',
+								})
+							"/>
 					</template>	
 					<template #body>
-						<div v-html="item.content" class="text-left lg:h-60">
+						<div v-html="item.content" class="text-left lg:h-60"
+						:data-directus="
+								setAttr({
+									collection: 'block_messages_message',
+									item: item.id,
+									fields: 'content',
+									mode: 'popover',
+								})
+							">
 
 						</div>
-						<div class="flex flex-row justify-around">
-							<div v-for="person in item.people" >
+						<div class="flex flex-row justify-around"
+							:data-directus="
+								setAttr({
+									collection: 'block_messages_message',
+									item: item.id,
+									fields: 'people',
+									mode: 'popover',
+								})
+							">
+							<div v-for="person in item.people" 
+								>
 								<ProfileImage class="h-40 mx-auto" :image="person.person.image":ui="{ item: 'basis-1/2' }" />
 								<p class="font-heading">
 									{{ person.person.first_name }} {{ person.person.last_name }}
 								</p>
-								<p>{{ person.extra }}</p>
-								<CountryName v-if="person.country"
-								:country-codes="person.country.countryCodes"
-								:locale="person.country.locale"
-								/>
+								<p
+									:data-directus="
+										setAttr({
+											collection: 'block_messages_message_persons',
+											item: person.id,
+											fields: 'extra',
+											mode: 'popover',
+										})"
+								>
+									{{ person.extra }}
+								</p>
+									<CountryName v-if="person.country"
+										:country-codes="person.country.countryCodes"
+										:locale="person.country.locale"
+									/>
 							</div>
 						</div>
 					</template>
@@ -115,16 +161,44 @@ const props = defineProps<MessagesProps>();
 					</UPageCard>
 		</UCarousel>
 		<div v-else class="clearfix">
-			<div v-for="message in data.messages" class="">
-					<div v-for="person in message.people" class="text-center float-left mr-2 mb-4  w-1/2">
-							<ProfileImage class="mx-auto" :image="person.person.image":ui="{ item: 'basis-1/2' }" />
+			<div v-for="message in data.messages" 
+			:data-directus="
+							setAttr({
+								collection: 'block_messages_message',
+								item: message.id,
+								fields: ['content', 'people'],
+								mode: 'popover',
+							})">
+					<div v-for="person in message.people" class="text-center float-left mr-2 mb-4  w-1/2"
+						>
+							<ProfileImage class="mx-auto" :image="person.person.image":ui="{ item: 'basis-1/2' }"
+								:data-directus="
+									setAttr({
+										collection: 'block_messages_message',
+										item: message.id,
+										fields: 'people',
+										mode: 'popover',
+									})" />
 							<h2 class="font-heading text-lg sm:text-2xl">
 								{{ person.person.first_name }} {{ person.person.last_name }}	
 							</h2>
-							<p class="font-heading text-sm sm:text-lg text-accent"> {{ person.extra }}</p>
+							<p 
+								class="font-heading text-sm sm:text-lg text-accent"
+								:data-directus="
+										setAttr({
+											collection: 'block_messages_message_persons',
+											item: person.id,
+											fields: 'extra',
+											mode: 'popover',
+										})"> 
+								{{ person.extra }}
+							</p>
 							
 					</div>
-				<div v-html="message.content" class="text-left pt-10">
+				<div 
+					v-html="message.content" 
+					class="text-left pt-10"
+					>
 				</div>
 			</div>
 		</div>

@@ -176,53 +176,6 @@ export interface BlockChargeTable {
 	user_updated?: DirectusUser | string | null;
 }
 
-export interface BlockChargeTableTab {
-	/** @description Larger main headline for this page section. */
-	label?: string | null;
-	type?: 'table' | 'card';
-	/** @description Smaller copy shown above the headline to label a section or add extra context. */
-	title?: string | null;
-	/** @primaryKey */
-	id: string;
-	/** @description Smaller copy shown above the headline to label a section or add extra context. */
-	charge_table: BlockChargeTable | string | null;
-	date_created?: string | null;
-	user_created?: DirectusUser | string | null;
-	date_updated?: string | null;
-	user_updated?: DirectusUser | string | null;
-}
-
-export interface BlockChargeTableCard {
-	/** @primaryKey */
-	id: string;
-	/** @description Name of the pricing plan. Shown at the top of the card. */
-	title?: string | null;
-	/** @description Short, one sentence description of the pricing plan and who it is for. */
-	description?: string | null;
-	/** @description Price and term for the pricing plan. (ie `$199/mo`) */
-	button?: BlockButton | string | null;
-	/** @description Badge that displays at the top of the pricing plan card to add helpful context. */
-	badge?: BlockButton | string | null;
-	/** @description The id of the pricing block this card belongs to. */
-	tab?: BlockPricingTab | string | null;
-	/** @description Add highlighted border around the pricing plan to make it stand out. */
-	category?: 'registration' | 'accommodation';
-	is_highlighted?: boolean | null;
-	sort?: number | null;
-	date_created?: string | null;
-	user_created?: DirectusUser | string | null;
-	date_updated?: string | null;
-	user_updated?: DirectusUser | string | null;
-	congress_charges: BlockChargeTableCardCharge[] | string[] | null;
-}
-
-export interface BlockChargeTableCardCharge {
-	/** @primaryKey */
-	id: number;
-	block_chargetable_card: BlockChargeTableCard | string | null;
-	congress_charge: CongressCharge | string | null;
-}
-
 export interface CongressCharge {
 	/** @primaryKey */
 	id: string;
@@ -405,7 +358,7 @@ export interface BlockPricingCard {
 	/** @description Price and term for the pricing plan. (ie `$199/mo`) */
 	price?: string | null;
 	/** @description Badge that displays at the top of the pricing plan card to add helpful context. */
-	badge?: string | null;
+	badge?: Array<{label: string, link: string}> | null;
 	/** @description Short list of features included in this plan. Press `Enter` to add another item to the list. */
 	features?: 'json' | null;
 	/** @description The action button / link shown at the bottom of the pricing card. */
@@ -414,11 +367,22 @@ export interface BlockPricingCard {
 	tab?: BlockPricingTab | string | null;
 	/** @description Add highlighted border around the pricing plan to make it stand out. */
 	is_highlighted?: boolean | null;
+	use_congress_charges?: boolean | null;
+	category?: 'registration' | 'accommodation';
+	congress_charges?: BlockPricingCardCongressCharge[] | string[] | null;
 	sort?: number | null;
 	date_created?: string | null;
 	user_created?: DirectusUser | string | null;
 	date_updated?: string | null;
 	user_updated?: DirectusUser | string | null;
+}
+
+export interface BlockPricingCardCongressCharge {
+	/** @primaryKey */
+	id: number;
+	card: BlockPricingCard | string | null;
+	charge: CongressCharge | string | null;
+	sort: number;
 }
 
 export interface BlockRichtext {
@@ -546,7 +510,8 @@ export interface Congress {
 	sponsor_tiers?: CongressSponsorTier[] | string | null;
 	abstracts?: CongressAbstracts[] | string[] | null;
 	registration_charges?: RegistrationCharge[];
-	accommodation_charges?: AccommodationCharge[];
+	accommodation_charges?: AccommodationCharge[]
+	charges?: CongressCharge[] | string[] | null;
 }
 
 export interface RegistrationCharge {

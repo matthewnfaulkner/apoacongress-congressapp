@@ -131,7 +131,7 @@ const buttons = button_group?.buttons.map((button) => ({
 				<div class="px-6 mx-auto sm:px-8 lg:px-12 xl:px-50 max-w-8xl flex justify-end-safe ">
 					<div class="w-full lg:w-2/3 xl:w-2/3 p-5 bg-secondary/60 sm:bg-transparent lg:p-10 text-right text-shadow-black text-shadow-lg h-lvh sm:h-auto">
 						<p class="tracking-tighter text-white mt-0 lg:mt-0">
-							<Text class=" font-heading text-md sm:text-xl" 
+							<Text class=" font-heading text-md sm:text-xl text-white" 
 							:content="data.tagline" 
 							:data-directus="
 									setAttr({ 
@@ -142,7 +142,7 @@ const buttons = button_group?.buttons.map((button) => ({
 							</Text><br/>
 							<div class="flex flex-row justify-end">
 								<NuxtImg src="/images/apoalogo.png" class="inline h-25"/>
-								<Text class="font-heading italic font-normal text-7xl md:text-8xl inline"
+								<Text class="font-heading italic font-normal text-7xl md:text-8xl inline text-white"
 									:content="data.headline"
 									:item-id="data.id"
 									:data-directus="

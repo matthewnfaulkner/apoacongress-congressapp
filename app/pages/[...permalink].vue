@@ -70,8 +70,8 @@ function applyVisualEditingButton() {
 
 onMounted(() => {
 	if (!isVisualEditingEnabled.value) return;
-	applyVisualEditingButton();
-	applyVisualEditing();
+		applyVisualEditingButton();
+		applyVisualEditing();
 });
 </script>
 
