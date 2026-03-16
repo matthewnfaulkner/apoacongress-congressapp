@@ -72,9 +72,6 @@ const pageFields = [
 												}
 											]
 										},
-										{
-											button: ['id', 'label', 'variant', 'url', 'type', { page: ['permalink'] }, { post: ['slug'] }],
-										},
 									]
 								},
 							]
