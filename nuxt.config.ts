@@ -20,7 +20,7 @@ export default defineNuxtConfig({
 	},
 	routeRules: {
 		// dynamic redirect
-		'/': { isr: true },
+		'/**': { isr: 60 },
 
 		// CMS pages
 		'/preview': { isr: true },
