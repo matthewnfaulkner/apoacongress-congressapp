@@ -11,11 +11,16 @@ interface PricingTabProps {
 			price?: string;
 			badge?: string;
 			features?: string[];
-			button?: {
-				id: string;
-				label: string | null;
-				variant: string | null;
-				url: string | null;
+			button_group?: {
+				buttons: Array<{
+					id: string;
+					label: string | null;
+					variant: string | null;
+					url: string | null;
+					type: 'url' | 'page' | 'post';
+					pagePermalink?: string | null;
+					postSlug?: string | null;
+				}>;
 			};
 			is_highlighted?: boolean;
 		}>;

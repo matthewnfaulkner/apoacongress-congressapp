@@ -362,7 +362,7 @@ export interface BlockPricingCard {
 	/** @description Short list of features included in this plan. Press `Enter` to add another item to the list. */
 	features?: 'json' | null;
 	/** @description The action button / link shown at the bottom of the pricing card. */
-	button?: BlockButton | string | null;
+	button_group?: BlockButtonGroup | string | null;
 	/** @description The id of the pricing block this card belongs to. */
 	tab?: BlockPricingTab | string | null;
 	/** @description Add highlighted border around the pricing plan to make it stand out. */

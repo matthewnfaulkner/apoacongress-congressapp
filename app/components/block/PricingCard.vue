@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import Button from '../base/BaseButton.vue';
+import ButtonGroup from '../base/ButtonGroup.vue';
+
 import { CheckCircle2 } from 'lucide-vue-next';
 
 interface PricingCardProps {
@@ -18,11 +19,16 @@ interface PricingCard {
 		congress_charges?: Array<{
 			charge: CongressCharge
 		}>
-		button?: {
-			id: string;
-			label: string | null;
-			variant: string | null;
-			url: string | null;
+		button_group?: {
+			buttons: Array<{
+				id: string;
+				label: string | null;
+				variant: string | null;
+				url: string | null;
+				type: 'url' | 'page' | 'post';
+				pagePermalink?: string | null;
+				postSlug?: string | null;
+			}>;
 		};
 		is_highlighted?: boolean;
 };
@@ -68,7 +74,7 @@ watchEffect(() => {
 			price: top?.charge.price || '',
 			description: `${dateStringToHumanStringBack(detail?.check_in)} - ${dateStringToHumanStringBack(detail?.check_out)}`,
 			badge: props.card.badge,
-			button: props.card.button,
+			button_group: props.card.button_group,
 			use_congress_charges: true,
 			features: localCharges.flatMap(c => {
 				return `${c.charge.price} - ${c.charge.sub_category}`;
@@ -102,7 +108,7 @@ watchEffect(() => {
 			price: top?.charge.price || '',
 			description: `${detail?.cutoff_description || ''} ${dateStringToHumanStringBack(detail?.cutoff_date)}`,
 			badge: props.card.badge,
-			button: props.card.button,
+			button_group: props.card.button_group,
 			use_congress_charges: true,
 			features: filteredCharges.flatMap(c => {
 				return `<b>${c.charge.price}</b> - ${detail.cutoff_description} ${dateStringToHumanStringBack(detail?.cutoff_date)}`
@@ -231,22 +237,19 @@ watchEffect(() => {
 				</li>
 			</ul>
 		</div>
-
-		<div class="mt-auto pt-4">
-			<Button
-				v-if="card.button"
-				class="w-full"
-				id="card.button.uuid"
+		<div
+			v-if="card.button_group?.buttons?.length"
+			class="mt-6 flex justify-center image_left my-3"
+		>
+			<ButtonGroup
+				:buttons="card.button_group?.buttons"
 				:data-directus="
-					setAttr({
-						collection: 'block_button',
-						item: card.button.id,
-						fields: ['type', 'label', 'variant', 'url', 'page', 'post'],
-						mode: 'popover',
-					})
+					setAttr({ 
+						collection: 'block_button_group', 
+						item: card.button_group?.id, 
+						fields: 'buttons', 
+						mode: 'modal' })
 				"
-				:label="card.button.label"
-				:variant="card.button.variant"
 			/>
 		</div>
 	</div>

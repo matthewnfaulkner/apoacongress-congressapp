@@ -72,6 +72,14 @@ const pageFields = [
 												}
 											]
 										},
+										{
+											button_group: [
+												'id',
+												{
+													buttons: ['id', 'label', 'variant', 'url', 'type', { page: ['permalink'] }, { post: ['slug'] }],
+												},
+											],
+										},
 									]
 								},
 							]
