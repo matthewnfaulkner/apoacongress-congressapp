@@ -62,7 +62,7 @@ const pageFields = [
 										'is_highlighted',
 										'use_congress_charges',
 										'category',
-										'badge
+										'badge'
 												   ]
 								},
 							]
