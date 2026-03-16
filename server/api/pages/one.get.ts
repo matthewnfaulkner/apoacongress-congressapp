@@ -51,23 +51,6 @@ const pageFields = [
 							tabs: [
 								'id',
 								'label',
-								{
-									pricing_cards: [
-										'id',
-										'sort',
-										'title',
-										'description',
-										'price',
-										'badge',
-										'features',
-										'is_highlighted',
-										'use_congress_charges',
-										'category',
-										{
-											button: ['id', 'label', 'variant', 'url', 'type', { page: ['permalink'] }, { post: ['slug'] }],
-										},
-									],
-								},
 							]
 						}
 					],
