@@ -20,10 +20,10 @@ export default defineNuxtConfig({
 	},
 	routeRules: {
 		// dynamic redirect
-		'/**': { isr: 60 },
+		'/**': { swr: 60 },
 
 		// CMS pages
-		'/preview': { isr: true },
+		'/preview': { swr: true },
 	},
 	ui: {
 		colorMode: false,
