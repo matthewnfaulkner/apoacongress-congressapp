@@ -51,6 +51,9 @@ const pageFields = [
 							tabs: [
 								'id',
 								'label',
+								{
+									pricing_cards: ['*']
+								},
 							]
 						}
 					],
