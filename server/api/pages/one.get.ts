@@ -53,16 +53,7 @@ const pageFields = [
 								'label',
 								{
 									pricing_cards: [
-										'id',
-										'sort',
-										'title',
-										'description',
-										'price',
-										'features',
-										'is_highlighted',
-										'use_congress_charges',
-										'category',
-										'badge',
+										'*',
 										{
 											congress_charges: [
 												{
@@ -102,13 +93,7 @@ const pageFields = [
 						},
 					],
 					block_mainhero: [
-						'id',
-						'tagline',
-						'headline',
-						'description',
-						'countdown',
-						'image',
-						'bgcolor',
+						'*',
 						{
 							button_group: [
 								'id',
