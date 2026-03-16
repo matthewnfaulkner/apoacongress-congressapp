@@ -106,9 +106,9 @@
 			</ClientOnly>
 				
 		</div>
-		<NuxtLink v-for="locale in availableLocales" :key="locale.code" :to="switchLocalePath(locale.code)">
+		<!--<NuxtLink v-for="locale in availableLocales" :key="locale.code" :to="switchLocalePath(locale.code)">
 					{{ locale.name }}
-				</NuxtLink>
+				</NuxtLink>-->
 	</template>
 
 	<template #body>

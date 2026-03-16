@@ -90,7 +90,7 @@ const positionsWithSpan = computed(() =>
 			</UMarquee>
 			<UPageGrid 
 				v-else
-				class="relative grid grid-cols-1 xs: sm:grid-cols-2 lg:grid-cols-4 gap-0 sm:gap-8">
+				class="relative grid grid-cols-1 xs: sm:grid-cols-2 lg:grid-cols-4 gap-0 sm:gap-2">
 				<UPageCard
 					v-for="position in positionsWithSpan"
 					:key="position.id"
@@ -100,7 +100,7 @@ const positionsWithSpan = computed(() =>
 					class="ring-0"
 					:ui="{
 						root: 'items-baseline',
-						container: 'p-0',
+						container: 'p-2 sm:p-2 align-items-center',
 						wrapper: 'mx-auto',
 						body:'flex-0'
 					}"
@@ -109,9 +109,7 @@ const positionsWithSpan = computed(() =>
 						<div></div>
 					</template>
 					
-					<h2 class="text-center text-xl font-heading">
-						<UBadge :label="position.title" color="accent" class="text-sm"></UBadge>
-					</h2>
+					
 					<div
 						class="grid gap-6"
 						:class="`grid-cols-1 sm:grid-cols-${Math.min(position.members.length, 2)} lg:grid-cols-${Math.min(position.members.length, 4)}`"
@@ -119,12 +117,17 @@ const positionsWithSpan = computed(() =>
 						<UPageCard
 							v-for="person in position.members"
 							:key="person.persons_id.id"
-							class="text-center ring-0"
+							class="text-center ring-0 w-full align-items-start"
+							:ui="{
+								container: 'sm:p-1'
+							}"
 							:to="`/people/${person.persons_id.id}`"
-						>	
-							<ProfileImage class="h-40 mx-auto" :image="person.persons_id.image" />
-							<p class="font-heading">
-							{{ person.persons_id.first_name }} {{ person.persons_id.last_name }}
+						>	<h2 class="text-center font-heading whitespace-normal h-15 align-items-center flex flex-row">
+						<UBadge :label="position.title" color="accent" class="text-sm h-fit m-auto" :ui="{ label: 'whitespace-normal'}"></UBadge>
+					</h2>
+							<ProfileImage class="h-70 lg:h-40 mx-auto" :image="person.persons_id.image" />
+							<p class="font-heading h-[2lh] text-2xl sm:text-lg">
+								{{ person.persons_id.first_name }} {{ person.persons_id.last_name }}
 							</p>
 							<CountryName v-if="person.persons_id.country"
 							:country-codes="person.persons_id.country.countryCodes"
