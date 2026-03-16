@@ -22,7 +22,7 @@ const {
 	error,
 	refresh,
 } = await useFetch<Page>('/api/pages/one', {
-	key: `pages-${permalink.value}`,
+	key: `pages-${route.fullPath}`,
 	query: {
 		permalink,
 		preview: enabled.value ? true : undefined,
