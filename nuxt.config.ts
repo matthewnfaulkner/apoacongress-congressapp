@@ -19,11 +19,14 @@ export default defineNuxtConfig({
 		compatibilityVersion: 4,
 	},
 	routeRules: {
-		// dynamic redirect
-		'/**': { swr: 60 },
+		// Never cache API routes - query params must always hit the server fresh
+		'/api/**': { isr: false },
 
-		// CMS pages
-		'/preview': { swr: true },
+		// Cache all page routes
+		'/**': { isr: 60 },
+
+		// Preview must always be fresh
+		'/preview': { isr: false },
 	},
 	ui: {
 		colorMode: false,
