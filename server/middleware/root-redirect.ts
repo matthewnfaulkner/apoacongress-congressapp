@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
         if (!site?.preview || event.path === redirectPath) return
         
         // Do the actual HTTP redirect
-        //return sendRedirect(event, redirectPath, 302)
+        return sendRedirect(event, redirectPath, 302)
 	} catch (error){
 		throw createError({ statusCode: 500, statusMessage: 'Internal Server Error' });
 	}

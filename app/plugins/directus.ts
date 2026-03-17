@@ -27,7 +27,7 @@ export default defineNuxtPlugin(() => {
 
     // ✅ NOW Nuxt context exists
     const config = useRuntimeConfig();
-
+    
     const directus = createDirectus(config.public.directusUrl)
         .with(authentication("session", { credentials: "include", autoRefresh: true }))
         .with(rest({ credentials: "include" }));

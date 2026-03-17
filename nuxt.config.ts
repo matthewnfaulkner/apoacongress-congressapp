@@ -20,7 +20,7 @@ export default defineNuxtConfig({
 	},
 	routeRules: {
 		// Never cache API routes - query params must always hit the server fresh
-		'/api/**': { isr: false },
+		'/api/**': { isr: false },   // API always fresh
 
 		// Cache all page routes
 		'/**': { isr: 60 },
@@ -54,7 +54,6 @@ export default defineNuxtConfig({
 		'shadcn-nuxt',
 		'@nuxt/icon',
 		'@nuxtjs/color-mode',
-		'@nuxtjs/seo',
 		'@nuxt/ui',
 		'@primevue/nuxt-module',
 		'@pinia/nuxt',
@@ -134,6 +133,6 @@ export default defineNuxtConfig({
 	sitemap: {
 		sources: ['/api/sitemap'],
 	},
-
+	
 	compatibilityDate: '2025-01-16',
 });

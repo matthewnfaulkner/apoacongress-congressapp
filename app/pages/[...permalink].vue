@@ -22,7 +22,7 @@ const {
 	error,
 	refresh,
 } = await useFetch<Page>('/api/pages/one', {
-	key: `pages-${permalink.value}`,
+	key: computed(() => `pages-${permalink.value}`),
 	query: {
 		permalink,
 		preview: enabled.value ? true : undefined,
@@ -30,6 +30,7 @@ const {
 		id: route.query.id as string,
 		version,
 	},
+	getCachedData: (key, nuxtApp) => nuxtApp.payload.data[key] ?? nuxtApp.static.data[key],
 });
 
 if (!page.value || error.value) {

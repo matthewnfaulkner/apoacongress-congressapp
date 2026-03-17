@@ -324,7 +324,7 @@ const pageFields = [
  * - Dynamic content blocks with real-time data fetching
  * - SEO metadata support
  */
-export default defineEventHandler(async (event) => {
+export default cachedEventHandler(async (event) => {
 	const query = getQuery(event);
 
 	const { preview, token: rawToken, permalink: rawPermalink, id, version, languageCode } = query;
@@ -461,8 +461,14 @@ export default defineEventHandler(async (event) => {
 		}
 
 		return page;
-	} catch (error) {
-		console.log(error)
+	} catch  {
 		throw createError({ statusCode: 500, statusMessage: 'Page not found' });
 	}
+}, {
+  maxAge: 60,
+  getKey: (event) => {
+    const { permalink, version } = getQuery(event)
+    return `page-${permalink}`
+  },
+  shouldBypassCache: (event) => getQuery(event).preview === 'true',
 });

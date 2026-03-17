@@ -183,7 +183,7 @@ const personFields = [
  * - Dynamic content blocks with real-time data fetching
  * - SEO metadata support
  */
-export default cachedEventHandler(async (event) => {
+export default defineEventHandler(async (event) => {
 	const query = getQuery(event);
 
 	const { preview, token: rawToken, id, } = query;
@@ -273,11 +273,4 @@ export default cachedEventHandler(async (event) => {
 	} catch {
 		throw createError({ statusCode: 500, statusMessage: 'Person not found' });
 	}
-}, {
-  maxAge: 60,
-  getKey: (event) => {
-    const { permalink, version } = getQuery(event)
-    return `page-${permalink}`
-  },
-  shouldBypassCache: (event) => getQuery(event).preview === 'true',
 });
