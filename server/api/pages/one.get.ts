@@ -465,7 +465,7 @@ export default cachedEventHandler(async (event) => {
 		throw createError({ statusCode: 500, statusMessage: 'Page not found' });
 	}
 }, {
-  maxAge: 60,
+  maxAge: 3600,
   getKey: (event) => {
     const { permalink, version } = getQuery(event)
     return `page-${permalink}`

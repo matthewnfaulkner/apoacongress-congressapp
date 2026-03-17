@@ -9,7 +9,7 @@
 		<span>
 			<UUser 
 				:avatar="{
-					class: 'lg:hidden xl:block rounded-none w-fit',
+					class: 'lg:hidden xl:block rounded-none max-w-25',
 					src: lightLogoUrl,
 					icon: 'i-lucide-image'
 				}" 
@@ -69,30 +69,30 @@
 		</UNavigationMenu>
 		<div v-if="storeReady">
 			<ClientOnly>
-			<UDropdownMenu
-				v-if=" auth.isAuthenticated" 
-				:items="items"
-				:content="{
-					side: 'bottom',
-				}"
-				:ui="{
-					content: 'w-48',
-					item: 'cursor-pointer'
-				}"
-			>
-				<UButton
-					v-if=" auth.isAuthenticated" 
-					:avatar="{
-						text: `${auth.isAuthenticated?.first_name[0] + auth.isAuthenticated?.last_name[0]}`,
-						src: `${getDirectusAssetURL(auth.isAuthenticated.avatar)}`,
-						size: 'xl'
+				<UDropdownMenu
+					v-if="auth.isAuthenticated" 
+					:items="items"
+					:content="{
+						side: 'bottom',
 					}"
-					size="xl"
-					color="accent"
-					variant="outline"
-					class="p-1"
-				/>
-			</UDropdownMenu>
+					:ui="{
+						content: 'w-48',
+						item: 'cursor-pointer'
+					}"
+				>
+					<UButton
+						v-if=" auth.isAuthenticated" 
+						:avatar="{
+							text: `${auth.isAuthenticated?.first_name[0] + auth.isAuthenticated?.last_name[0]}`,
+							src: `${getDirectusAssetURL(auth.isAuthenticated.avatar)}`,
+							size: 'xl'
+						}"
+						size="xl"
+						color="accent"
+						variant="outline"
+						class="p-1 w-12 h-12"
+					/>
+				</UDropdownMenu>
 			
 			<UButton
 				v-else
@@ -105,6 +105,9 @@
 				
 			</ClientOnly>
 				
+		</div>
+		<div v-else>
+			<USkeleton class="h-12 w-12 rounded-1 w-12" />
 		</div>
 		<!--<NuxtLink v-for="locale in availableLocales" :key="locale.code" :to="switchLocalePath(locale.code)">
 					{{ locale.name }}
