@@ -24,7 +24,6 @@ export default defineNuxtConfig({
 
 		// Cache all page routes
 		'/**': { isr: 60 },
-
 	},
 	ui: {
 		colorMode: false,
@@ -83,6 +82,7 @@ export default defineNuxtConfig({
 	},
 
 	security: {
+		enabled: process.env.NODE_ENV !== 'production' || !process.env.NUXT_PRERENDER_NODE_ENV ? false : true,
 		headers: {
 			contentSecurityPolicy: {
 				'img-src': ["'self'", 'data:', '*'],
@@ -131,6 +131,58 @@ export default defineNuxtConfig({
 	sitemap: {
 		sources: ['/api/sitemap'],
 	},
-	
+
+	hooks: {
+		async 'prerender:routes'(ctx) {
+		// Ensure we only do this during a production build
+		if (process.env.NODE_ENV === 'development') return
+
+		const directusUrl = process.env.DIRECTUS_URL || 'https://admin.congress.apoaonline.com'
+		const token = process.env.DIRECTUS_SERVER_TOKEN // Use a static token if your collections are private
+
+		try {
+			console.log('Fetching dynamic routes for prerendering...')
+
+			// 1. Fetch Pages and Posts in parallel via standard fetch
+			// (This avoids issues with SDK initialization inside the config file)
+			const [pagesRes, postsRes] = await Promise.all([
+			fetch(`${directusUrl}/items/pages?fields=permalink&limit=-1`, {
+				headers: token ? { Authorization: `Bearer ${token}` } : {}
+			}),
+			fetch(`${directusUrl}/items/posts?filter[status][_eq]=published&fields=slug&limit=-1`, {
+				headers: token ? { Authorization: `Bearer ${token}` } : {}
+			})
+			])
+
+			const pages = await pagesRes.json()
+			const posts = await postsRes.json()
+
+			// 2. Format and add Pages
+			pages.data?.forEach((page: any) => {
+			const path = page.permalink.startsWith('/') ? page.permalink : `/${page.permalink}`
+			ctx.routes.add(path)
+			})
+
+			// 3. Format and add Posts
+			posts.data?.forEach((post: any) => {
+			ctx.routes.add(`/blog/${post.slug}`)
+			})
+
+			console.log(`Successfully added ${ctx.routes.size} routes to prerender.`)
+		} catch (error) {
+			console.error('Prerender hook failed:', error)
+		}
+		}
+	},
+	nitro: {
+		prerender: {
+			// This is the most important part:
+      		crawlLinks: false,
+			/*crawlLinks: true,
+			routes: ['/', '/sitemap_index.xml'],*/
+			failOnError: false,
+		}
+	},
+
 	compatibilityDate: '2025-01-16',
 });
