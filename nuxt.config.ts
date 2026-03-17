@@ -25,8 +25,6 @@ export default defineNuxtConfig({
 		// Cache all page routes
 		'/**': { isr: 60 },
 
-		// Preview must always be fresh
-		'/preview': { isr: false },
 	},
 	ui: {
 		colorMode: false,
