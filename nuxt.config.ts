@@ -23,7 +23,8 @@ export default defineNuxtConfig({
 		'/api/**': { isr: false },   // API always fresh
 
 		// Cache all page routes
-		'/**': { isr: 60 },
+		//'/**': { isr: 60 },
+		'/**': { ssr: false },
 	},
 	ui: {
 		colorMode: false,
@@ -205,7 +206,7 @@ export default defineNuxtConfig({
 		sources: ['/api/sitemap'],
 	},
 
-	hooks: {
+	/*hooks: {
 		async 'prerender:routes'(ctx) {
 		// Ensure we only do this during a production build
 		if (process.env.NODE_ENV === 'development') return
@@ -255,7 +256,7 @@ export default defineNuxtConfig({
 			routes: ['/', '/sitemap_index.xml'],*/
 			failOnError: false,
 		}
-	},
+	},*/
 
 	compatibilityDate: '2025-01-16',
 });
