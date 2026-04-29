@@ -61,10 +61,6 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
                 </UUser>
             </template>
             <UForm title="Reset Password" :schema="schema" :state="state" class="space-y-4" @submit="onSubmit">
-                <UFormField>
-                    <PersonSelectMenu></PersonSelectMenu>
-                    <RoleSelectMenu></RoleSelectMenu>
-                </UFormField>
                 <UFormField label="Email" name="email">
                 <UInput v-model="state.email" />
                 </UFormField>

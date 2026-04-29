@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
                 fields: ['preview']
             })
             )
-        
+        return;
         const redirectPath = '/preview'
 
         // Skip redirect if toggle is off or already at target
