@@ -253,7 +253,7 @@ export default defineNuxtConfig({
 			// This is the most important part:
       		crawlLinks: false,
 			/*crawlLinks: true,
-			routes: ['/', '/sitemap_index.xml'],*/
+			routes: ['/', '/sitemap_index.xml'],
 			failOnError: false,
 		}
 	},*/
