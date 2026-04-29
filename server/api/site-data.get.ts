@@ -55,7 +55,12 @@ export default defineEventHandler(async (event) => {
 								},
 								{
 									'organiser' : [
-										'*'
+										'id',
+										'name',
+										'email',
+										'logo',
+										'address',
+										'phone',
 									]
 								}
 							]
