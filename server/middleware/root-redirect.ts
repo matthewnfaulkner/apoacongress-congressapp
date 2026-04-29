@@ -6,7 +6,8 @@ export default defineEventHandler(async (event) => {
         if (
         event.path.startsWith('/api') ||
         event.path.startsWith('/_nuxt') ||
-        event.path === '/favicon.ico'
+        event.path === '/favicon.ico' ||
+        event.path.startsWith('/public')
         ) {
         return
         }

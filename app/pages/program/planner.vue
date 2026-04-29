@@ -12,7 +12,7 @@ import { ConfirmationModal } from "~/components/ui/modal";
 import { useToast } from '@nuxt/ui/runtime/composables/useToast.js';
 
 
-const { $directus, $isAuthenticatedWithPolicy } = useNuxtApp();
+const { $directus, $isAuthenticated } = useNuxtApp();
 const toast = useToast();
 const zoomStates = ref<Record<number, number>>([]);
 const panStates = ref<Record<number, { x: number; y: number; deltaX: number; deltaY: number }>>({})
@@ -22,7 +22,7 @@ const revealed = ref(false)
 const el = ref<HTMLElement | null>(null)
 let observer: IntersectionObserver | null = null
 
-const isAuthenticated = await $isAuthenticatedWithPolicy('Schedule - Editor');
+const isAuthenticated = await $isAuthenticated();
 
 const isLoggedIn = computed(() =>
   isAuthenticated ? true: false
@@ -602,46 +602,6 @@ const handleGridClick = async (e) => {
 };
 
 
-const toolbarItems = computed(() => [
-    {
-    label: 'View',
-    icon: 'i-lucide-eye',
-    value: 'none',
-    active: currentMode.value === 'NONE',
-    onSelect: () => {currentMode.value = 'NONE'}
-  },
-  {
-    label: 'Drag/ Resize',
-    icon: 'i-lucide-hand',
-    active: currentMode.value === 'edit',
-    onSelect: () => {currentMode.value = 'edit'}
-
-  },
-  {
-    label: 'Add',
-    icon: 'i-lucide-cross',
-    value: 'add',
-    active: currentMode.value === 'add',
-    onSelect: () => {currentMode.value = 'add'}
-  },
-  {
-    label: 'Copy',
-    icon: 'i-lucide-copy',
-    value: 'copy',
-    active: currentMode.value === 'copy',
-    onSelect: () => {currentMode.value = 'copy'}
-  },
-  {
-    label: 'Delete',
-    icon: 'i-lucide-trash',
-    value: 'del',
-    active: currentMode.value === 'del',
-    onSelect: () => {currentMode.value = 'del'}
-  },
-
-  
-])
-
 const updateOnResize = async (i: string, newH: number, newW: number, type: GridItemTypes) => {
   if(type == GridItemTypes.Session) updateSessionOnResize(i, newH, newW);
   else if (type == GridItemTypes.Break) updateBreakOnResize(i, newH, newW);
@@ -781,32 +741,11 @@ function hToTime(row: number) : number{
 </script>
 
 <template>
-  <UError
-    v-if="!isLoggedIn"
-    :clear="{
-      color: 'neutral',
-      size: 'xl',
-      icon: 'i-lucide-arrow-left',
-      class: 'rounded-full'
-    }"
-    :error="{
-      statusCode: 404,
-      statusMessage: 'Permission Denied',
-      message: 'You don\'t Have permission to view this page'
-    }"
-  />
-  <div v-else>
+  <div>
     <div v-if="loading" class="text-black w-full h-full flex items-center justify-center">
         <UProgress color="secondary" size="xl" :v-model="null" class="flex justify-center py-10 w-50"/>
     </div>
     <div v-else>
-      <UNavigationMenu  
-        v-if="isAuthenticated"
-        color="accent" 
-        v-model="currentMode" 
-        :items="toolbarItems" 
-        highlight 
-        class="flex-1 fixed z-10 w-full bg-white px-30" />
       <UTabs 
         :items="tabsArray" 
         v-model="activeTab" 
@@ -827,13 +766,12 @@ function hToTime(row: number) : number{
                   @pointerdown="onPointerDown"
                   @pointerup="onPointerUp"
                   @pointerleave="onPointerUp"
-
                   zoomOrigin="pointer"
                   >
-
+ 
               
                 <div class="grid-layout min-h-100 relative"  ref="el" >                          
-                  <grid-layout
+                <grid-layout
                         v-if="item.published"
                         class="w-200 grid"
                         :id="`grid-${index}`"
@@ -1035,4 +973,9 @@ background:
     border-radius: 10px;
     cursor: pointer;
 }
+
+.controll__buttons {
+  top: 120px !important;
+}
+
 </style>

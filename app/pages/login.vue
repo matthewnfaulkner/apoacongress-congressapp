@@ -1,4 +1,5 @@
 <script setup lang="ts">
+
 import { readProviders, customEndpoint, readMe } from '@directus/sdk'
 const { $directus, $isAuthenticated } = useNuxtApp()
 
@@ -14,19 +15,17 @@ const checkLoginStatus = async () => {
   try {
     // readMe() is the standard way to fetch the current authenticated user
     const response = await $isAuthenticated();
-    console.log(response);
     if(response) {
           isLoggedIn.value = true;
           if(redirect) navigateTo(redirect);
           else navigateTo('/');
     }
     else {
-      navigateTo(loginurl, {external: true});
+      //navigateTo(loginurl, {external: true});
     }
   } catch (error) {
     isLoggedIn.value = false;
     user.value = null;
-    console.log(error);
     console.log('Not logged in or session expired');
   }
 };
@@ -40,7 +39,8 @@ onMounted(async () => {
     // User is now authenticated in the SDK state
   } catch (err) {
     console.log(err);
-    navigateTo(loginurl, {external: true});
+    checkLoginStatus();
+    //navigateTo(loginurl, {external: true});
     // This will error if they aren't logged in yet; 
     // you can redirect them to the SSO login link here
   }
@@ -48,8 +48,9 @@ onMounted(async () => {
 
 </script>
 <template>
-
-     <div class="text-black w-full h-full flex items-center justify-center">
-      <UProgress color="secondary" size="xl" :v-model="null" class="flex justify-center py-10 w-50"/>
-   </div>
+    <div>
+     <div class="text-black w-full min-h-lvh flex items-center justify-center">
+        <UProgress color="secondary" size="xl" :v-model="null" class="flex justify-center py-10 w-50"/>
+      </div>
+    </div>
 </template>

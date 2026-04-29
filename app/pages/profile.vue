@@ -3,7 +3,7 @@ import type { Person, DirectusUser } from '#shared/types/schema';
 import { removeSeconds } from '@/utils/time-utils';
 import BaseEventType from '~/components/eventTypes/BaseEventType.vue';
 import type { TableColumn, TableRow } from '@nuxt/ui'
-import { readMe, updateMe } from '@directus/sdk';
+import { readMe, updateMe, uploadFiles } from '@directus/sdk';
 import * as z from 'zod'
 import type { FormError, FormSubmitEvent } from '@nuxt/ui'
 import { ConfirmationModal } from "~/components/ui/modal";
@@ -30,12 +30,17 @@ const isLoggedIn = computed(() =>
   auth.isAuthenticated !== false
 )
 
-if(!isLoggedIn) {
-    navigateTo('/login?redirect=/profile');
-}
 
 const personFields = [
-    '*',
+    'id',
+    'first_name',
+    'last_name',
+    'email',
+    'avatar',
+    'has_subscription',
+    'country',
+    'membership_number',
+    'title',
     {
         person : [
             'id',
@@ -63,7 +68,7 @@ const personFields = [
                     }
                 ]
             },
-            {
+            /*{
                 assignments: [
                     'id',
                     {
@@ -87,7 +92,6 @@ const personFields = [
                                         ],
                                         workshops: [
                                         'id',
-                                        
                                         ],
                                         talks: [
                                         'id',
@@ -189,7 +193,7 @@ const personFields = [
                         ]
                     }
                 ]
-            }
+            }*/
         ]
     }
 	
@@ -214,17 +218,34 @@ const items = computed(() => {
   return crumbs
 })
 
-const profile = ref<DirectusUser>();
+type UserProfile = DirectusUser & {
+    has_subscription?: boolean | null;
+    membership_number?: string | null;
+    person?: any;
+};
+const profile = ref<UserProfile>();
 
 const {
 	public: { directusUrl },
 } = useRuntimeConfig();
 
+const countryCode = computed(() => {
+    const raw = profile.value?.country as any;
+    if (!raw) return '';
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    return (parsed?.key ?? '').toUpperCase();
+});
+
+const countryFlag = computed(() => {
+    if (!countryCode.value) return '';
+    return [...countryCode.value].map(c => String.fromCodePoint(c.charCodeAt(0) + 127397)).join('');
+});
+
 watch(
   ready,
   async (ready) => {
-    if (!ready) return
-    const { data } = await useAsyncData <DirectusUser>('profile', async() => {
+    if (!ready || !isLoggedIn) return
+    const { data } = await useAsyncData <DirectusUser>('profile-' + auth.isAuthenticated.id , async() => {
         return await $directus.request<DirectusUser>(readMe(
             {   
                 fields: personFields,
@@ -279,7 +300,7 @@ watch(
                             }
                         }
                         }
-                        }
+                }
             
             }
         ))})
@@ -417,7 +438,7 @@ const schema = z.object({
      })
 });
 
-type Schema = typeof schema
+type Schema = z.infer<typeof schema>
 
 const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
 	try {
@@ -471,6 +492,45 @@ const disassociatePerson = async () => {
 }
 
 
+const avatarInput = ref<HTMLInputElement | null>(null);
+const avatarUploading = ref(false);
+
+const AVATAR_ALLOWED_TYPES = ['image/jpeg', 'image/png'];
+const AVATAR_MAX_BYTES = 1 * 1024 * 1024; // 1 MB
+
+const onAvatarChange = async (e: Event) => {
+    const input = e.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+
+    if (!AVATAR_ALLOWED_TYPES.includes(file.type)) {
+        toast.add({ title: 'Invalid file type', description: 'Please upload a JPEG or PNG image.', color: 'error' });
+        return;
+    }
+    if (file.size > AVATAR_MAX_BYTES) {
+        toast.add({ title: 'File too large', description: 'Avatar must be under 1 MB.', color: 'error' });
+        return;
+    }
+
+    avatarUploading.value = true;
+    try {
+        const fd = new FormData();
+        fd.append('file', file, file.name);
+        const uploaded = await $directus.request(uploadFiles(fd)) as { id?: string };
+        if (!uploaded?.id) throw new Error('Upload failed');
+
+        await $directus.request(updateMe({ avatar: uploaded.id }));
+        if (profile.value) profile.value.avatar = uploaded.id;
+        toast.add({ title: 'Avatar updated', color: 'accent' });
+    } catch (e) {
+        toast.add({ title: 'Upload failed', color: 'error' });
+        console.error(e);
+    } finally {
+        avatarUploading.value = false;
+    }
+};
+
 onMounted(async () => {
   // if your store has a fetch method, call it here
   ready.value = true
@@ -478,11 +538,100 @@ onMounted(async () => {
 
 </script>
 <template>
-    {{ profile?.person }}
-    {{ person }}
-	<div  ref="wrapperRef">
+    <UError
+      v-if="!isLoggedIn"
+      redirect="/login"
+      :clear="{
+        color: 'neutral',
+        size: 'xl',
+        trailingIcon: 'i-lucide-arrow-right',
+        class: 'rounded-full',
+        label: 'Log In',
+      }"
+      :error="{
+        statusCode: 404,
+        statusMessage: 'Sign In Required',
+        message: 'You need to sign in to access this page.'
+      }"
+    />
+	<div  v-else ref="wrapperRef">
 		<Container class="py-12">
-            <Headline headline="Congress Profile" class="text-accent text-center"/>
+            <Headline headline="My Profile" class="text-accent text-center"/>
+
+            <!-- User Account Card -->
+            <div v-if="profile" class="max-w-2xl mx-auto mb-10">
+                <UCard class="ring-1 ring-accent/20">
+                    <div class="flex items-center gap-6">
+                        <!-- Avatar -->
+                        <div
+                            class="relative shrink-0 w-24 h-24 cursor-pointer"
+                            @click="avatarInput?.click()"
+                        >
+                            <DirectusImage
+                                v-if="profile.avatar"
+                                :uuid="typeof profile.avatar === 'string' ? profile.avatar : (profile.avatar as any).id"
+                                alt="Profile avatar"
+                                class="w-24 h-24 rounded-full object-cover ring-2 ring-accent/30"
+                            />
+                            <div v-else class="w-24 h-24 rounded-full ring-2 ring-accent/30 bg-accent/10 flex items-center justify-center">
+                                <UIcon name="i-lucide-circle-user-round" size="72" class="text-accent/60" />
+                            </div>
+                            <div class="absolute bottom-0 left-0 w-7 h-7 rounded-full bg-accent flex items-center justify-center ring-2 ring-white dark:ring-gray-900">
+                                <UIcon v-if="!avatarUploading" name="i-lucide-pencil" size="14" class="text-white" />
+                                <UIcon v-else name="i-lucide-loader-circle" size="14" class="text-white animate-spin" />
+                            </div>
+                            <input
+                                ref="avatarInput"
+                                type="file"
+                                accept="image/jpeg,image/png"
+                                class="hidden"
+                                @change="onAvatarChange"
+                            />
+                        </div>
+
+                        <!-- Profile fields -->
+                        <div class="flex-1 min-w-0 space-y-1">
+                            <p v-if="profile.title" class="text-sm text-muted">{{ profile.title }}</p>
+                            <h2 class="font-heading text-2xl leading-tight truncate">
+                                {{ profile.first_name }} {{ profile.last_name }}
+                            </h2>
+                            <div class="mt-2 space-y-1.5 text-sm">
+                                <div class="flex items-center gap-2">
+                                    <UIcon name="i-lucide-mail" class="text-muted shrink-0" />
+                                    <span class="truncate">{{ profile.email }}</span>
+                                </div>
+                                <div v-if="countryCode" class="flex items-center gap-2">
+                                    <UIcon name="i-lucide-map-pin" class="text-muted shrink-0" />
+                                    <span>{{ countryFlag }}</span>
+                                    <CountryName :country-codes="[countryCode]" />
+                                </div>
+                                <div v-if="profile.membership_number" class="flex items-center gap-2">
+                                    <UIcon name="i-lucide-id-card" class="text-muted shrink-0" />
+                                    <span>Membership Number: {{ profile.membership_number }}</span>
+                                </div>
+                                <div class="pt-1">
+                                    <UBadge
+                                        v-if="profile.has_subscription"
+                                        color="accent"
+                                        variant="subtle"
+                                        icon="i-lucide-circle-check"
+                                        label="Active Subscription"
+                                    />
+                                    <UBadge
+                                        v-else
+                                        color="neutral"
+                                        variant="subtle"
+                                        icon="i-lucide-circle-x"
+                                        label="No Subscription"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </UCard>
+            </div>
+
+            <Headline v-if="profile?.person" headline="Congress Profile" class="text-accent text-center mt-8"/>
             <div v-if="profile?.person" >
                 <div class="w-full flex flex-col justify-center">
                     <UButton label="Not You?" color="accent" class="w-30 m-auto justify-center text-xl" @click="disassociatePerson"/>
@@ -557,7 +706,7 @@ onMounted(async () => {
                     </UTable>
                 </div>
             </div>
-            <div v-else class="text-center text-xl flex-column">
+            <!---<div v-else class="text-center text-xl flex-column">
                 <p>No Congress Profile link with your account.</p>
                 <small >
                     You can link your user profile with a facaulty profile. <br>
@@ -572,7 +721,7 @@ onMounted(async () => {
                     </UButton>
                 </UForm>
             </div>
-
+            -->
 		</Container>
 	</div>
 	

@@ -55,7 +55,68 @@ export default defineNuxtConfig({
 		'@primevue/nuxt-module',
 		'@pinia/nuxt',
 		'@nuxtjs/i18n',
+		'@nuxtjs/mdc',
+		'@dargmuesli/nuxt-cookie-control',
+		'@nuxtjs/turnstile'
 	],
+	scripts: {
+		registry: {
+			googleMaps: { trigger: 'onNuxtReady' },
+		},
+	},
+	cookieControl: {
+		barPosition: 'bottom-left',
+		closeModalOnClickOutside: true,
+		colors: {
+			barBackground: 'var(--color-secondary)',
+			modalBackground: 'var(--color-primary)',
+			modalButtonBackground: 'var(--color-secondary)',
+  			modalButtonColor: 'var(--color-primary)',
+		},
+		isControlButtonEnabled: false,
+		isModalForced: false,
+		// The cookies that are to be controlled.
+		// See detailed explanation further down below!
+		cookies: {
+		necessary: [
+			{
+				description: {
+					en: 'This cookie enables authentication.'
+				},
+				id: process.env.DIRECTUS_SESSION_TOKEN_NAME as string, // use a short cookie id to save bandwidth and prefixes to separate
+				isPreselected: false, // `true` is not GDPR compliant! This flag does not enable any cookies, it only preselects the cookie's modal toggle. The default is `false`.
+				name: {
+					en: 'Directus Session Token' // you always have to specify a cookie name (in English)
+				},
+				links: {
+					'https://example.com/privacy': 'Privacy Policy',
+					'https://example.com/terms': 'Terms of Service',
+				},
+				src: 'https://example.com/preferences/js?id=<API-KEY>',
+				targetCookieIds: [process.env.DIRECTUS_SESSION_TOKEN_NAME as string],
+				}
+		],
+		optional: [
+			{
+				description: {
+					en: 'This cookie stores preferences.'
+				},
+				id: 'pa', // use a short cookie id to save bandwidth and prefixes to separate
+				isPreselected: false, // `true` is not GDPR compliant! This flag does not enable any cookies, it only preselects the cookie's modal toggle. The default is `false`.
+				name: {
+					en: 'Preferaences' // you always have to specify a cookie name (in English)
+				},
+				links: {
+					'https://example.com/privacy': 'Privacy Policy',
+					'https://example.com/terms': 'Terms of Service',
+				},
+				src: 'https://example.com/preferences/js?id=<API-KEY>',
+				targetCookieIds: ['xmpl_a', 'xmpl_b'],
+				}
+		],
+		}
+
+	},
 	css: ['~/assets/css/main.css'],
 	runtimeConfig: {
 		public: {
@@ -64,10 +125,22 @@ export default defineNuxtConfig({
 			enableVisualEditing: process.env.NUXT_PUBLIC_ENABLE_VISUAL_EDITING !== 'false',
 			siteId: process.env.SITE_ID as string,
 			loginUrl: process.env.LOGIN_URL as string,
-			logoutUrl: process.env.LOGOUT_URL as string 
+			logoutUrl: process.env.LOGOUT_URL as string,
+			isSandbox: process.env.NUXT_PUBLIC_IS_SANDBOX != 'false',
+			enableChatAgent: process.env.NUXT_PUBLIC_ENABLE_CHAT != 'false'
 			
 		},
 		directusServerToken: process.env.DIRECTUS_SERVER_TOKEN,
+		anthropicApiKey: process.env.ANTHROPIC_API_KEY,
+		voyageApiKey: process.env.VOYAGE_API_KEY,
+		rebuildIndexSecret: process.env.REBUILD_INDEX_SECRET,
+		duffelApiKey: process.env.DUFFEL_API_KEY,
+		sessionTokenName: process.env.DIRECTUS_SESSION_TOKEN_NAME as string || 'directus_session_token',
+		scripts: {
+			googleMaps: {
+				apiKey: 'AIzaSyAyj3Ebj4qOEGVWx84gkuP7Nq6UQAQ5J78', // NUXT_PUBLIC_SCRIPTS_GOOGLE_MAPS_API_KEY
+			},
+		},
 	},
 	shadcn: {
 		/**

@@ -42,6 +42,7 @@ const {
 		id: route.query.id as string,
 		version,
 	},
+	//getCachedData: (key, nuxtApp) => nuxtApp.payload.data[key] ?? nuxtApp.static.data[key],
 });
 
 

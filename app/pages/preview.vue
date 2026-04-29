@@ -5,7 +5,9 @@ import VueCountdown from '@chenfengyuan/vue-countdown';
 import { useToast } from '@nuxt/ui/runtime/composables/useToast.js';
 import { useAuthStore } from '~/stores/auth';
 
-
+definePageMeta({
+  layout: 'login',
+})
 
 const route = useRoute();
 const i18n = useI18n();

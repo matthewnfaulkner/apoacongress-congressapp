@@ -7,6 +7,7 @@ const { enabled, state } = useLivePreview();
 const pageUrl = useRequestURL();
 const { isVisualEditingEnabled, apply, setAttr } = useVisualEditing();
 
+
 const permalink = computed(() => {
   	if(!route.params.permalink) return '';
   	if(typeof route.params.permalink ===  'string') return route.params.permalink;
@@ -30,7 +31,7 @@ const {
 		id: route.query.id as string,
 		version,
 	},
-	getCachedData: (key, nuxtApp) => nuxtApp.payload.data[key] ?? nuxtApp.static.data[key],
+	//getCachedData: (key, nuxtApp) => nuxtApp.payload.data[key] ?? nuxtApp.static.data[key],
 });
 
 if (!page.value || error.value) {

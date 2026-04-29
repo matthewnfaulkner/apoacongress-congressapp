@@ -15,15 +15,14 @@ const { $directus, $isAuthenticatedWithPolicy } = useNuxtApp();
 const { locale, locales, defaultLocale } = useI18n();
 const path = withoutTrailingSlash(withLeadingSlash(route.path));
 const permalink = locale.value === defaultLocale ?  path : '/';
-
+const loading = ref(true)
 const isAuthenticated = await $isAuthenticatedWithPolicy('Abstracts - Submit');
 
 const isLoggedIn = computed(() =>
   isAuthenticated ? true: false
 )
 
-
-const loading = ref(true);
+const turnstileToken = ref();
 
 const congressAbstract = ref<CongressAbstracts | null>(null);
 const submissions = ref<AbstractSubmission[] | string[] | null>(null)
@@ -74,7 +73,7 @@ watch(
       return await $directus.request<AbstractSubmission[]>(readItems(
         'abstract_submissions',
         {
-          limit: -1,
+          limit: 1,
           fields: [
                     'id',
                     'status',
@@ -99,7 +98,7 @@ watch(
         }
       ))
     })
-
+    console.log(data);
     if(data.value && data.value.length > 0) {
         data.value = data.value as AbstractSubmission[];
         submissions.value = data.value;
@@ -122,6 +121,7 @@ watch(
         });
     }
 }
+loading.value = false
   }// run immediately if storeReady is already true
 )
 
@@ -141,9 +141,6 @@ const hasSubmissions = ref(false);
 const submissionsCount = ref(submissions.value?.length || 0);
 const submissionsTable = ref<Submission[]>([]);
 
-
-
-
 const columns: TableColumn<Submission>[] = [
 {
     accessorKey: 'title',
@@ -152,6 +149,9 @@ const columns: TableColumn<Submission>[] = [
   {
     accessorKey: 'submitted',
     header: 'Date Submitted',
+    cell: ({ row }: { row: any }) => row.getValue('submitted')
+      ? new Date(row.getValue('submitted')).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
+      : '',
   },
   {
     accessorKey: 'status',
@@ -211,7 +211,7 @@ function getRowItems(row: Row<Submission>) {
         openSubmissionForm.value = true;
         state.id = row.original.id;
         state.abstract = row.original.abstract;
-        state.authors = JSON.parse(row.original.authors);
+        state.authors = row.original.authors ? JSON.parse(row.original.authors) : {};
         state.category = row.original.category;
         state.title = row.original.title;
       }
@@ -234,12 +234,13 @@ const schema = z.object({
   category: z.string('Category is required'),
   authors: z.array(
     z.object({
+        title: z.string().nonempty("Title is required"),
         name: z.string().nonempty("Author name is required"),
         institution: z.string().nonempty("Institution is required")
     })
   ).min(1, "At least one author is required").refine(authors => 
-    authors.every(a => a.name.trim() !== "" && a.institution.trim() !== ""),
-    { message: "All authors must have a name and institution" }
+    authors.every(a => a.title.trim() !== "" && a.name.trim() !== "" && a.institution.trim() !== ""),
+    { message: "All authors must have a title, name, and institution" }
   ),
   consent: z.boolean().refine(val => val === true, {
     message: "You must give your consent",
@@ -253,8 +254,9 @@ const state = reactive<Partial<Schema>>({
   title: undefined,
   abstract: undefined,
   authors: [{
-    name: undefined,
-    institution: undefined
+    title: '',
+    name: '',
+    institution: ''
   }],
   category: undefined,
   consent: false
@@ -264,7 +266,7 @@ function resetState() {
   state.id = undefined,
   state.title = undefined;
   state.abstract = undefined;
-  state.authors = [{ name: undefined, institution: undefined }];``
+  state.authors = [{title: '', name: '', institution: '' }];
   state.category = undefined;
   state.consent = false;
 }
@@ -274,6 +276,10 @@ const error = ref<string | null>(null);
 
 const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
 	error.value = null;
+	if (!turnstileToken.value) {
+		error.value = 'Please complete the CAPTCHA before submitting.';
+		return;
+	}
 	try {
         const formData = submission.data as Schema;
 
@@ -369,6 +375,7 @@ onMounted(async () => {
 </script>
 
 <template>
+
     <UError
       v-if="!isLoggedIn"
       redirect="/login"
@@ -438,20 +445,25 @@ onMounted(async () => {
                                 <UInput v-model="state.title" class="w-75 md:w-100 lg:w-200" color="secondary" variant="subtle"  />
                             </UFormField>
                             <UFormField required label="Abstract" name="abstracr"  size="xl"  class="pb-5">
-                                <UTextarea v-model="state.abstract" class="w-75 md:w-100 lg:w-200" :rows=15 color="secondary" variant="subtle"/>
+                                <UTextarea v-model="state.abstract" class="w-full lg:w-200" :rows=15 color="secondary" variant="subtle"/>
                             </UFormField>
                             <UFormField required label="Authors" name="authors" size="xl" class="text-center pb-5" >
-                                <div v-for="(author, index) in state.authors" :key="index" class="flex lg:gap-2 mb-2">
-                                    <UInput v-model="author.name" placeholder="Name" class="lg:w-95" color="secondary" variant="subtle"/>
-                                    <UInput v-model="author.institution" placeholder="Institution" class="lg:w-95" color="secondary" variant="subtle"/>
-                                    <UButton 
-                                        icon="i-lucide-trash" 
-                                        variant="outline" 
-                                        color="secondary" 
-                                        type="button" 
-                                        size="xl"
-                                        @click="state.authors.splice(index, 1)">
-                                    </UButton>
+                                <div v-for="(author, index) in state.authors" :key="index" class="mb-5 lg:flex lg:gap-2 lg:items-center">
+                                    <div class="flex gap-2 mb-2 lg:mb-0 lg:contents">
+                                        <UInput v-model="author.title" placeholder="Title" class="w-24" color="secondary" variant="subtle"/>
+                                        <UInput v-model="author.name" placeholder="Name" class="flex-1" color="secondary" variant="subtle"/>
+                                    </div>
+                                    <div class="flex gap-2 items-center lg:contents">
+                                        <UInput v-model="author.institution" placeholder="Institution" class="flex-1" color="secondary" variant="subtle"/>
+                                        <UButton
+                                            icon="i-lucide-trash"
+                                            variant="outline"
+                                            color="secondary"
+                                            type="button"
+                                            size="xl"
+                                            @click="state.authors!.splice(index, 1)">
+                                        </UButton>
+                                    </div>
                                 </div>
                                 <UButton 
                                     type="button" 
@@ -460,21 +472,27 @@ onMounted(async () => {
                                     icon="i-lucide-plus"
                                     size="xl"
                                     class="m-auto"
-                                    @click="state.authors.push({ name: '', institution: '' })"/>
+                                    @click="state.authors!.push({title: '', name: '', institution: '' })"/>
                             </UFormField>
                             <UFormField  class="pb-5" name="consent">
-                                <UCheckbox v-model="state.consent" label="I hereby agree to the terms and conditions of abstract submission." color="accent"/>
+                                <UCheckbox v-model="state.consent" size="lg" variant="card" label="I hereby agree to the terms and conditions of abstract submission." color="accent"/>
                             </UFormField>
                             <div>
-                                
+                            <UFormField  class="py-5 text-center" name="captcha">
+                                <NuxtTurnstile v-model="turnstileToken" />
+                            </UFormField>
                             </div>
-                            <UButton 
-                                :label="state.id ? 'Update' : 'Submit'"
-                                color="accent"
-                                variant="solid"
-                                size="xl"
-                                type="submit">
-                            </UButton>
+                            <UAlert v-if="error" color="error" variant="subtle" :description="error" class="mb-3" />
+                            <div class="w-full text-center">
+                              <UButton
+                                  :label="state.id ? 'Update' : 'Submit'"
+                                  color="accent"
+                                  variant="solid"
+                                  size="xl"
+                                  class="m-auto"
+                                  type="submit">
+                              </UButton>
+                            </div>
                         </UForm>
                     </div>
                 </template>
@@ -482,7 +500,16 @@ onMounted(async () => {
         </ClientOnly>
         <div class="flex flex-col items-center justify-center gap-4 p-4">
             <Headline headline="Abstract Submissions"/> 
-                    <UProgress  v-if="!storeReady" color="secondary" size="xl" :v-model="null" class="flex justify-center py-10 w-50"/>
+                    <UButton 
+                        v-if="submissionsCount < 5" 
+                        label="Submit New Abstract"
+                        color="accent"
+                        @click="() => {openSubmissionForm = true; resetState()}"
+                    />
+                    <p v-else>
+                        Cannot Submit Further Abstracts - Limit Reached
+                    </p>
+                    <UProgress  v-if="loading" color="secondary" size="xl" :v-model="null" class="flex justify-center py-10 w-50"/>
                     <!-- Table with data -->
                     <UTable 
                         v-else
@@ -491,15 +518,7 @@ onMounted(async () => {
                         class="lg:w-200"
                         />
 
-            <UButton 
-                v-if="submissionsCount < 5" 
-                label="Submit New Abstract"
-                color="accent"
-                @click="() => {openSubmissionForm = true; resetState()}"
-            />
-            <p v-else>
-                Cannot Submit Further Abstracts - Limit Reached
-            </p>
+            
         </div>        
 	</div>
 </template>

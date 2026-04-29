@@ -258,7 +258,22 @@ export interface BlockMainHero {
 	date_updated?: string | null;
 	user_updated?: DirectusUser | string | null;
 	bgColor: string | null;
+	announcements?: BlockMainHeroAnnouncement[] | string[] | null;
 }
+
+export interface BlockMainHeroAnnouncement {
+	/** @description Larger main headline for this page section. */
+	headline?: string | null;
+	/** @primaryKey */
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	content?: string | null;
+	hero?: BlockMainHero | string | null;
+}
+
 
 export interface BlockMessages {
 	/** @description Larger main headline for this page section. */
@@ -652,7 +667,7 @@ export interface CongressEvent {
 export interface CongressEventType {
 	id: string;
 	congress_events_id: string;
-	item?: Plenary | Workshop | Symposium | Talk | Discussion | string | null;
+	item?: Plenary | Workshop | Symposium | Talk | Discussion | FreePapers | string | null;
 	/** @description The collection (type of block). */
 	collection?: string | null;
 }
@@ -774,6 +789,7 @@ export interface FormField {
 	user_created?: DirectusUser | string | null;
 	date_updated?: string | null;
 	user_updated?: DirectusUser | string | null;
+	use_user_data?: boolean | null;
 }
 
 export interface Form {
@@ -802,6 +818,7 @@ export interface Form {
 	fields?: FormField[] | string[];
 	/** @description Received form responses. */
 	submissions?: FormSubmission[] | string[];
+	site?: Site | string | null;
 }
 
 export interface FormSubmission {
@@ -892,6 +909,8 @@ export interface Site {
 	navigations?: Navigation[]
 	organisations?: SiteOrganisations[] | string[] | null;
 	preview?: boolean;
+	support_form?: Form | string | null;
+	user_policies?: SitePolicy[] | number[] | null;
 }
 
 export interface Navigation {
@@ -956,9 +975,15 @@ export interface Organisation {
 	phone?: string | null;
 	email?: string | null;
 	logo?: DirectusFile | string | null;
-	users?: DirectusUser[] | string[] | null;
+	users?: OrganisationUser[] | string[] | null;
 	sites?: SiteOrganisations[] | string[] | null;
 	website?: string | null;
+}
+
+export interface OrganisationUser {
+	id: number;
+	user: DirectusUser | string | null;
+	organisation: Organisation | string | null;
 }
 
 export interface SiteOrganisations {
@@ -1032,8 +1057,19 @@ export interface Discussion {
 	user_updated?: DirectusUser | string | null;
 }
 
+export interface FreePaper {
+	id: string;
+	sort?: string | null;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	title?: string;
+	abstract?: AbstractSubmission | string | null;
+}
+
 export interface Symposium {
-	id: number;
+	id: string;
 	/** @description Smaller copy shown above the headline to label a section or add extra context. */
 	topic?: string,
 	sort?: string | null;
@@ -1092,6 +1128,43 @@ export interface Post {
 	user_updated?: DirectusUser | string | null;
 }
 
+export interface Policy {
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	name: string | null;
+	type: string | null;
+	notification: string | null;
+	content: string | null;
+	sites: SitePolicy[] | string[]| null;
+	required: boolean;
+	default: boolean;
+}
+
+export interface SitePolicy {
+	id: number;
+	site: Site | string | null;
+	policy: Policy | string | null;
+
+}
+
+
+export interface UserPolicyAgreement {
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	policy?: Policy | string | null;
+	version?: string | null;
+	user: DirectusUser | string | null;
+	consent: boolean;
+	active: boolean;
+}
+
+
 export interface Redirect {
 	/** @primaryKey */
 	id: string;
@@ -1148,6 +1221,60 @@ export interface CongressSponsorTier{
 	date_updated?: string | null;
 }
 
+export interface SupportCase { 
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	agent?: DirectusUser | string | null;
+	status?: string;
+	category?: string;
+	messages: CaseMessage[] | string[];
+	customer: DirectusUser | string | null;
+	customer_email?: string;
+	customer_first_name?: string;
+	customer_last_name?: string;
+	form_submission: FormSubmission;
+	summary?: string | null;
+	folder?: DirectusFolder | string | null;
+}
+
+export interface CaseMessageFile {
+	id: string;
+	message: CaseMessage | string | null;
+	file: DirectusFile | string | null;  
+}
+
+export interface CaseMessage {
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	case: SupportCase;
+	sender: DirectusUser | string | null;
+	sender_role: 'customer' | 'agent';
+	sender_email: string;
+	message: string;
+	is_internal: boolean;	
+	files?: CaseMessageFile[] | string[];
+}
+
+
+export interface CongressSponsor {
+	id: string;
+	/** @description Smaller copy shown above the headline to label a section or add extra context. */
+	sponsors_id?: Sponsor | string | null;
+	congress_id?: Congress | string | null;
+	tier?:  CongressSponsorTier | string | null;
+	sort?: string | null;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	
+}
+
 export interface Venue {
 	id: string;
 	/** @description Smaller copy shown above the headline to label a section or add extra context. */
@@ -1159,6 +1286,12 @@ export interface Venue {
 	user_created?: DirectusUser | string | null;
 	date_updated?: string | null;
 	user_updated?: DirectusUser | string | null;
+	travel_general_info?: string | null;
+	travel_info_by_country?: CountryTravelInfo[] | string[] | null;
+	visa_general_info?: string | null;
+	visa_link?: string | null;
+	visa_info_by_country?: VenueVisaInfo[] | string[] | null;
+	airport_codes?: string[] | null
 }
 
 export interface VenueRoom { 
@@ -1173,6 +1306,44 @@ export interface VenueRoom {
 	user_updated?: DirectusUser | string | null;
 
 }
+
+export interface VenueVisaInfo {
+	/** @primaryKey */
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	venue: Venue | string | null;
+	details?: string | null;
+	link?: string | null;
+	countries?: VenueVisaInfoCountry[] | string[] | null;
+}
+
+export interface VenueVisaInfoCountry {
+	id: number;
+	venue_visa_info: VenueVisaInfo | string | null;
+	country:  string | null;
+}
+
+export interface CountryTravelInfo {
+	/** @primaryKey */
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	venue: Venue | string | null;
+	details?: string | null;
+	link?: string | null;
+	country?: Country | string | null;
+}
+
+export interface Country {
+	/** @primaryKey */
+	id: string;
+}
+
 
 export interface DirectusAccess {
 	/** @primaryKey */
@@ -1468,6 +1639,10 @@ export interface DirectusUser {
 	posts?: Post[] | string[];
 	policies?: DirectusAccess[] | string[];
 	person?: Person | string | null;
+	country?: Country | string | null;
+	membership_number?: string | null;
+	user_policy_agreements?: UserPolicyAgreement[] | string[] | null;
+	organisations: OrganisationUser[] | string[] | null;
 }
 
 export interface DirectusWebhook {
@@ -1666,12 +1841,16 @@ export interface Schema {
 	roles: Role[];
 	plenaries: Plenary[];
 	posts: Post[];
+	policies: Policy[];
+	user_policy_agreements: UserPolicyAgreement[];
 	redirects: Redirect[];
 	Sponsors: Sponsor[];
 	symposiums: Symposium[];
 	talks: Talk[];
 	venues: Venue[];
 	venue_rooms: VenueRoom[];
+	venue_visa_info: VenueVisaInfo[];
+	country_travel_info: CountryTravelInfo[];
 	workshops: Workshop[];
 	directus_access: DirectusAccess[];
 	directus_activity: DirectusActivity[];
@@ -1755,12 +1934,16 @@ export enum CollectionNames {
 	roles = 'roles',
 	plenaries = 'plenaries',
 	posts = 'posts',
+	policies = 'policies',
+	user_policy_agreements = 'user_policy_agreements',
 	redirects = 'redirects',
 	sponsors = 'sponsors',
 	symposiums = 'symposiums',
 	talks = 'talks',
 	venues = 'venues',
 	venue_rooms = 'venue_rooms',
+	venue_visa_info = 'venue_visa_info',
+	country_travel_info = 'country_travel_info',
 	workshops = 'workshops',
 	directus_access = 'directus_access',
 	directus_activity = 'directus_activity',

@@ -1,3 +1,20 @@
+import {
+	aggregate,
+	createDirectus,
+	readItem,
+	readItems,
+	rest,
+	readSingleton,
+	createItem,
+	updateItem,
+	// staticToken,
+	uploadFiles,
+	readMe,
+	withToken,
+	type QueryFilter,
+	readUser,
+} from '@directus/sdk';
+
 interface SubmissionValue {
 	field: string;
 	value?: string;
@@ -7,7 +24,20 @@ interface SubmissionValue {
 export default defineEventHandler(async (event) => {
 	const config = useRuntimeConfig();
 	const formData = await readMultipartFormData(event);
+	const cookie = getHeader(event, 'cookie') ?? ''
+	const cookies = parseCookies(event);
+	const sessionTokenName = config.sessionTokenName;
+	const isAuthenticated = !!cookies.directus_session_token;
 
+	const userDirectus = createDirectus(config.public.directusUrl).with(
+		rest({
+			onRequest: (options) => ({
+				...options,
+				headers: { ...options.headers, cookie },
+			})
+		})
+	)
+	
 	if (!formData) {
 		throw createError({
 			statusCode: 400,
@@ -49,8 +79,13 @@ export default defineEventHandler(async (event) => {
 
 				const uploadFormData = new FormData();
 				uploadFormData.append('file', blob, field.filename);
-
-				const uploadedFile = (await directusServer.request(withToken(TOKEN, uploadFiles(uploadFormData)))) as {
+				
+				const uploadedFile = (await directusServer.request(
+					withToken(
+						TOKEN, 
+						uploadFiles(uploadFormData)
+					)
+				)) as {
 					id?: string;
 				};
 
@@ -70,11 +105,17 @@ export default defineEventHandler(async (event) => {
 
 		const payload = {
 			form: formId,
+			site: config.public.siteId,
 			values: submissionValues,
 		};
 
-		await directusServer.request(withToken(TOKEN, createItem('form_submissions', payload)));
-
+		//
+		if(isAuthenticated) {
+			await userDirectus.request(createItem('form_submissions', payload));
+		} else {
+			await userDirectus.request(withToken(TOKEN, createItem('form_submissions', payload)));
+		}
+		
 		return { success: true };
 	} catch {
 		throw createError({
@@ -83,3 +124,4 @@ export default defineEventHandler(async (event) => {
 		});
 	}
 });
+``

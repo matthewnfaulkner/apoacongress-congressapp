@@ -16,5 +16,14 @@ useHead({
 		<NuxtLayout>
 			<NuxtPage />
 		</NuxtLayout>
+		<CookieControl
+			locale="en"
+			:ui="{
+				bar: 'bg-secondary'
+			}"
+		/>
+		<ClientOnly>
+			<PolicyConsentModal />
+		</ClientOnly>
 	</UApp>
 </template>

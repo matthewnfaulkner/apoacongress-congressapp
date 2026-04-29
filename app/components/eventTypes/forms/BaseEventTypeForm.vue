@@ -3,6 +3,7 @@ import SymposiumsForm from './SymposiumsForm.vue';
 import TalksForm from './TalksForm.vue';
 import PlenariesForm from './PlenariesForm.vue';
 import DiscussionsForm from './DiscussionsForm.vue';
+import { BaseEventTypeForm } from '#components';
 
 interface BaseEventTypeProps {
 	defaultValue: object,
@@ -21,6 +22,7 @@ const formRef = ref<HTMLElement | null>(null);
 const emit = defineEmits(['update:modelValue'])
 
 const components: Record<string, any> = {
+	freePapers: TalksForm,
 	symposiums: SymposiumsForm,
 	talks: TalksForm,
 	plenaries: PlenariesForm,

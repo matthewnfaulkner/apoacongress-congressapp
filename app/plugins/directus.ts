@@ -20,23 +20,23 @@ import {
     readFields,
     readRelation,
     readRelationByCollection,
-    uploadFiles
+    uploadFiles,
 } from "@directus/sdk";
 
 export default defineNuxtPlugin(() => {
 
     // ✅ NOW Nuxt context exists
     const config = useRuntimeConfig();
-    
+
     const directus = createDirectus(config.public.directusUrl)
-        .with(authentication("session", { credentials: "include", autoRefresh: true }))
+        .with(authentication("session", { credentials: "include" }))
         .with(rest({ credentials: "include" }));
 
 
     const isAuthenticated = async () => {
         try {
             const me = await directus.request(readMe({
-                fields: ['id', 'email', 'first_name', 'last_name']
+                fields: ['id', 'email', 'first_name', 'last_name', 'user_policy_agreements']
             }));
             return me;
         } catch (error) {
@@ -107,6 +107,7 @@ export default defineNuxtPlugin(() => {
         );
     };
 
+
     return {
         provide: {
             directus,
@@ -131,7 +132,8 @@ export default defineNuxtPlugin(() => {
             readFields,
             readRelation,
             readRelationByCollection,
-            uploadFiles
+            uploadFiles,
+
         }
     };
 });

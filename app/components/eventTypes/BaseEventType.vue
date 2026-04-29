@@ -5,6 +5,7 @@ import Plenaries from './Plenaries.vue';
 import Talks from './Talks.vue';
 import Workshops from './Workshops.vue';
 import Discussions from './Discussions.vue';
+import FreePapers from './FreePapers.vue';
 
 interface BaseEventTypeProps {
 	type: {
@@ -19,6 +20,7 @@ const props = defineProps<BaseEventTypeProps>();
 const typeRef = ref<HTMLElement | null>(null);
 
 const components: Record<string, any> = {
+	freePapers: FreePapers,
     symposiums: Symposiums,
     plenaries: Plenaries,
     talks: Talks,

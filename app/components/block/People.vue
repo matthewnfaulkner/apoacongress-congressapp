@@ -34,6 +34,7 @@ const validPeople = computed(() =>
 
 
 <template>
+	<Headline :headline="data.headline" />
 	<div v-for="people in validPeople" :key="people.id" class="py-0">
 		<Container>
 			<BasePeople :people="people" :display="props.data.display"/>

@@ -54,9 +54,9 @@ const darkLogoUrl = computed(() =>
 </script>
 
 <template>
-	<UFooter v-if="site" ref="footerRef" class="bg-secondary py-16">
+	<UFooter v-if="site" ref="footerRef" class="bg-secondary py-16" :ui="{ center: 'justify-start'}">
 		<template #left>
-			<div class="flex-1 text-white">
+			<div class="flex-1 text-white px-4 pt-4">
 					<NuxtLink to="/" class="inline-block transition-opacity hover:opacity-70">
 						<img
 							v-if="lightLogoUrl"
@@ -94,11 +94,11 @@ const darkLogoUrl = computed(() =>
 					</div>
 				</div>
 		</template>
-		<Container class="text-white">
+		<Container class="text-white m-0">
 			<div class="flex flex-col md:flex-row items-start gap-8 pt-8">
 				<div class="flex flex-col items-start flex-1">
 					<nav v-if="props.navigation.items?.length" class="w-full md:w-auto text-left">
-						<ul class="space-y-4 list-disc">
+						<ul class="space-y-4 list-disc list-inside">
 							<li v-for="item in props.navigation.items" :key="item.id">
 								<NuxtLink
 									v-if="item.page?.permalink"

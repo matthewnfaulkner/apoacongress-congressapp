@@ -1,8 +1,8 @@
 <script setup lang="ts">
+
 definePageMeta({
   layout: 'login',
 })
-
 import { z } from 'zod'
 import type { FormSubmitEvent, AuthFormField } from '@nuxt/ui'
 import { readMe, readPolicies, enableTwoFactor, generateTwoFactorSecret } from '@directus/sdk'
@@ -13,8 +13,8 @@ const { t } = useI18n();
 const siteDataStore = useSiteDataStore();
 const siteData = siteDataStore.siteData;
 
-const { $directus } = useNuxtApp();
-const toast = useToast()
+const { $directus, $isAuthenticatedWithPolicy } = useNuxtApp();
+
 const otpRequired = ref(false)
 const loading = ref(false)
 
@@ -106,7 +106,16 @@ async function login(payload: FormSubmitEvent<Schema>){
               qrCodeSecret.value = tfaSecret.secret;
               qrCodeUrl.value = await QRCode.toDataURL(await tfaSecret.otpauth_url);
             }
-            const me = await $directus.request(readMe());
+            const me = await $isAuthenticatedWithPolicy('Abstracts - Reviewer');
+
+            if(!me) {
+              validationError.value = "You don't have permission to access the dashboard.";
+              showValidationErrors.value = true;
+
+              await $directus.logout();
+            }
+
+            navigateTo('/');
 
         } catch(error) {
 
@@ -124,7 +133,18 @@ async function login(payload: FormSubmitEvent<Schema>){
         try{
               showValidationErrors.value = false;
               const response = await $directus.login({ email: data.email, password: data.password, otp: data.otp });
-              navigateTo('/profile');
+
+              const me = await $isAuthenticatedWithPolicy('Abstracts - Reviewer');
+
+              if(!me) {
+                validationError.value = "You don't have permission to access the dashboard.";
+                showValidationErrors.value = true;
+
+                await $directus.logout();
+              }
+
+              navigateTo('/');
+
           } catch(error) {
               console.log(error);
               if(error.message == 'Invalid user OTP.') {
@@ -154,6 +174,7 @@ async function login(payload: FormSubmitEvent<Schema>){
 
 </script>
   <template>
+
     <div class="flex flex-col items-center justify-center gap-4 p-4 h-lvh">
       <UPageCard class="w-full max-w-md ">
         <UAuthForm
@@ -161,7 +182,7 @@ async function login(payload: FormSubmitEvent<Schema>){
           title="Login"
           description="Enter your credentials to access your account."
           icon="i-lucide-user"
-          
+          @submit="login"
           :loading="loading"
           :fields="fields"
           :submit="{

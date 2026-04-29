@@ -4,12 +4,18 @@
 
 
 
+@layer base {
+  h4 {
+    @apply text-lg font-semibold my-3;
+  }
+}
+
 @source inline('{sm:,md:,lg:,xl:,}col-span-{1,2,3,4,5,6,7,8,9,10,11,12}');
 @source inline('{sm:,md:,lg:,xl:,}grid-cols-{1,2,3,4,5,6,7,8,9,10,11,12}');
 
 
 @theme {
-   --font-heading: 'Cinzel', system-ui, sans-serif;
+  --font-heading: 'Cinzel', system-ui, sans-serif;
 
   --color-primary:    oklch(0.972 0.003 247.8);
   --color-primary-50: oklch(0.972 0.003 247.8);
@@ -107,6 +113,9 @@ h3 { font-size: 1.5rem; font-weight: bold; margin-bottom: 15px; margin-top: 15px
     --ui-bg-accented: var(--ui-color-neutral-200);
     --ui-bg-inverted: var(--ui-color-neutral-900);
 
+
+    
+
 }
 
 .dark{
@@ -116,3 +125,17 @@ h3 { font-size: 1.5rem; font-weight: bold; margin-bottom: 15px; margin-top: 15px
     --color-background:oklch(0.613 0.141 279.55);
 }
 
+@media (max-width: 768px) {
+  .cookieControl__BarButtons{
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 1em
+  }
+
+  .cookieControl__BarButtons button {
+    height: 50px;
+    padding: 10px 5px !important;
+    margin: 0px !important;
+    font-size: 14px !important;
+  }
+}

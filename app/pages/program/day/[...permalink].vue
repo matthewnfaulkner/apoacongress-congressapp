@@ -6,8 +6,6 @@ import type { TableColumn } from '@nuxt/ui'
 import { addMinutesToTime, removeSeconds } from '~/utils/time-utils';
 import BaseEventType from '~/components/eventTypes/BaseEventType.vue';
 
-const UCheckbox = resolveComponent('UCheckbox')
-const UButton = resolveComponent('UButton')
 const route = useRoute();
 const { enabled, state } = useLivePreview();
 const { isVisualEditingEnabled, apply, setAttr } = useVisualEditing();
@@ -276,5 +274,10 @@ function model(event) {
 		</UTabs>
 		</Container>
 	</div>
-	<div v-else class="text-center text-xl mt-[20%]">Schedule Unavailable</div>
+	<div v-else>
+	<div class="text-center text-xl mt-[20%] w-full text-center">
+		<p class="text-center m-2">Schedule Coming Soon</p>
+		<UButton class="m-auto p-2" label="Get Notifed" color="accent" variant="solid" to="/register-interset" />
+	</div>
+	</div>
 </template>

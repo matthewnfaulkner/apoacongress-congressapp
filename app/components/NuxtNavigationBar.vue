@@ -21,6 +21,7 @@
 
     <!-- UNavigationMenu with parsed items -->
 	<template #right>
+
 		<UNavigationMenu 
 			:items="menuItems" 
 			class="hidden lg:flex" 
@@ -83,9 +84,10 @@
 					<UButton
 						v-if=" auth.isAuthenticated" 
 						:avatar="{
-							text: `${auth.isAuthenticated?.first_name[0] + auth.isAuthenticated?.last_name[0]}`,
-							src: `${getDirectusAssetURL(auth.isAuthenticated.avatar)}`,
-							size: 'xl'
+							text: `${authUser?.first_name?.[0] ?? ''}${authUser?.last_name?.[0] ?? ''}`,
+							src: getDirectusAssetURL(authUser?.avatar) || '',
+							size: 'xl',
+							ui: {fallback: 'overflow-visible'}
 						}"
 						size="xl"
 						color="accent"
@@ -96,7 +98,8 @@
 			
 			<UButton
 				v-else
-				:href="loginUrl" 
+				:to="loginUrl" 
+				target="_self"
 				label="Log In"
 				color="accent"
 				variant="outline"
@@ -139,15 +142,21 @@ import { useAuthStore } from '~/stores/auth';
 import { getDirectusAssetURL } from '@@/server/utils/directus-utils';
 import type { DropdownMenuItem } from '@nuxt/ui';
 import { useDirectusTranslation } from '@/composables/useDirectusTranslation';
+import { withLeadingSlash, withoutTrailingSlash } from 'ufo';
 
 const { $logout } = useNuxtApp();
 const localePath = useLocalePath();
-
+const route  = useRoute();
+const path = computed(() => withoutTrailingSlash(withLeadingSlash(route.path)));
 const auth = await useAuthStore();
 const storeReady = ref(false)
 
 const isLoggedIn = computed(() =>
   auth.isAuthenticated !== false
+)
+
+const authUser = computed(() =>
+  typeof auth.isAuthenticated === 'object' ? auth.isAuthenticated : null
 )
 
 const { locale, locales } = useI18n();
@@ -166,7 +175,8 @@ const props = defineProps<{
 
 
 const runtimeConfig = useRuntimeConfig();
-const loginUrl = runtimeConfig.public.loginUrl || '';
+
+const loginUrl = computed(() => runtimeConfig.public.loginUrl + `?redirect=${path.value}` || '');
 // Logo URLs
 const lightLogoUrl = computed(() =>
   props.site?.logo ? `${runtimeConfig.public.directusUrl}/assets/${props.site.logo}` : '/images/logo.svg'
@@ -186,9 +196,9 @@ interface parsedMenuItem {
 function parseMenu(items: NavigationItem[]) : parsedMenuItem[] {
   return items.map((item) => 
 	{ 	
-		const { translated } = useDirectusTranslation(item.translations);
+		//const { translated } = useDirectusTranslation(item.translations);
 		return {
-			label: computed(() => translated.value?.title || item.title),
+			label: computed(() => item.title),
 			to: computed(() => item.page?.permalink ? localePath(item.page?.permalink) : item.url || undefined),
 			children: item.children?.length ? parseMenu(item?.children) : undefined,
 			slot: item?.children?.length ? 'parent' : '',
@@ -210,6 +220,11 @@ const items = ref<DropdownMenuItem[]>([
     label: 'Profile',
     icon: 'i-lucide-user',
 	to: '/profile'
+  },
+  {
+    label: 'Support Tickets',
+    icon: 'i-lucide-message-circle-question-mark',
+	to: '/support/mytickets'
   },
   {
     label: 'Log Out',

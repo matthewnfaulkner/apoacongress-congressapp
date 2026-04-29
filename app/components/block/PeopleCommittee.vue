@@ -50,17 +50,16 @@ const positionsWithSpan = computed(() =>
 		container: 'gap-0 sm:gap-0 lg:gap-0 lg:py-0 py-0 sm:py-0'
 	}">
 		<div v-if="data.positions" class="min-w-0 max-w-full">
-			<Headline :headline="data.title" />
+			
 			<UMarquee 
 				v-if="props.display == 'marquee'"
 				class="max-w-screen" 
 				pause-on-hover
-				reverse
-				:repeat="6"
+				
 				:overlay="false"
 				:ui="{
 					root: 'group relative flex items-center overflow-hidden gap-0',
-					content: 'flex items-center shrink-0 justify-around gap-0 ',
+					content: 'flex items-center shrink-0 justify-around gap-0 [animation-delay:2.5s]',
 				}">
 				<div v-for="position in positionsWithSpan" class="flex flex-row">
 					<UPageCard
@@ -100,7 +99,7 @@ const positionsWithSpan = computed(() =>
 					class="ring-0"
 					:ui="{
 						root: 'items-baseline',
-						container: 'p-2 sm:p-2 align-items-center',
+						container: 'p-2 sm:p-2 align-items-center gap-y-0',
 						wrapper: 'mx-auto',
 						body:'flex-0'
 					}"
@@ -119,7 +118,7 @@ const positionsWithSpan = computed(() =>
 							:key="person.persons_id.id"
 							class="text-center ring-0 w-full align-items-start"
 							:ui="{
-								container: 'sm:p-1'
+								container: 'sm:p-1 gap-y-0'
 							}"
 							:to="`/people/${person.persons_id.id}`"
 						>	<h2 class="text-center font-heading whitespace-normal h-15 align-items-center flex flex-row">

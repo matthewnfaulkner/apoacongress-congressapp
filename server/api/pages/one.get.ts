@@ -95,6 +95,9 @@ const pageFields = [
 					block_mainhero: [
 						'*',
 						{
+							announcements: ['content']
+						},
+						{
 							button_group: [
 								'id',
 								{
@@ -130,6 +133,7 @@ const pageFields = [
 										'choices',
 										'required',
 										'sort',
+										'use_user_data'
 									],
 								},
 							],
@@ -468,7 +472,7 @@ export default cachedEventHandler(async (event) => {
   maxAge: 3600,
   getKey: (event) => {
     const { permalink, version } = getQuery(event)
-    return `page-${permalink}`
+    return `pages-${permalink}`
   },
   shouldBypassCache: (event) => getQuery(event).preview === 'true',
 });

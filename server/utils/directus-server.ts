@@ -9,6 +9,7 @@ import {
 	readSingleton,
 	createItem,
 	updateItem,
+	readContentVersions,
 	// staticToken,
 	uploadFiles,
 	readMe,
@@ -42,5 +43,6 @@ export {
 	aggregate,
 	uploadFiles,
 	readUser,
+	readContentVersions
 };
 export type { QueryFilter };

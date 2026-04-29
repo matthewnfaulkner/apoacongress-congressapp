@@ -71,7 +71,6 @@ const people = computed<PersonCard[]>(() =>
 		container: 'gap-0 sm:gap-0 lg:gap-0 lg:py-0'
 	}">
 		<div v-if="people">
-			<Headline :headline="data.headline" />
 			<UPageGrid class="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
 				<UPageCard
 					v-for="person in people"

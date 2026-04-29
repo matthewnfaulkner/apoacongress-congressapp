@@ -1,7 +1,7 @@
 
 import { defineStore } from 'pinia'
 
-type AuthResult = boolean | DirectusUser
+export type AuthResult = boolean | DirectusUser
 
 interface AuthState {
   isAuthenticated: AuthResult
