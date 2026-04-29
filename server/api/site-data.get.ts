@@ -201,7 +201,9 @@ export default defineEventHandler(async (event) => {
 		]);
 
 		return { globals, site, headerNavigation, footerNavigation };
-	} catch {
-		throw createError({ statusCode: 500, statusMessage: 'Internal Server Error' });
+	} catch (error){
+		
+		throw createError({ statusCode: 500, statusMessage: error instanceof Error ? error.message : String(error) });
+
 	}
 });
