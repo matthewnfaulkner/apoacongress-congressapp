@@ -11,11 +11,11 @@ const redirect = route.query.redirect as string;
 const runtimeConfig = useRuntimeConfig();
 const loginurl = runtimeConfig.public.loginUrl || '';
 
-const refreshCookie = useCookie(runtimeConfig.public.refreshTokenName as string);
+const refreshCookie = useCookie('sandbox_apoacongress_refresh_token');
 // Capture on the server during SSR before hydration drops HttpOnly cookies from JS scope
 const cookieToken = useState('login_cookie_token', () => refreshCookie.value ?? null);
-console.log(refreshCookie);
-console.log(runtimeConfig.public.refreshTokenName);
+console.log('[SSR cookies]', useRequestHeaders(['cookie']));
+onMounted(() => console.log('[Client cookies]', document.cookie));
 const checkLoginStatus = async () => {
   try {
     const response = await $isAuthenticated();
