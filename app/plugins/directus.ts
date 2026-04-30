@@ -28,10 +28,13 @@ export default defineNuxtPlugin(() => {
     const config = useRuntimeConfig();
 
     const tokenStorage = {
-        get: () => JSON.parse(localStorage.getItem('directus_auth') || 'null'),
-        set: (value: object | null) => value
-            ? localStorage.setItem('directus_auth', JSON.stringify(value))
-            : localStorage.removeItem('directus_auth'),
+        get: () => import.meta.client ? JSON.parse(localStorage.getItem('directus_auth') || 'null') : null,
+        set: (value: object | null) => {
+            if (!import.meta.client) return;
+            value
+                ? localStorage.setItem('directus_auth', JSON.stringify(value))
+                : localStorage.removeItem('directus_auth');
+        },
     };
 
     const directus = createDirectus(config.public.directusUrl)
