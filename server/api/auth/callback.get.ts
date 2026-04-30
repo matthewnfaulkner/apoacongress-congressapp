@@ -11,11 +11,10 @@ export default defineEventHandler(async (event) => {
 	const refreshToken = cookies[config.refreshTokenName];
 
 	console.log('AUTH CALLBACK refreshTokenName:', config.refreshTokenName);
-	console.log('AUTH CALLBACK refreshToken present:', !!refreshToken);
+	console.log('AUTH CALLBACK cookie header:', getHeader(event, 'cookie'));
 
 	if (!refreshToken) {
-		return { cookieKeys: Object.keys(cookies) };
-		return sendRedirect(event, config.public.loginUrl);
+		return { cookieKeys: Object.keys(cookies), cookieHeader: getHeader(event, 'cookie') };
 	}
 
 	try {
