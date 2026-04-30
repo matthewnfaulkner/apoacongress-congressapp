@@ -48,7 +48,6 @@ onMounted(async () => {
         expires: tokens.expires,
         expires_at: Date.now() + tokens.expires,
       });
-      await $directus.setToken(tokens.access_token);
     } catch (err) {
       console.error('Exchange token failed', err);
     }
@@ -72,7 +71,6 @@ onMounted(async () => {
         expires: response.data.expires,
         expires_at: Date.now() + response.data.expires,
       });
-      await $directus.setToken(response.data.access_token);
     } catch (err) {
       console.error('SSO token refresh failed', err);
     }

@@ -105,9 +105,14 @@ export default defineNuxtPlugin(() => {
     };
 
     const logout = async () => {
-        await directus.logout();
+        try {
+            await directus.logout();
+        } catch {
+            // token may be missing or already expired — still clear local state
+        }
+        tokenStorage.set(null);
 
-        const auth = useAuthStore(); // ✅ allowed inside plugin runtime
+        const auth = useAuthStore();
         auth.reset();
 
         navigateTo(
