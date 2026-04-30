@@ -132,11 +132,13 @@ export default defineNuxtConfig({
 			
 		},
 		directusServerToken: process.env.DIRECTUS_SERVER_TOKEN,
+		authExchangeSecret: process.env.AUTH_EXCHANGE_SECRET,
 		anthropicApiKey: process.env.ANTHROPIC_API_KEY,
 		voyageApiKey: process.env.VOYAGE_API_KEY,
 		rebuildIndexSecret: process.env.REBUILD_INDEX_SECRET,
 		duffelApiKey: process.env.DUFFEL_API_KEY,
 		sessionTokenName: process.env.DIRECTUS_SESSION_TOKEN_NAME as string || 'directus_session_token',
+		refreshTokenName: process.env.DIRECTUS_REFRESH_TOKEN_NAME as string || 'directus_refresh_token',
 		scripts: {
 			googleMaps: {
 				apiKey: 'AIzaSyAyj3Ebj4qOEGVWx84gkuP7Nq6UQAQ5J78', // NUXT_PUBLIC_SCRIPTS_GOOGLE_MAPS_API_KEY

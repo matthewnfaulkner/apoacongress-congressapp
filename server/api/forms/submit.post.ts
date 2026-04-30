@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
 	const cookie = getHeader(event, 'cookie') ?? ''
 	const cookies = parseCookies(event);
 	const sessionTokenName = config.sessionTokenName;
-	const isAuthenticated = !!cookies.directus_session_token;
+	const isAuthenticated = !!cookies.sessionTokenName;
 
 	const userDirectus = createDirectus(config.public.directusUrl).with(
 		rest({

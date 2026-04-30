@@ -19,8 +19,8 @@ export default defineEventHandler(async (event) => {
 		throw createError({ statusCode: 500, statusMessage: 'Chat Agent not Enabled' });
 	}
 
-	// Verify the user is authenticated via their Directus session cookie
-	const sessionToken = getCookie(event, config.sessionTokenName);
+	const authHeader = getHeader(event, 'authorization');
+	const sessionToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
 	if (!sessionToken) {
 		throw createError({ statusCode: 401, statusMessage: 'Authentication required' });
 	}

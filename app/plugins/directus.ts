@@ -25,11 +25,17 @@ import {
 
 export default defineNuxtPlugin(() => {
 
-    // ✅ NOW Nuxt context exists
     const config = useRuntimeConfig();
 
+    const tokenStorage = {
+        get: () => JSON.parse(localStorage.getItem('directus_auth') || 'null'),
+        set: (value: object | null) => value
+            ? localStorage.setItem('directus_auth', JSON.stringify(value))
+            : localStorage.removeItem('directus_auth'),
+    };
+
     const directus = createDirectus(config.public.directusUrl)
-        .with(authentication("session", { credentials: "include" }))
+        .with(authentication("json", { storage: tokenStorage }))
         .with(rest({ credentials: "include" }));
 
 
@@ -111,6 +117,7 @@ export default defineNuxtPlugin(() => {
     return {
         provide: {
             directus,
+            directusTokenStorage: tokenStorage,
             readItems,
             readProviders,
             refresh,

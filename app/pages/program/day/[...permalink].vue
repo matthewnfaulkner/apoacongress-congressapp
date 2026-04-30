@@ -275,9 +275,9 @@ function model(event) {
 		</Container>
 	</div>
 	<div v-else>
-	<div class="text-center text-xl mt-[20%] w-full text-center">
-		<p class="text-center m-2">Schedule Coming Soon</p>
-		<UButton class="m-auto p-2" label="Get Notifed" color="accent" variant="solid" to="/register-interset" />
-	</div>
+		<div class="text-center text-xl mt-[20%] w-full text-center">
+			<p class="text-center m-2">Schedule Coming Soon</p>
+			<UButton class="m-auto p-2" label="Get Notifed" color="accent" variant="solid" to="/register-interset" />
+		</div>
 	</div>
 </template>

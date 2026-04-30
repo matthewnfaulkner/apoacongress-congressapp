@@ -1,7 +1,7 @@
 <script setup lang="ts">
 
 import { readProviders, customEndpoint, readMe } from '@directus/sdk'
-const { $directus, $isAuthenticated } = useNuxtApp()
+const { $directus, $directusTokenStorage, $isAuthenticated } = useNuxtApp()
 
 const route = useRoute();
 const user = ref(null);
@@ -13,7 +13,6 @@ const loginurl = runtimeConfig.public.loginUrl || '';
 
 const checkLoginStatus = async () => {
   try {
-    // readMe() is the standard way to fetch the current authenticated user
     const response = await $isAuthenticated();
     if(response) {
           isLoggedIn.value = true;
@@ -31,19 +30,41 @@ const checkLoginStatus = async () => {
 };
 
 onMounted(async () => {
-  try {
-    const response = await $directus.refresh({
-        mode: 'session',
-    });
-    checkLoginStatus();
-    // User is now authenticated in the SDK state
-  } catch (err) {
-    console.log(err);
-    checkLoginStatus();
-    //navigateTo(loginurl, {external: true});
-    // This will error if they aren't logged in yet; 
-    // you can redirect them to the SSO login link here
+  const k = route.query.k as string;
+
+  if (k) {
+    try {
+      const tokens = await $fetch('/api/auth/exchange', {
+        method: 'POST',
+        body: { token: k },
+      }) as { access_token: string; refresh_token: string; expires: number };
+
+      // Write full token data to storage first so setToken reads it back with refresh_token intact
+      $directusTokenStorage.set({
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
+        expires: tokens.expires,
+        expires_at: Date.now() + tokens.expires,
+      });
+      await $directus.setToken(tokens.access_token);
+    } catch (err) {
+      console.error('Token exchange failed', err);
+    }
+
+    // Clean the exchange key from the URL
+    const cleanQuery = { ...route.query };
+    delete cleanQuery.k;
+    const qs = new URLSearchParams(cleanQuery as Record<string, string>).toString();
+    history.replaceState({}, '', route.path + (qs ? `?${qs}` : ''));
+  } else {
+    try {
+      await $directus.refresh();
+    } catch (err) {
+      console.log(err);
+    }
   }
+
+  checkLoginStatus();
 });
 
 </script>
