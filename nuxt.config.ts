@@ -22,9 +22,13 @@ export default defineNuxtConfig({
 		// Never cache API routes - query params must always hit the server fresh
 		'/api/**': { isr: false },   // API always fresh
 
+		// Auth pages must always run fresh SSR to read cookies
+		'/login': { isr: false },
+		'/admin_login': { isr: false },
+
 		// Cache all page routes
 		'/**': { isr: 60 },
-		
+
 	},
 	ui: {
 		colorMode: false,

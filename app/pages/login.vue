@@ -1,6 +1,5 @@
 <script setup lang="ts">
 
-import { readProviders, customEndpoint, readMe } from '@directus/sdk'
 const { $directus, $directusTokenStorage, $isAuthenticated } = useNuxtApp()
 
 const route = useRoute();
@@ -9,37 +8,57 @@ const isLoggedIn = ref(false);
 const redirect = route.query.redirect as string;
 
 const runtimeConfig = useRuntimeConfig();
-const loginurl = runtimeConfig.public.loginUrl || '';
 
-const refreshCookie = useCookie('sandbox_apoacongress_refresh_token');
-// Capture on the server during SSR before hydration drops HttpOnly cookies from JS scope
+// Read the refresh token cookie during SSR — captures it before hydration
+// drops HttpOnly cookies from JS scope. Cookie name must match DIRECTUS_REFRESH_TOKEN_NAME.
+const refreshCookie = useCookie(runtimeConfig.public.refreshTokenName || 'directus_refresh_token');
 const cookieToken = useState('login_cookie_token', () => refreshCookie.value ?? null);
-console.log('[SSR cookies]', useRequestHeaders(['cookie']));
-onMounted(() => console.log('[Client cookies]', document.cookie));
+
 const checkLoginStatus = async () => {
   try {
     const response = await $isAuthenticated();
-    if(response) {
-          isLoggedIn.value = true;
-          if(redirect) navigateTo(redirect);
-          else navigateTo('/');
-    }
-    else {
-      //navigateTo(loginurl, {external: true});
+    if (response) {
+      isLoggedIn.value = true;
+      if (redirect) navigateTo(redirect);
+      else navigateTo('/');
     }
   } catch (error) {
     isLoggedIn.value = false;
     user.value = null;
-    console.log('Not logged in or session expired');
   }
 };
 
 onMounted(async () => {
+  // Priority 1: signed exchange token created by /api/auth/callback (most secure)
+  const exchangeToken = route.query.k as string | undefined;
+
+  // Priority 2: raw refresh token passed directly in URL (fallback / manual testing)
   const ssoToken = (route.query.token ?? route.query.refresh_token ?? cookieToken.value) as string | undefined;
   cookieToken.value = null;
 
-  if (ssoToken) {
-  
+  if (exchangeToken) {
+    try {
+      const tokens = await $fetch<{ access_token: string; refresh_token: string; expires: number }>(
+        '/api/auth/exchange',
+        { method: 'POST', body: { token: exchangeToken } },
+      );
+      $directusTokenStorage.set({
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
+        expires: tokens.expires,
+        expires_at: Date.now() + tokens.expires,
+      });
+      await $directus.setToken(tokens.access_token);
+    } catch (err) {
+      console.error('Exchange token failed', err);
+    }
+
+    const cleanQuery = { ...route.query };
+    delete cleanQuery.k;
+    const qs = new URLSearchParams(cleanQuery as Record<string, string>).toString();
+    history.replaceState({}, '', route.path + (qs ? `?${qs}` : ''));
+
+  } else if (ssoToken) {
     try {
       const response = await $fetch<{
         data: { access_token: string; refresh_token: string; expires: number };
@@ -68,7 +87,7 @@ onMounted(async () => {
     try {
       await $directus.refresh();
     } catch (err) {
-      console.log(err);
+      // no existing session
     }
   }
 
