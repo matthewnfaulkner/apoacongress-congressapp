@@ -128,7 +128,8 @@ export default defineNuxtConfig({
 			loginUrl: process.env.LOGIN_URL as string,
 			logoutUrl: process.env.LOGOUT_URL as string,
 			isSandbox: process.env.NUXT_PUBLIC_IS_SANDBOX != 'false',
-			enableChatAgent: process.env.NUXT_PUBLIC_ENABLE_CHAT != 'false'
+			enableChatAgent: process.env.NUXT_PUBLIC_ENABLE_CHAT != 'false',
+			refreshTokenName: process.env.DIRECTUS_REFRESH_TOKEN_NAME as string || 'directus_refresh_token',
 			
 		},
 		directusServerToken: process.env.DIRECTUS_SERVER_TOKEN,

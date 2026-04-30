@@ -11,6 +11,10 @@ const redirect = route.query.redirect as string;
 const runtimeConfig = useRuntimeConfig();
 const loginurl = runtimeConfig.public.loginUrl || '';
 
+const refreshCookie = useCookie(runtimeConfig.public.refreshTokenName as string);
+// Capture on the server during SSR before hydration drops HttpOnly cookies from JS scope
+const cookieToken = useState('login_cookie_token', () => refreshCookie.value ?? null);
+
 const checkLoginStatus = async () => {
   try {
     const response = await $isAuthenticated();
@@ -30,10 +34,11 @@ const checkLoginStatus = async () => {
 };
 
 onMounted(async () => {
-  const k = route.query.k as string;
-  const ssoToken = (route.query.token ?? route.query.refresh_token) as string | undefined;
+  const ssoToken = (route.query.token ?? route.query.refresh_token ?? cookieToken.value) as string | undefined;
+  cookieToken.value = null;
 
   if (ssoToken) {
+  
     try {
       const response = await $fetch<{
         data: { access_token: string; refresh_token: string; expires: number };
@@ -55,29 +60,6 @@ onMounted(async () => {
     const cleanQuery = { ...route.query };
     delete cleanQuery.token;
     delete cleanQuery.refresh_token;
-    const qs = new URLSearchParams(cleanQuery as Record<string, string>).toString();
-    history.replaceState({}, '', route.path + (qs ? `?${qs}` : ''));
-
-  } else if (k) {
-    try {
-      const tokens = await $fetch('/api/auth/exchange', {
-        method: 'POST',
-        body: { token: k },
-      }) as { access_token: string; refresh_token: string; expires: number };
-
-      $directusTokenStorage.set({
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token,
-        expires: tokens.expires,
-        expires_at: Date.now() + tokens.expires,
-      });
-      await $directus.setToken(tokens.access_token);
-    } catch (err) {
-      console.error('Token exchange failed', err);
-    }
-
-    const cleanQuery = { ...route.query };
-    delete cleanQuery.k;
     const qs = new URLSearchParams(cleanQuery as Record<string, string>).toString();
     history.replaceState({}, '', route.path + (qs ? `?${qs}` : ''));
 
