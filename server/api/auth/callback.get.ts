@@ -7,14 +7,15 @@ export default defineEventHandler(async (event) => {
 		throw createError({ statusCode: 500, statusMessage: 'AUTH_EXCHANGE_SECRET not configured' });
 	}
 
-	const cookies = parseCookies(event);
-	const refreshToken = cookies[config.refreshTokenName];
-
-	console.log('AUTH CALLBACK refreshTokenName:', config.refreshTokenName);
-	console.log('AUTH CALLBACK cookie header:', getHeader(event, 'cookie'));
+	// Directus is on a different domain so its cookie won't cross to this domain.
+	// Read the refresh token from the query string instead (passed by Directus in the redirect URL).
+	const query = getQuery(event);
+	const refreshToken = query.token as string | undefined
+		?? query.refresh_token as string | undefined
+		?? parseCookies(event)[config.refreshTokenName];
 
 	if (!refreshToken) {
-		return { cookieKeys: Object.keys(cookies), cookieHeader: getHeader(event, 'cookie') };
+		return { query: Object.keys(query), cookieHeader: getHeader(event, 'cookie') };
 	}
 
 	try {

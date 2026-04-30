@@ -31,15 +31,40 @@ const checkLoginStatus = async () => {
 
 onMounted(async () => {
   const k = route.query.k as string;
+  const ssoToken = (route.query.token ?? route.query.refresh_token) as string | undefined;
 
-  if (k) {
+  if (ssoToken) {
+    try {
+      const response = await $fetch<{
+        data: { access_token: string; refresh_token: string; expires: number };
+      }>(`${runtimeConfig.public.directusUrl}/auth/refresh`, {
+        method: 'POST',
+        body: { mode: 'json', refresh_token: ssoToken },
+      });
+      $directusTokenStorage.set({
+        access_token: response.data.access_token,
+        refresh_token: response.data.refresh_token,
+        expires: response.data.expires,
+        expires_at: Date.now() + response.data.expires,
+      });
+      await $directus.setToken(response.data.access_token);
+    } catch (err) {
+      console.error('SSO token refresh failed', err);
+    }
+
+    const cleanQuery = { ...route.query };
+    delete cleanQuery.token;
+    delete cleanQuery.refresh_token;
+    const qs = new URLSearchParams(cleanQuery as Record<string, string>).toString();
+    history.replaceState({}, '', route.path + (qs ? `?${qs}` : ''));
+
+  } else if (k) {
     try {
       const tokens = await $fetch('/api/auth/exchange', {
         method: 'POST',
         body: { token: k },
       }) as { access_token: string; refresh_token: string; expires: number };
 
-      // Write full token data to storage first so setToken reads it back with refresh_token intact
       $directusTokenStorage.set({
         access_token: tokens.access_token,
         refresh_token: tokens.refresh_token,
@@ -51,11 +76,11 @@ onMounted(async () => {
       console.error('Token exchange failed', err);
     }
 
-    // Clean the exchange key from the URL
     const cleanQuery = { ...route.query };
     delete cleanQuery.k;
     const qs = new URLSearchParams(cleanQuery as Record<string, string>).toString();
     history.replaceState({}, '', route.path + (qs ? `?${qs}` : ''));
+
   } else {
     try {
       await $directus.refresh();
