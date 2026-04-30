@@ -14,7 +14,8 @@ const loginurl = runtimeConfig.public.loginUrl || '';
 const refreshCookie = useCookie(runtimeConfig.public.refreshTokenName as string);
 // Capture on the server during SSR before hydration drops HttpOnly cookies from JS scope
 const cookieToken = useState('login_cookie_token', () => refreshCookie.value ?? null);
-
+console.log(refreshCookie);
+console.log(runtimeConfig.public.refreshTokenName);
 const checkLoginStatus = async () => {
   try {
     const response = await $isAuthenticated();
