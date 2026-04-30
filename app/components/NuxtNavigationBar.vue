@@ -176,7 +176,7 @@ const props = defineProps<{
 
 const runtimeConfig = useRuntimeConfig();
 
-const loginUrl = computed(() => runtimeConfig.public.loginUrl + `?redirect=${path.value}` || '');
+const loginUrl = computed(() => runtimeConfig.public.loginUrl /*+ `?redirect=${path.value}`*/ || '');
 // Logo URLs
 const lightLogoUrl = computed(() =>
   props.site?.logo ? `${runtimeConfig.public.directusUrl}/assets/${props.site.logo}` : '/images/logo.svg'
