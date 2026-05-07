@@ -5,13 +5,14 @@ definePageMeta({
 })
 import { z } from 'zod'
 import type { FormSubmitEvent, AuthFormField } from '@nuxt/ui'
-import { readMe, readPolicies, enableTwoFactor, generateTwoFactorSecret } from '@directus/sdk'
+import { readPolicies, enableTwoFactor, generateTwoFactorSecret } from '@directus/sdk'
 import QRCode from 'qrcode';
 
 const { t } = useI18n();
 
 const siteDataStore = useSiteDataStore();
 const siteData = siteDataStore.siteData;
+
 
 const { $directus, $isAuthenticatedWithPolicy } = useNuxtApp();
 

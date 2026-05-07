@@ -143,7 +143,7 @@ watchEffect(() => {
 			>
 				{{ card.title }}
 			</h3>
-			<div class="flex-shrink-0 w-50"
+			<div class=""
 				v-if="card.badge"
 				v-for="badge in card.badge">
 				<UButton v-if="badge.link"
@@ -168,7 +168,7 @@ watchEffect(() => {
 					v-else
 					:variant="card.is_highlighted ? 'solid' : 'outline'"
 					color= "secondary"
-					class="text-xs font-medium uppercase"
+					class="text-xs font-medium uppercase "
 					:data-directus="
 						setAttr({
 							collection: 'block_pricing_cards',

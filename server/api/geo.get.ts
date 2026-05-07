@@ -6,6 +6,6 @@ export default defineEventHandler((event) => {
 		headers['x-vercel-ip-country'] ?? // Vercel
 		headers['x-country'] ?? // Netlify
 		'XX'
-
+	
 	return { country }
 })

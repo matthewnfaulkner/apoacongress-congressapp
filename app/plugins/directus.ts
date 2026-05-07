@@ -37,9 +37,15 @@ export default defineNuxtPlugin(() => {
         },
     };
 
-    const directus = createDirectus(config.public.directusUrl)
-        .with(authentication("json", { storage: tokenStorage }))
-        .with(rest({ credentials: "include" }));
+    // Sandbox: cookie-based session (same .apoaonline.com domain, Directus manages tokens)
+    // Production: json mode with localStorage (cross-domain, tokens exchanged via /api/auth/callback)
+    const directus = config.public.isSandbox
+        ? createDirectus(config.public.directusUrl)
+            .with(authentication("cookie"))
+            .with(rest({ credentials: "include" }))
+        : createDirectus(config.public.directusUrl)
+            .with(authentication("json", { storage: tokenStorage }))
+            .with(rest({ credentials: "include" }));
 
 
     const isAuthenticated = async () => {

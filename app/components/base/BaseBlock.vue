@@ -5,6 +5,7 @@ import Gallery from '~/components/block/Gallery.vue';
 import Pricing from '~/components/block/Pricing.vue';
 import Posts from '~/components/block/Posts.vue';
 import Form from '~/components/block/FormBlock.vue';
+import FormFlow from '~/components/block/FormFlowBlock.vue'; 
 import People from '~/components/block/People.vue';
 import MainHero from '~/components/block/MainHero.vue';
 import Sponsors from '../block/Sponsors.vue';
@@ -31,6 +32,7 @@ const components: Record<string, any> = {
 	block_pricing: Pricing,
 	block_posts: Posts,
 	block_form: Form,
+	block_form_flow: FormFlow,
 	block_people: People,
 	block_sponsors: Sponsors,
 	block_chargetable: ChargeTable

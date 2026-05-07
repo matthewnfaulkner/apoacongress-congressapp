@@ -147,6 +147,21 @@ export interface BlockForm {
 	user_updated?: DirectusUser | string | null;
 }
 
+export interface BlockFormFlow {
+	/** @primaryKey */
+	id: string;
+	/** @description Form to show within block */
+	flow?: FormFlow | string | null;
+	/** @description Larger main headline for this page section. */
+	headline?: string | null;
+	/** @description Smaller copy shown above the headline to label a section or add extra context. */
+	tagline?: string | null;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+}
+
 export interface BlockGallery {
 	/** @description Larger main headline for this page section. */
 	headline?: string | null;
@@ -527,6 +542,7 @@ export interface Congress {
 	registration_charges?: RegistrationCharge[];
 	accommodation_charges?: AccommodationCharge[]
 	charges?: CongressCharge[] | string[] | null;
+	societies?: CongressSociety[] | string[] | null;
 }
 
 export interface RegistrationCharge {
@@ -564,7 +580,6 @@ export interface CongressSchedule {
 	sessions? : CongressSession[];
 	breaks? : CongressBreak[];
 }
-
 
 export interface CongressDay {
 	id: string;
@@ -632,6 +647,13 @@ export interface CongressSession {
 	room?: VenueRoom | string | null;
 	events?: CongressEvent[];
 	section? : ApoaSection;
+	rooms?: CongressSessionRoom[] | string[] | null;
+}
+
+export interface CongressSessionRoom {
+	id: number;
+	session: CongressSession | string | null;
+	room: VenueRoom | string | null;
 }
 
 export interface ApoaSection {
@@ -662,6 +684,14 @@ export interface CongressEvent {
 	children: CongressEvent[];
 	relative_start: number;
 	duration: number | null;
+}
+
+export interface CongressSociety {
+	id: string;
+	congress_id: string;
+	item?: ApoaSection;
+	/** @description The collection (type of block). */
+	collection?: string | null;
 }
 
 export interface CongressEventType {
@@ -837,6 +867,130 @@ export interface FormSubmissionValue {
 	id: string;
 	/** @description Parent form submission for this value. */
 	form_submission?: FormSubmission | string | null;
+	field?: FormField | string | null;
+	/** @description The data entered by the user for this specific field in the form submission. */
+	value?: string | null;
+	sort?: number | null;
+	file?: DirectusFile | string | null;
+	/** @description Form submission date and time. */
+	timestamp?: string | null;
+}
+
+export interface FormFlow { 
+	/** @primaryKey */
+	id: string;
+	key: string;
+	site: Site | string | null;
+	title?:  string | null;
+	steps?: FormFlowStep[] | string[] | null;
+	show_steps?: boolean;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	submit_label?: string | null;
+	/** @description Message shown after successful submission. */
+	success_message?: string | null;
+	/** @description Destination URL after successful submission. */
+	success_redirect_url?: string | null;
+	/** @description Show or hide this form from the site. */
+	is_active?: boolean | null;
+	show_summary?: boolean | null;
+	/** @description Setup email notifications when forms are submitted. */
+	emails?: Array<{ to: string[]; subject: string; message: string }> | null;
+
+}
+
+export interface FormFlowStep {
+	/** @primaryKey */
+	id: string;
+	title?: string;
+	sort?: string;
+	flow: FormFlow | string | null;
+	fields?: FormFlowField | string | null;
+	conditions?: FormFlowCondition[];
+	description?: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	advance_message?: string;
+	guest_only?: boolean | null;
+}
+
+export interface FormFlowCondition {
+	/** @primaryKey */
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	logical_operator: 'AND' | 'OR';
+	step: FormFlowStep | string | null;
+	rules: FormFlowRule[] | string[] | null;
+	next_step: FormFlowStep | string | null;
+}
+
+export interface FormFlowRule {
+	/** @primaryKey */
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	operator: '_eq' | '_neq' | '_null' | '_nnull';
+	field: FormFlowField | string | null;
+	value?: string;
+	condition: FormFlowCondition | string | null;
+}
+
+export interface FormFlowField {
+	/** @primaryKey */
+	id: string;
+	/** @description Unique field identifier, not shown to users (lowercase, hyphenated) */
+	name?: string | null;
+	/** @description Input type for the field */
+	type?: 'text' | 'textarea' | 'checkbox' | 'checkbox_group' | 'radio' | 'file' | 'select' | 'hidden' | null;
+	/** @description Text label shown to form users. */
+	label?: string | null;
+	/** @description Default text shown in empty input. */
+	placeholder?: string | null;
+	/** @description Additional instructions shown below the input */
+	help?: string | null;
+	/** @description Available rules: `email`, `url`, `min:5`, `max:20`, `length:10`. Combine with pipes example: `email|max:255` */
+	validation?: string | null;
+	/** @description Field width on the form */
+	width?: '100' | '67' | '50' | '33' | null;
+	/** @description Options for radio or select inputs */
+	choices?: Array<{ text: string; value: string }> | null;
+	/** @description Parent form this field belongs to. */
+	step?: FormFlowStep | string | null;
+	sort?: number | null;
+	/** @description Make this field mandatory to complete. */
+	required?: boolean | null;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	use_user_data?: boolean | null;
+}
+
+export interface FormFlowSubmission {
+	/** @description Unique ID for this specific form submission @primaryKey */
+	id: string;
+	/** @description Form submission date and time. */
+	timestamp?: string | null;
+	/** @description Associated form for this submission. */
+	form?: Form | string | null;
+	/** @description Submitted field responses */
+	values?: FormSubmissionValue[] | string[];
+}
+
+export interface FormFlowSubmissionValue {
+	/** @primaryKey */
+	id: string;
+	/** @description Parent form submission for this value. */
+	form_submission?: FormFlowSubmission | string | null;
 	field?: FormField | string | null;
 	/** @description The data entered by the user for this specific field in the form submission. */
 	value?: string | null;

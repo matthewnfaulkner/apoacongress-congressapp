@@ -609,6 +609,18 @@ onMounted(async () => {
                                     <UIcon name="i-lucide-id-card" class="text-muted shrink-0" />
                                     <span>Membership Number: {{ profile.membership_number }}</span>
                                 </div>
+                                <div v-else>
+                                    <UAlert icon="i-lucide-triangle-alert" title="No Active APOA Membership" color="accent" class="w-fit my-2 ring text-accent-100" />
+                                    <div class="flex items-center gap-2 space-y-1.5 ">
+                                        <span>Not a member yet?</span>
+                                        <UButton to="https://apoaonline.com" color="secondary"  variant="outline" label="Join the APOA" />
+                                    </div>
+                                    <div class="flex items-center gap-2 py-1">
+                                        <span>Membership Missing?</span>
+                                        <UButton to="/contact" color="secondary" variant="outline" label="Get Help" />
+                                    </div>
+                                </div>
+                                
                                 <div class="pt-1">
                                     <UBadge
                                         v-if="profile.has_subscription"
@@ -629,6 +641,58 @@ onMounted(async () => {
                         </div>
                     </div>
                 </UCard>
+            </div>
+
+            <!-- What's Next suggestions -->
+            <div class="max-w-4xl mx-auto my-8">
+                <Headline headline="What would you like to do?" class="text-center mb-6" />
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <UPageCard
+                        to="/abstracts/submission"
+                        title="Submit / Manage an Abstract"
+                        description="Share your research and contribute to the scientific programme."
+                        icon="i-lucide-file-text"
+                        highlight-color="accent"
+                        class="hover:ring-accent/50 transition-all"
+                        :ui="{ leadingIcon: 'text-accent' }"
+                    />
+                    <UPageCard
+                        to="/host/travel"
+                        title="Travel Advice"
+                        description="Get information on flights, visas, and getting to the congress."
+                        icon="i-lucide-plane"
+                        highlight-color="accent"
+                        class="hover:ring-accent/50 transition-all"
+                        :ui="{ leadingIcon: 'text-accent' }"
+                    />
+                    <UPageCard
+                        to="/registration"
+                        title="Register for Congress"
+                        description="Secure your place at APOA 2026 in Taiwan."
+                        icon="i-lucide-calendar-check"
+                        highlight-color="accent"
+                        class="hover:ring-accent/50 transition-all"
+                        :ui="{ leadingIcon: 'text-accent' }"
+                    />
+                    <UPageCard
+                        to="/contact"
+                        title="Get Help"
+                        description="Need assistance? Reach out to the congress team."
+                        icon="i-lucide-message-circle-question-mark"
+                        highlight-color="accent"
+                        class="hover:ring-accent/50 transition-all"
+                        :ui="{ leadingIcon: 'text-accent' }"
+                    />
+                    <UPageCard
+                        to="/host/venue"
+                        title="Venue & Host City"
+                        description="Discover the congress venue and explore what Taiwan has to offer."
+                        icon="i-lucide-map-pin"
+                        highlight-color="accent"
+                        class="hover:ring-accent/50 transition-all"
+                        :ui="{ leadingIcon: 'text-accent' }"
+                    />
+                </div>
             </div>
 
             <Headline v-if="profile?.person" headline="Congress Profile" class="text-accent text-center mt-8"/>

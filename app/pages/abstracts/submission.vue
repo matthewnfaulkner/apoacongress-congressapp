@@ -230,7 +230,7 @@ function getRowItems(row: Row<Submission>) {
 const schema = z.object({
   id: z.any().nullable(),
   abstract: z.string('Abstract is required').max(250, 'Max 250 Characters'),
-  title: z.string('Title is required').max(75, "Max 75 Characters"),
+  title: z.string('Title is required').max(150, "Max 150 Characters"),
   category: z.string('Category is required'),
   authors: z.array(
     z.object({

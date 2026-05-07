@@ -79,10 +79,9 @@ const countryTravelInfo = computed<CountryTravelInfo | null>(() => {
 
 	return (
 		travelData.value.travelInfo.find((info) => {
-			const country = info.country as { key: string } | string | null | undefined;
+			const country = info.country as | string | null | undefined;
 			if (!country) return false;
-			const key = typeof country === 'string' ? country : country.key;
-			return key.toUpperCase() === code;
+			return country.toUpperCase() === code;
 		}) ?? null
 	);
 });
@@ -265,7 +264,6 @@ watch(selectedCityCode, async (cityCode) => {
 </script>
 
 <template>
-
 	<Container class="py-12">
 		<Headline headline="Travel & Visa Information" class="text-accent text-center" />
 		<Tagline tagline="Everything you need to know about travelling to the congress venue." class="font-normal text-center mb-10" />

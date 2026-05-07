@@ -107,6 +107,7 @@ const pageFields = [
 						},
 					],
 					block_posts: ['id', 'tagline', 'headline', 'collection', 'limit'],
+					block_form_flow: ['*'],
 					block_form: [
 						'id',
 						'tagline',
@@ -474,5 +475,8 @@ export default cachedEventHandler(async (event) => {
     const { permalink, version } = getQuery(event)
     return `pages-${permalink}`
   },
-  shouldBypassCache: (event) => getQuery(event).preview === 'true',
+  shouldBypassCache: (event) => {
+    const config = useRuntimeConfig()
+    return config.public.isSandbox || getQuery(event).preview === 'true'
+  },
 });

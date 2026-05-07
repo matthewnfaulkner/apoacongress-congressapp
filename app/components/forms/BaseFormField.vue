@@ -47,9 +47,10 @@ const getComponentProps = (field: FormField) => {
 </script>
 
 <template>
+
 	<div v-if="props.field.type !== 'hidden'" :class="`field-width-${field.width ?? '100'}`">
 		<FormItem class="pt-2">
-			<FormLabel :for="field.name ?? ''" class="flex items-center justify-between">
+			<FormLabel :for="field.name ?? ''" class="flex items-center justify-between text-base">
 				<div class="flex items-center space-x-1 h-[20px]">
 					<span v-if="field.type !== 'checkbox'">{{ field.label ?? '' }}</span>
 					<TooltipProvider v-if="field.help">

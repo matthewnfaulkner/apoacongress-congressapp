@@ -24,8 +24,6 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
                 return navigateTo('/')
             }
         }
-    } else if (to.name?.startsWith("admin_login")) {
-                return navigateTo('/')
-            }
+    } 
 });
 ``

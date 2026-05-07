@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { Page, PageBlock } from '#shared/types/schema';
 import { withLeadingSlash, withoutTrailingSlash } from 'ufo';
-import VueCountdown from '@chenfengyuan/vue-countdown';
 import { useToast } from '@nuxt/ui/runtime/composables/useToast.js';
 import { useAuthStore } from '~/stores/auth';
 
@@ -10,13 +9,12 @@ definePageMeta({
 })
 
 const route = useRoute();
-const i18n = useI18n();
 const { enabled, state } = useLivePreview();
 const pageUrl = useRequestURL();
 const { isVisualEditingEnabled, apply, setAttr } = useVisualEditing();
+const { $directus, $isAuthenticated } = useNuxtApp();
 
-
-const { locale, locales, defaultLocale } = useI18n();
+const { locale, defaultLocale } = useI18n();
 
 const path = withoutTrailingSlash(withLeadingSlash(route.path));
 const permalink = locale.value === defaultLocale ?  path : '/';
@@ -24,7 +22,7 @@ const permalink = locale.value === defaultLocale ?  path : '/';
 const toast = useToast()
 
 const auth = await useAuthStore();
-
+const log = await $isAuthenticated();
 const isLoggedIn = computed(() =>
   auth.isAuthenticated === true ||
   typeof auth.isAuthenticated === 'object'

@@ -4,6 +4,8 @@ import { Chat } from '@ai-sdk/vue'
 import { DefaultChatTransport } from 'ai'
 import type { UIMessage } from 'ai'
 
+const { $directusTokenStorage } = useNuxtApp()
+
 const siteDataStore = useSiteDataStore();
 const siteData = siteDataStore.getSiteData() as Site;
 
@@ -23,10 +25,15 @@ const input = ref('')
 const pendingMessages = ref<string[]>([])
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
-// Session cookie is sent automatically by the browser — no token passing needed
 const chat = new Chat({
   messages,
-  transport: new DefaultChatTransport({ api: '/api/chat' }),
+  transport: new DefaultChatTransport({
+    api: '/api/chat',
+    headers: () => {
+      const token = $directusTokenStorage.get()?.access_token as string | undefined
+      return { Authorization: token ? `Bearer ${token}` : '' }
+    },
+  }),
 })
 
 
@@ -70,6 +77,7 @@ const open = ref(false);
 </script>
 
 <template>
+	
 		<UPopover v-if="enableChatAgent" :dismissible="false" :ui="{ content: 'sm:max-w-3xl h-100 sm:h-[28rem]' }" class="fixed bottom-10 right-10 z-100 h-4" v-model:open="open">
 		
 		<UChip color="accent" size="xl">

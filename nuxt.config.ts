@@ -1,5 +1,7 @@
 import tailwindcss from "@tailwindcss/vite";
 
+const isSandbox = process.env.NUXT_PUBLIC_IS_SANDBOX !== 'false';
+
 export default defineNuxtConfig({
 	components: [
 		{ path: '~/components', pathPrefix: false },
@@ -18,9 +20,12 @@ export default defineNuxtConfig({
 	future: {
 		compatibilityVersion: 4,
 	},
-	routeRules: {
+	routeRules: isSandbox ? {
+		'/api/**': { isr: false },
+		'/**': { isr: false, ssr: false },
+	} : {
 		// Never cache API routes - query params must always hit the server fresh
-		'/api/**': { isr: false },   // API always fresh
+		'/api/**': { isr: false },
 
 		// Auth pages must always run fresh SSR to read cookies
 		'/login': { isr: false },
@@ -28,7 +33,6 @@ export default defineNuxtConfig({
 
 		// Cache all page routes
 		'/**': { isr: 60 },
-
 	},
 	ui: {
 		colorMode: false,
@@ -132,6 +136,7 @@ export default defineNuxtConfig({
 			loginUrl: process.env.LOGIN_URL as string,
 			logoutUrl: process.env.LOGOUT_URL as string,
 			isSandbox: process.env.NUXT_PUBLIC_IS_SANDBOX != 'false',
+			cacheTtl: isSandbox ? 0 : 60,
 			enableChatAgent: process.env.NUXT_PUBLIC_ENABLE_CHAT != 'false',
 			refreshTokenName: process.env.DIRECTUS_REFRESH_TOKEN_NAME as string || 'directus_refresh_token',
 			

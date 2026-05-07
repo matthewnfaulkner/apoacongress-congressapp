@@ -24,6 +24,7 @@ interface MessagesProps {
 			tagline: string,
 			content: string,
 			button_group?: {
+				id: string;
 				buttons: Array<{
 					id: string;
 					label: string | null;
@@ -161,7 +162,7 @@ const props = defineProps<MessagesProps>();
 					</UPageCard>
 		</UCarousel>
 		<div v-else class="clearfix">
-			<div v-for="message in data.messages" 
+			<div v-for="message in data.messages" class="flow-root"
 			:data-directus="
 							setAttr({
 								collection: 'block_messages_message',

@@ -11,10 +11,13 @@
 				:avatar="{
 					class: 'lg:hidden xl:block rounded-none max-w-25',
 					src: lightLogoUrl,
-					icon: 'i-lucide-image'
+					icon: 'i-lucide-image',
+					ui: {
+						root: 'w-fit bg-transparent'
+					}
 				}" 
 				size="2xl" class="relative font-heading" 
-				:name="props.site.title"/>
+			/>
 		</span>
       </NuxtLink>
     </template>
@@ -176,7 +179,7 @@ const props = defineProps<{
 
 const runtimeConfig = useRuntimeConfig();
 
-const loginUrl = computed(() => runtimeConfig.public.loginUrl /*+ `?redirect=${path.value}`*/ || '');
+const loginUrl = computed(() => runtimeConfig.public.loginUrl + `?redirect=${path.value}` || '');
 // Logo URLs
 const lightLogoUrl = computed(() =>
   props.site?.logo ? `${runtimeConfig.public.directusUrl}/assets/${props.site.logo}` : '/images/logo.svg'
