@@ -22,7 +22,7 @@ export default defineNuxtConfig({
 	},
 	routeRules: isSandbox ? {
 		'/api/**': { isr: false },
-		'/**': { isr: false, ssr: false },
+		'/**': { isr: false },
 	} : {
 		// Never cache API routes - query params must always hit the server fresh
 		'/api/**': { isr: false },
