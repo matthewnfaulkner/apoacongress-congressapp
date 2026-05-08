@@ -147,10 +147,7 @@ const pageFields = [
 						'category',
 					],	
 					block_people: [
-						'id',
-						'tagline',
-						'headline',
-						'display',
+						'*',
 						{
 							people: [
 								'collection',
@@ -476,6 +473,7 @@ export default cachedEventHandler(async (event) => {
     return `pages-${permalink}`
   },
   shouldBypassCache: (event) => {
+	return true;
     const config = useRuntimeConfig()
     return config.public.isSandbox || getQuery(event).preview === 'true'
   },

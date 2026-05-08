@@ -459,6 +459,10 @@ export interface BlockPeople {
 	type?: string| null;
 	people: BlockPeoplePeople;
 	display?: string | null;
+	show_country?: boolean | null;
+	show_title?: boolean | null;
+	show_flag?: boolean | null;
+
 }
 
 
