@@ -3,7 +3,8 @@ import { useAuthStore } from "~/stores/auth";
 export default defineNuxtRouteMiddleware(async (to, from) => {
     // Skip this entirely during the prerender/build phase
     if (import.meta.prerender) return;
-    
+
+
     const { $isAuthenticated, $isAuthenticatedWithPolicy } = useNuxtApp();
 
     const auth = useAuthStore();
@@ -12,6 +13,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
 
     const config = useRuntimeConfig();
     if(config.public.isSandbox) {
+        if (import.meta.server) return;
         const result = await $isAuthenticatedWithPolicy('Abstracts - Reviewer');
         auth.setAuth(result);
         
