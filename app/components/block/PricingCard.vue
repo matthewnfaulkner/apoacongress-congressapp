@@ -20,6 +20,7 @@ interface PricingCard {
 			charge: CongressCharge
 		}>
 		button_group?: {
+			id?: string;
 			buttons: Array<{
 				id: string;
 				label: string | null;
@@ -31,6 +32,7 @@ interface PricingCard {
 			}>;
 		};
 		is_highlighted?: boolean;
+		hotel?: { id: string; name: string; star_rating?: number | null } | null;
 };
 
 interface Feature {
@@ -67,15 +69,20 @@ watchEffect(() => {
 
 		const detail = details?.[0];
 
+		const rawHotel = top?.charge.hotel;
+		const hotel = rawHotel && typeof rawHotel === 'object' ? rawHotel as { id: string; name: string; star_rating?: number | null } : null;
+
 		card.value = {
 			id: props.card.id,
 			category: 'accommodation',
-			title: top?.charge.sub_category || '',
+			title: props.card.title ? props.card.title : top?.charge.sub_category || '',
 			price: top?.charge.price || '',
 			description: `${dateStringToHumanStringBack(detail?.check_in)} - ${dateStringToHumanStringBack(detail?.check_out)}`,
 			badge: props.card.badge,
 			button_group: props.card.button_group,
 			use_congress_charges: true,
+			is_highlighted: props.card.is_highlighted,
+			hotel,
 			features: localCharges.flatMap(c => {
 				return `${c.charge.price} - ${c.charge.sub_category}`;
 			})
@@ -104,14 +111,19 @@ watchEffect(() => {
 		card.value = {
 			id: props.card.id,
 			category: 'registration',
-			title: top?.charge.sub_category || '',
+			title: props.card.title ? props.card.title : top?.charge.sub_category || '',
 			price: top?.charge.price || '',
 			description: `${detail?.cutoff_description || ''} ${dateStringToHumanStringBack(detail?.cutoff_date)}`,
 			badge: props.card.badge,
 			button_group: props.card.button_group,
 			use_congress_charges: true,
+			is_highlighted: props.card.is_highlighted,
 			features: filteredCharges.flatMap(c => {
-				return `<b>${c.charge.price}</b> - ${detail.cutoff_description} ${dateStringToHumanStringBack(detail?.cutoff_date)}`
+				const fdetails =
+					c?.charge.details as RegistrationChargeDetail[];
+
+					const fd = fdetails?.[0] as RegistrationChargeDetail;
+				return `<b>${c.charge.price}</b> - ${fd.cutoff_description} ${dateStringToHumanStringBack(fd?.cutoff_date)}`
 
 			})
 		};
@@ -121,6 +133,7 @@ watchEffect(() => {
 </script>
 
 <template>
+
 	<div
 		:class="[
 			'flex flex-col max-w-[600px] border rounded-lg p-6',
@@ -237,6 +250,17 @@ watchEffect(() => {
 				</li>
 			</ul>
 		</div>
+		<UButton
+			v-if="card.hotel"
+			:to="`/hotels/${card.hotel.id}`"
+			variant="ghost"
+			color="accent"
+			class="mt-4 w-full justify-center text-sm"
+			icon="i-lucide-building-2"
+			trailing
+		>
+			{{ card.hotel.name }}
+		</UButton>
 		<div
 			v-if="card.button_group?.buttons?.length"
 			class="mt-6 flex justify-center image_left my-3"
@@ -246,7 +270,7 @@ watchEffect(() => {
 				:data-directus="
 					setAttr({ 
 						collection: 'block_button_group', 
-						item: card.button_group?.id, 
+						item: card.button_group?.id ?? null,
 						fields: 'buttons', 
 						mode: 'modal' })
 				"

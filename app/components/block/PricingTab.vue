@@ -6,11 +6,13 @@ interface PricingTabProps {
 		headline?: string;
 		pricing_cards: Array<{
 			id: string;
+			title: string;
 			label: string;
 			description?: string;
 			price?: string;
-			badge?: string;
+			badge?: Array<{ label: string; link?: string }> | null;
 			features?: string[];
+			sort?: number;
 			button_group?: {
 				buttons: Array<{
 					id: string;
@@ -27,7 +29,11 @@ interface PricingTabProps {
 	};
 }
 const { setAttr } = useVisualEditing();
-defineProps<PricingTabProps>();
+const props = defineProps<PricingTabProps>();
+
+const sortedCards = computed(() =>
+	[...props.tab.pricing_cards].sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0))
+)
 </script>
 
 <template>
@@ -46,7 +52,7 @@ defineProps<PricingTabProps>();
 					mode: 'modal',
 				})
 			"
-		>
-			<PricingCard v-for="card in tab.pricing_cards" :key="card.id" :card="card" />
+		>	
+			<PricingCard v-for="card in sortedCards" :key="card.id" :card="card" ></PricingCard>
 		</div>
 </template>

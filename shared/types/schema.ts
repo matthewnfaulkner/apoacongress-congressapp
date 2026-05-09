@@ -205,6 +205,7 @@ export interface CongressCharge {
 	sub_category?: string | null;
 	price?: string | null;
 	details: RegistrationChargeDetail[] | AccommodationChargeDetail[] | null;
+	hotel?: Hotel | string | null;
 }
 
 export interface RegistrationChargeDetail {
@@ -547,6 +548,7 @@ export interface Congress {
 	accommodation_charges?: AccommodationCharge[]
 	charges?: CongressCharge[] | string[] | null;
 	societies?: CongressSociety[] | string[] | null;
+	hotels?: CongressHotel[] | string[] | null;
 }
 
 export interface RegistrationCharge {
@@ -1033,6 +1035,37 @@ export interface Globals {
 	user_created?: DirectusUser | string | null;
 	date_updated?: string | null;
 	user_updated?: DirectusUser | string | null;
+}
+
+export interface GeoJSONPoint {
+	type: 'Point';
+	coordinates: [number, number]; // [longitude, latitude]
+}
+
+export interface Hotel {
+	/** @primaryKey */
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	name: string;
+	star_rating?: number | null;
+	website?: string | null;
+	phone?: string | null;
+	address?: string | null;
+	image?: DirectusFile | string | null;
+	rooms?: number | null;
+	location?: GeoJSONPoint | null;
+	ammenities?: string[] | null;
+	congresses?: CongressHotel[] | string[] | null;
+}
+
+export interface CongressHotel {
+	id: number;
+	hotel: Hotel | string | null;
+	congress: Congress | string | null;
+	directions?: string | null;
 }
 
 export interface Site {
@@ -1988,6 +2021,7 @@ export interface Schema {
 	form_submissions: FormSubmission[];
 	form_submission_values: FormSubmissionValue[];
 	globals: Globals;
+	hotels: Hotel[];
 	sites: Site[];
 	navigation: Navigation[];
 	navigation_items: NavigationItem[];
@@ -2081,6 +2115,7 @@ export enum CollectionNames {
 	form_submissions = 'form_submissions',
 	form_submission_values = 'form_submission_values',
 	globals = 'globals',
+	hotels = 'hotels',
 	sites = 'sites',
 	navigation = 'navigation',
 	navigation_items = 'navigation_items',
