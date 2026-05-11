@@ -59,7 +59,7 @@ watchEffect(() => {
 	const now = new Date();
 
 	const localCharges = [...charges.value]; // mutable copy
-	
+	console.log(localCharges);
 	if (props.card.category === 'accommodation') {
 
 		const top = localCharges.shift();
@@ -91,15 +91,19 @@ watchEffect(() => {
 	} else if (props.card.category === 'registration') {
 
 		const filteredCharges = localCharges.filter(charge => {
-			if(!charge.charge.details) return
+			if(!charge.charge.details || Object.keys(charge.charge.details ).length) return true
 
 			const details =
 				charge.charge.details[0] as RegistrationChargeDetail;
 
+			console.log(details)
 			const cutoff = new Date(details.cutoff_date);
 			return now < cutoff;
-		});
+			
 
+			return true;
+		});
+		console.log(filteredCharges);
 		const top = filteredCharges.shift();
 		topCharge.value = top?.charge;
 
@@ -113,19 +117,11 @@ watchEffect(() => {
 			category: 'registration',
 			title: props.card.title ? props.card.title : top?.charge.sub_category || '',
 			price: top?.charge.price || '',
-			description: `${detail?.cutoff_description || ''} ${dateStringToHumanStringBack(detail?.cutoff_date)}`,
 			badge: props.card.badge,
 			button_group: props.card.button_group,
 			use_congress_charges: true,
 			is_highlighted: props.card.is_highlighted,
-			features: filteredCharges.flatMap(c => {
-				const fdetails =
-					c?.charge.details as RegistrationChargeDetail[];
 
-					const fd = fdetails?.[0] as RegistrationChargeDetail;
-				return `<b>${c.charge.price}</b> - ${fd.cutoff_description} ${dateStringToHumanStringBack(fd?.cutoff_date)}`
-
-			})
 		};
 	}
 });
@@ -133,7 +129,6 @@ watchEffect(() => {
 </script>
 
 <template>
-
 	<div
 		:class="[
 			'flex flex-col max-w-[600px] border rounded-lg p-6',

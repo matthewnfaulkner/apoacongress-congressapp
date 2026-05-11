@@ -4,11 +4,6 @@
 
 
 
-@keyframes cookieBannerIn {
-  from { opacity: 0; transform: translateY(1rem); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
 @layer base {
   h4 {
     @apply text-lg font-semibold my-3;

@@ -62,7 +62,7 @@ const darkLogoUrl = computed(() =>
 							v-if="lightLogoUrl"
 							:src="lightLogoUrl"
 							alt="Logo"
-							:class="['w-[120px] h-auto', darkLogoUrl ? 'dark:hidden' : '']"
+							:class="['w-[200px] h-auto', darkLogoUrl ? 'dark:hidden' : '']"
 						/>
 						<img
 							v-if="darkLogoUrl"
