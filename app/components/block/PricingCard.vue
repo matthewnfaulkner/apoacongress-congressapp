@@ -90,13 +90,10 @@ watchEffect(() => {
 	} else if (props.card.category === 'registration') {
 
 		const filteredCharges = localCharges.filter(charge => {
-			if(!charge.charge.details || Object.keys(charge.charge.details ).length) return true
-
-			const details =
-				charge.charge.details[0] as RegistrationChargeDetail;
-
+			if (!charge.charge.details || !charge.charge.details.length) return true;
+			const details = charge.charge.details[0] as RegistrationChargeDetail;
 			const cutoff = new Date(details.cutoff_date);
-			return now < cutoff;
+			return now <= cutoff;
 		});
 		const top = filteredCharges.shift();
 		topCharge.value = top?.charge;
@@ -119,7 +116,7 @@ watchEffect(() => {
 			features: filteredCharges.flatMap(c => {
 				const d = (c.charge.details as RegistrationChargeDetail[])?.[0];
 				return d
-					? `${c.charge.price} - ${d.cutoff_description} ${dateStringToHumanStringBack(d.cutoff_date)}`
+					? `<b class="text-accent">${c.charge.price}</b> - ${d.cutoff_description} ${dateStringToHumanStringBack(d.cutoff_date)}`
 					: c.charge.price || '';
 			}),
 		};
@@ -240,7 +237,6 @@ watchEffect(() => {
 				"
 			>
 				<li v-for="(feature, index) in card.features" :key="index" class="flex items-center gap-3 text-regular">
-					
 					<p class="leading-relaxed" v-html="feature"></p>
 				</li>
 			</ul>

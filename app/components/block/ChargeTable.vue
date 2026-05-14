@@ -32,7 +32,6 @@ const componentData = computed(() => type);
 
 <template>
 	<Headline :headline="headline" />
-	{{ componentData }}
 	<div ref="blockRef" class="relative">
 		<component :is="Component" v-if="Component" :id="`block-${data.id}`" :data="componentData" />
 	</div>

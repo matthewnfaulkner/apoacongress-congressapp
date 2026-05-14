@@ -95,7 +95,7 @@ const pageFields = [
 					block_mainhero: [
 						'*',
 						{
-							announcements: ['content']
+							announcements: ['headline', 'content']
 						},
 						{
 							partners: [

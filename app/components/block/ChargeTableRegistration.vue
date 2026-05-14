@@ -57,23 +57,34 @@ const charges = data.value?.charges as CongressCharge[] || [];
 
 const tabs = ref();
 
-const grouped: GroupedData = charges.reduce<GroupedData>((acc, item, index) => {
+const headersByDelegate: Record<string, Set<string>> = {};
+charges.forEach(item => {
+	const delegate = item.delegate || 'International';
+	headersByDelegate[delegate] ??= new Set();
+	item.details?.forEach(detail => {
+		const d = detail as RegistrationChargeDetail;
+		const header = `${d.cutoff_description} - ${dateStringToHumanStringBack(d.cutoff_date)}`;
+		headersByDelegate[delegate].add(header);
+	});
+});
+
+const grouped: GroupedData = charges.reduce<GroupedData>((acc, item) => {
 	const delegate = item.delegate || 'International';
 	const category = item.sub_category || 'APOA Member';
-	acc[delegate] ??= {
+	acc[delegate] ??= {};
+	acc[delegate][category] ??= { category };
+
+	if (!item.details || !item.details.length) {
+		headersByDelegate[delegate]?.forEach(header => {
+			acc[delegate][category][header] = item.price;
+		});
+	} else {
+		item.details.forEach(detail => {
+			const d = detail as RegistrationChargeDetail;
+			const header = `${d.cutoff_description} - ${dateStringToHumanStringBack(d.cutoff_date)}`;
+			acc[delegate][category][header] = item.price;
+		});
 	}
-
-
-	item.details?.forEach((detail) => {
-
-		const registrationChargeDetail = detail as RegistrationChargeDetail;
-		const header = `${registrationChargeDetail.cutoff_description} - ${dateStringToHumanStringBack(registrationChargeDetail.cutoff_date)}`;
-
-		acc[delegate][category] ??= {
-			category: category
-		};
-		acc[delegate][category][header] = item.price
-	});
 
 	return acc;
 }, {})
@@ -87,22 +98,14 @@ items: Object.values(subObj),
 
 
 
-interface Cutoff {
-  date: string;
-  name: string;
-}
-
-interface RegistrationCharge {
-  delegate: string;
+type CategoryRow = {
   category: string;
-  price: string;
-  cutoff: Cutoff[];
-}
-
+  [header: string]: string | null | undefined;
+};
 
 type GroupedData = {
   [delegate: string]: {
-    [date: string]: RegistrationCharge[];
+    [subCategory: string]: CategoryRow;
   };
 };
 

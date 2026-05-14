@@ -163,7 +163,7 @@ onMounted(() => {
 					>
 					<div
 						v-if="openAnnouncements"
-						class="text-shadow-none absolute  bottom-30 left-1/2 -translate-x-1/2 z-40 w-[90%] max-w-lg px-10 lg:px-0 max-h-[80%]"
+						class="text-shadow-none absolute top-5 left-1/2 -translate-x-1/2 z-40 w-[90%] max-w-lg px-10 max-h-[80%] md:bottom-auto md:top-1/2 md:left-6 md:translate-x-0 md:-translate-y-1/2 md:w-1/2 md:w-[50%] md:px-0 lg:left-12 xl:left-50"
 					>
 						<UCard class="shadow-xl bg-primary shadow-2xl shadow-black">
 							<div class="flex flex-col gap-2">
@@ -325,7 +325,8 @@ onMounted(() => {
     		</div>
 
 
-			<div v-if="data.partners?.length" class="absolute top-0 left-0 right-0 pt-2">
+			<div v-if="data.partners?.length" class="absolute top-0 left-0 right-0 pt-2 transition-all duration-700 ease-out delay-1000"
+				:class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'">
 				<div class="px-6 mx-auto sm:px-8 lg:px-12 xl:px-50 max-w-8xl flex justify-end-safe">
 					<div class="w-full lg:w-2/3 xl:w-2/3 px-5 lg:px-10 pt-2 pb-2 sm:pb-3 flex flex-col items-end gap-1.5">
 						<div class="flex flex-col items-center gap-1.5">
