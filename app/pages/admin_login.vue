@@ -201,7 +201,7 @@ useSeoMeta({ title: 'Admin Login', ogTitle: 'Admin Login', robots: 'noindex' });
           orientation="vertical"
         >
           <template #avatar>
-            <DirectusImage :uuid="siteData?.logo" class="h-25 w-25"/>
+            <DirectusImage :uuid="siteData?.logo" class="h-auto w-25"/>
           </template>
         </UUser>
       </template>

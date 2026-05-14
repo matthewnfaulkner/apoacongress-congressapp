@@ -98,7 +98,7 @@ const darkLogoUrl = computed(() =>
 			<div class="flex flex-col md:flex-row items-start gap-8 pt-8">
 				<div class="flex flex-col items-start flex-1">
 					<nav v-if="props.navigation.items?.length" class="w-full md:w-auto text-left">
-						<ul class="space-y-4 list-disc list-inside">
+						<ul class="space-y-4 list-none list-inside">
 							<li v-for="item in props.navigation.items" :key="item.id">
 								<NuxtLink
 									v-if="item.page?.permalink"

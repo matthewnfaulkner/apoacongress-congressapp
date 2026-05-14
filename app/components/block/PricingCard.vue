@@ -111,11 +111,17 @@ watchEffect(() => {
 			category: 'registration',
 			title: props.card.title ? props.card.title : top?.charge.sub_category || '',
 			price: top?.charge.price || '',
+			description: detail ? `${detail.cutoff_description} ${dateStringToHumanStringBack(detail.cutoff_date)}` : undefined,
 			badge: props.card.badge,
 			button_group: props.card.button_group,
 			use_congress_charges: true,
 			is_highlighted: props.card.is_highlighted,
-
+			features: filteredCharges.flatMap(c => {
+				const d = (c.charge.details as RegistrationChargeDetail[])?.[0];
+				return d
+					? `${c.charge.price} - ${d.cutoff_description} ${dateStringToHumanStringBack(d.cutoff_date)}`
+					: c.charge.price || '';
+			}),
 		};
 	}
 });
