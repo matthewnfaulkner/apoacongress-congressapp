@@ -253,7 +253,7 @@ const meta: TableMeta<EventEntry> = {
   }
 }
 
-
+useSeoMeta({ title: 'Live Programme', ogTitle: 'Live Programme' });
 </script>
 
 <template>

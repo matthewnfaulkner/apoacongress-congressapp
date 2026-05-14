@@ -171,8 +171,7 @@ async function login(payload: FormSubmitEvent<Schema>){
     }
 }
 
-
-
+useSeoMeta({ title: 'Admin Login', ogTitle: 'Admin Login', robots: 'noindex' });
 </script>
   <template>
 

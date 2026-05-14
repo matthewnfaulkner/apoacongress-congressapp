@@ -35,6 +35,7 @@ const secondsUntil = Math.floor(
 );
 
 import  ButtonGroup  from '@/components/base/ButtonGroup.vue';
+import type { BlockMainHeroPartner } from "~~/shared/types/schema";
 
 interface MainHeroProps {
 	data: {
@@ -45,12 +46,15 @@ interface MainHeroProps {
 		countdown: boolean | null;
 		bgcolor: string | null;
 		image: string;
+		logo?: string;
 		announcements?: Array<{
 			id: string;
 			headline?: string | null;
 			content?: string | null;
 		}> | null;
+		partners?: BlockMainHeroPartner[] | null;
 		button_group?: {
+			id: string;
 			buttons: Array<{
 				id: string;
 				label: string | null;
@@ -113,7 +117,7 @@ const buttons = button_group?.buttons.map((button) => ({
 		${baseClasses}
 		${variantClasses[button?.variant]}
 	`
-}))
+})) ?? []
 
 const heroRef = useTemplateRef('heroRef');
 
@@ -133,7 +137,7 @@ onMounted(() => {
 </script>
 
 <template>
-	<div ref="heroRef" class="relative pt-0 pb-12 xl:pt-10 sm:pb-16 lg:pb-32 xl:pb-48 2xl:pb-56 min-h-lvh"
+	<div ref="heroRef" class="relative pt-20 pb-6 h-[calc(100svh-var(--ui-header-height,4rem))] overflow-hidden"
 		:style="{ '--herobg-color': data.bgcolor }"
 		:class="`bg-[var(--herobg-color)]`">
 			
@@ -185,11 +189,11 @@ onMounted(() => {
 
 			<div class="relative">
 				<div class="px-6 mx-auto sm:px-8 lg:px-12 xl:px-50 max-w-8xl flex justify-end-safe ">
-					<div class="w-full lg:w-2/3 xl:w-2/3 p-5 bg-secondary/60 sm:bg-transparent lg:p-10 text-right text-shadow-black text-shadow-lg rounded-b-xl sm:h-auto">
+					<div class="w-full lg:w-2/3 xl:w-2/3 p-5 text-white bg-secondary/60 sm:bg-transparent lg:p-10 text-right text-shadow-black text-shadow-lg rounded-b-xl sm:h-auto">
 						<!-- tagline -->
-						<p class="tracking-tighter text-white mt-0 lg:mt-0 transition-all duration-500 ease-out"
+						<p class="tracking-tighter  mt-0 lg:mt-0 transition-all duration-500 ease-out"
 							:class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'">
-							<Text class=" font-heading text-md sm:text-xl text-white"
+							<Text class=" font-heading text-md sm:text-xl text-center sm:text-right text-white"
 							:content="data.tagline"
 							:data-directus="
 									setAttr({
@@ -197,26 +201,40 @@ onMounted(() => {
 										item: data.id,
 										fields: 'tagline',
 										mode: 'modal' })">{{ props.data.tagline }}
-							</Text><br/>
+							</Text>
 							<!-- logo + headline -->
 							<div class="flex flex-row justify-end transition-all duration-500 ease-out delay-150"
 								:class="visible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'">
-								<NuxtImg src="/images/apoalogo.png" class="inline h-25"/>
-								<Text class="font-heading italic font-normal text-7xl md:text-8xl inline text-white"
-									:content="data.headline"
-									:item-id="data.id"
+								<DirectusImage
+									v-if="data.logo"
+									class="inline h-40 sm:h-50 xl:h-65"
+									:class="visible ? 'opacity-100 scale-100' : 'opacity-0 scale-105'"
+									:uuid="props.data.logo"
 									:data-directus="
 										setAttr({
 											collection: 'block_mainhero',
-											item: data.id,
-											fields: 'headline',
-											mode: 'modal' })"
-								/>
+											item: data?.id,
+											fields: 'logo',
+											mode: 'modal' })
+									"/>
+								<div v-else class="flex ">
+									<NuxtImg  src="/images/apoalogo.png" class="inline h-auto max-h-65"/>
+									<Text class="font-heading italic font-normal text-7xl md:text-8xl inline text-white"
+										:content="data.headline"
+										:item-id="data.id"
+										:data-directus="
+											setAttr({
+												collection: 'block_mainhero',
+												item: data.id,
+												fields: 'headline',
+												mode: 'modal' })"
+									/>
+								</div>
 							</div>
 						</p>
 						<!-- description -->
 						<Label
-							class="mt-2 font-sans text-base font-normal leading-7 text-white text-opacity-70 text-sm sm:text-lg italic transition-all duration-500 ease-out delay-250"
+							class="mt-2 font-sans text-xs font-normal leading-7 text-white text-opacity-70 sm:text-lg italic transition-all duration-500 ease-out delay-250"
 							:class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'"
 							:data-directus="
 										setAttr({
@@ -230,7 +248,7 @@ onMounted(() => {
 						<div class="transition-all duration-500 ease-out delay-400"
 							:class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'">
 							<Text
-								class="mt-2 font-sans text-xl lg:text-2xl font-bold text-white"
+								class="mt-2 font-sans text-xl lg:text-2xl font-bold"
 								:content="date"
 								:data-directus="
 									setAttr({
@@ -278,22 +296,22 @@ onMounted(() => {
 								"
 						>
 							<vue-countdown :time="secondsUntil * 1000" v-slot="{ days, hours, minutes, seconds }" class="text-shadow-none">
-								<UBadge class="p-2 m-1 lg:m-2 text-lg lg:text-3xl text-center text-secondary flex-col w-14 lg:w-20 transition-all duration-400 ease-out delay-550"
+								<UBadge class="p-2 m-1 lg:m-2 text-xs lg:text-3xl text-center text-secondary flex-col w-14 lg:w-20 transition-all duration-400 ease-out delay-550"
 									:class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'"
 									variant="solid" color="primary">{{days}}
 									<template #trailing><p class="text-xs">Days</p></template>
 								</UBadge>
-								<UBadge class="p-2 m-1 lg:m-2 text-lg lg:text-3xl text-center text-secondary flex-col w-14 lg:w-20 transition-all duration-400 ease-out delay-650"
+								<UBadge class="p-2 m-1 lg:m-2 text-xs lg:text-3xl text-center text-secondary flex-col w-14 lg:w-20 transition-all duration-400 ease-out delay-650"
 									:class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'"
 									variant="solid" color="primary">{{hours}}
 									<template #trailing><p class="text-xs">Hours</p></template>
 								</UBadge>
-								<UBadge class="p-2 m-1 lg:m-2 text-lg lg:text-3xl text-center text-secondary flex-col w-14 lg:w-20 transition-all duration-400 ease-out delay-750"
+								<UBadge class="p-2 m-1 lg:m-2 text-xs lg:text-3xl text-center text-secondary flex-col w-14 lg:w-20 transition-all duration-400 ease-out delay-750"
 									:class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'"
 									variant="solid" color="primary">{{minutes}}
 									<template #trailing><p class="text-xs">Minutes</p></template>
 								</UBadge>
-								<UBadge class="p-2 m-1 lg:m-2 text-lg lg:text-3xl text-center text-secondary flex-col w-14 lg:w-20 transition-all duration-400 ease-out delay-850"
+								<UBadge class="p-2 m-1 lg:m-2 text-xs lg:text-3xl text-center text-secondary flex-col w-14 lg:w-20 transition-all duration-400 ease-out delay-850"
 									:class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'"
 									variant="solid" color="primary">{{seconds}}
 									<template #trailing><p class="text-xs">Seconds</p></template>
@@ -305,6 +323,40 @@ onMounted(() => {
 				</div>
 				
     		</div>
-			
+
+
+			<div v-if="data.partners?.length" class="absolute top-0 left-0 right-0 pt-2">
+				<div class="px-6 mx-auto sm:px-8 lg:px-12 xl:px-50 max-w-8xl flex justify-end-safe">
+					<div class="w-full lg:w-2/3 xl:w-2/3 px-5 lg:px-10 pt-2 pb-2 sm:pb-3 flex flex-col items-end gap-1.5">
+						<div class="flex flex-col items-center gap-1.5">
+						<p class="text-white/70 text-[10px] sm:text-xs font-semibold uppercase tracking-widest whitespace-nowrap">In partnership with</p>
+						<div class="flex flex-row items-center gap-4 sm:gap-6 overflow-x-auto scrollbar-none"
+						:data-directus="
+									setAttr({
+										collection: 'block_mainhero',
+										item: data.id,
+										fields: 'partners',
+										mode: 'modal' })
+								">
+							<div 
+								v-for="partner in data.partners" 
+								:key="partner.id" class="flex flex-col items-center gap-0.5 group shrink-0"
+								>
+								<DirectusImage
+									v-if="partner.organisation?.logo"
+									:uuid="partner.organisation.logo"
+									class="h-6 sm:h-8 lg:h-12 w-auto object-contain opacity-80 group-hover:opacity-100 transition-opacity"
+								/>
+								<NuxtImg v-else src="/images/apoalogo.png" class="h-6 sm:h-8 lg:h-12 w-auto object-contain opacity-80 group-hover:opacity-100 transition-opacity" />
+								<span class="text-white/70 text-[9px] sm:text-2xs font-medium group-hover:text-white transition-colors leading-tight text-center w-16 sm:w-20 lg:w-24">
+									{{ partner.organisation?.name || partner.organisation?.abbr || partner.organisation?.short_name }}
+								</span>
+							</div>
+						</div>
+					</div>
+					</div>
+				</div>
+			</div>
+
 		</div>
 </template>

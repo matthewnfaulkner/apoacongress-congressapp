@@ -2,7 +2,14 @@
 import { readMe } from '@directus/sdk';
 import type { VenueVisaInfo, CountryTravelInfo, Site } from '#shared/types/schema';
 
-useHead({ title: 'Travel & Visa Information' });
+const travelPageUrl = useRequestURL();
+useSeoMeta({
+	title: 'Travel & Visa Information',
+	description: 'Visa requirements, travel information and entry guidance for APOA 2026 Taiwan.',
+	ogTitle: 'Travel & Visa Information',
+	ogDescription: 'Visa requirements, travel information and entry guidance for APOA 2026 Taiwan.',
+	ogUrl: travelPageUrl.toString(),
+});
 
 const { $directus } = useNuxtApp();
 const auth = useAuthStore();

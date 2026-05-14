@@ -10,7 +10,7 @@ const userId = typeof auth.isAuthenticated === 'object' ? auth.isAuthenticated.i
 const userEmail = typeof auth.isAuthenticated === 'object' ? (auth.isAuthenticated as any).email : null;
 const ticketId = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id;
 
-useHead({ title: 'Support Ticket' });
+useSeoMeta({ title: 'Support Ticket', ogTitle: 'Support Ticket', robots: 'noindex' });
 
 const statusColor: Record<string, string> = {
     open:        'info',

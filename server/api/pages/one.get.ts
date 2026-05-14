@@ -103,6 +103,15 @@ const pageFields = [
 							announcements: ['content']
 						},
 						{
+							partners: [
+								'*',
+								{
+									'organisation' : ['*']
+								}
+								
+							]
+						},
+						{
 							button_group: [
 								'id',
 								{
@@ -292,9 +301,9 @@ const pageFields = [
 							sponsors: [
 								{
 									sponsor: [
-										
+										'*',
 										{
-											sponsors_id:[
+											sponsor:[
 												'*'
 											]
 										},

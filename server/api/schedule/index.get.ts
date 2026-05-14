@@ -150,7 +150,7 @@ const scheduleFields = [
 								section: [
 									'id',
 									'name',
-									'color'
+									
 								]
 							}
 						]

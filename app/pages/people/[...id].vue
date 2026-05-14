@@ -105,9 +105,14 @@ onMounted(() => {
 	});
 });
 
-useHead({
-  title: `${person.value?.first_name} ${person.value?.last_name}`
-})
+const stripHtml = (s: string) => s.replace(/<[^>]*>/g, '').trim();
+useSeoMeta({
+	title: `${person.value?.first_name} ${person.value?.last_name}`,
+	description: person.value?.bio ? stripHtml(person.value.bio) : '',
+	ogTitle: `${person.value?.first_name} ${person.value?.last_name}`,
+	ogDescription: person.value?.bio ? stripHtml(person.value.bio) : '',
+	ogUrl: personUrl.toString(),
+});
 
 type EventEntry = {
   id: string
@@ -180,7 +185,7 @@ const rowSelection = ref<Record<string, boolean>>({})
 					:key="person.id"
 					highlight-color="accent"
 					orientation="horizontal"
-					class="text-center h-full justify-center ring-0"
+					class="text-center h-full justify-center ring-0 bg-transparent"
                     :title="`${person.first_name} ${person.last_name}` || ''" 
 					:ui="{
                         title: 'font-heading text-3xl',
@@ -217,7 +222,7 @@ const rowSelection = ref<Record<string, boolean>>({})
                                     :key="index"
                                     variant="outline"
                                     :to="`/committee/${committee_position.committee_positions_id?.committee.slug}`"
-                                    class=""
+                                    class="w-80"
                                     :title="committee_position.committee_positions_id?.title"
                                     :description="committee_position?.committee_positions_id?.committee.title"
                                     :ui="{

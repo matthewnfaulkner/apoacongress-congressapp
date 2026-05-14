@@ -42,6 +42,8 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         loading.value = false;
     }
 }
+
+useSeoMeta({ title: 'Forgot Password', ogTitle: 'Forgot Password', robots: 'noindex' });
 </script>
 
 <template>

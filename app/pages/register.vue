@@ -16,6 +16,8 @@ const register = async () => {
         password.value = ''
     }
 }
+
+useSeoMeta({ title: 'Create Account', ogTitle: 'Create Account', robots: 'noindex' });
 </script>
 <template>
     <form @submit.prevent="register">

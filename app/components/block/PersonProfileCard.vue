@@ -45,7 +45,7 @@ const props = defineProps<PersonProfileCardProps>();
 
 <template>
 	<UPageCard
-		class="text-center ring-0"
+		class="text-center ring-0 bg-transparent"
 		:class="cardClass"
 		:to="`/people/${id}`"
 		orientation="vertical"
@@ -72,6 +72,7 @@ const props = defineProps<PersonProfileCardProps>();
 		<template #body>
 			<div class="relative inline-block mx-auto">
 				<ProfileImage
+					class="bg-transparent"
 					:class="[imageClass ?? 'h-40', ui?.image]"
 					:image="image"
 				/>

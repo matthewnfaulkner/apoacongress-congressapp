@@ -59,8 +59,8 @@ const darkLogoUrl = computed(() =>
 			<div class="flex-1 text-white px-4 pt-4">
 					<NuxtLink to="/" class="inline-block transition-opacity hover:opacity-70">
 						<img
-							v-if="lightLogoUrl"
-							:src="lightLogoUrl"
+							v-if="darkLogoUrl"
+							:src="darkLogoUrl"
 							alt="Logo"
 							:class="['w-[200px] h-auto', darkLogoUrl ? 'dark:hidden' : '']"
 						/>

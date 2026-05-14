@@ -133,7 +133,7 @@ type Submission = {
   title: string,
   abstract: string,
   category: string,
-  authors: string[],
+  authors: string[] | { name: string; title: string; institution: string }[],
 }
 
 
@@ -271,7 +271,7 @@ function resetState() {
   state.consent = false;
 }
 
-const isSubmitted = ref(false);
+
 const error = ref<string | null>(null);
 
 const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
@@ -369,9 +369,10 @@ onMounted(async () => {
   if(isLoggedIn.value) {
     storeReady.value = true
   }
-  
+
 })
 
+useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robots: 'noindex' });
 </script>
 
 <template>

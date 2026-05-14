@@ -37,7 +37,14 @@ const {
 	public: { directusUrl },
 } = useRuntimeConfig();
 
-useHead({ title: hotel.value.name });
+const hotelUrl = useRequestURL();
+useSeoMeta({
+	title: hotel.value.name ?? '',
+	description: hotel.value.address ?? '',
+	ogTitle: hotel.value.name ?? '',
+	ogDescription: hotel.value.address ?? '',
+	ogUrl: hotelUrl.toString(),
+});
 </script>
 
 <template>

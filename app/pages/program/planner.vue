@@ -734,10 +734,11 @@ const updateBreakOnDrag = async (breakId : string, newX : number, newY: number,)
   }
 }
 
-function hToTime(row: number) : number{ 
+function hToTime(row: number) : number{
   return currentTab.value?.timeSubDivision * row + toMinutes(currentTab.value?.startTime);
 }
 
+useSeoMeta({ title: 'Programme Planner', ogTitle: 'Programme Planner' });
 </script>
 
 <template>

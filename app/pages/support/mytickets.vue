@@ -7,7 +7,7 @@ const auth = await useAuthStore();
 
 const isLoggedIn = computed(() => auth.isAuthenticated !== false);
 
-useHead({ title: 'My Support Tickets' });
+useSeoMeta({ title: 'My Support Tickets', ogTitle: 'My Support Tickets', robots: 'noindex' });
 
 const statusColor: Record<string, string> = {
     new:         'info',

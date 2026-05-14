@@ -92,6 +92,7 @@ onMounted(async () => {
   checkLoginStatus();
 });
 
+useSeoMeta({ title: 'Sign In', ogTitle: 'Sign In', robots: 'noindex' });
 </script>
 <template>
     <div>

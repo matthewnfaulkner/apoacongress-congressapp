@@ -38,8 +38,10 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
         toast.add({ title: 'Success', description: 'The form has been submitted.', color: 'success' })
     } catch (error) {
         console.log(error)
-    } 
+    }
 }
+
+useSeoMeta({ title: 'Reset Password', ogTitle: 'Reset Password', robots: 'noindex' });
 </script>
 
 <template>

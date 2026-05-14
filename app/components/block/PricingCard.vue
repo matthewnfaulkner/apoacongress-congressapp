@@ -59,7 +59,6 @@ watchEffect(() => {
 	const now = new Date();
 
 	const localCharges = [...charges.value]; // mutable copy
-	console.log(localCharges);
 	if (props.card.category === 'accommodation') {
 
 		const top = localCharges.shift();
@@ -96,14 +95,9 @@ watchEffect(() => {
 			const details =
 				charge.charge.details[0] as RegistrationChargeDetail;
 
-			console.log(details)
 			const cutoff = new Date(details.cutoff_date);
 			return now < cutoff;
-			
-
-			return true;
 		});
-		console.log(filteredCharges);
 		const top = filteredCharges.shift();
 		topCharge.value = top?.charge;
 

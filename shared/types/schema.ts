@@ -262,6 +262,7 @@ export interface BlockMainHero {
 	id: string;
 	/** @description Featured image in the hero. */
 	image?: DirectusFile | string | null;
+	logo?: DirectusFile | string | null;
 	/** @description Action buttons that show below headline and description. */
 	button_group?: BlockButtonGroup | string | null;
 	/** @description Supporting copy that shows below the headline. */
@@ -275,6 +276,14 @@ export interface BlockMainHero {
 	user_updated?: DirectusUser | string | null;
 	bgColor: string | null;
 	announcements?: BlockMainHeroAnnouncement[] | string[] | null;
+	partners?: BlockMainHeroPartner[] | string [] | null;
+}
+
+export interface BlockMainHeroPartner {
+	id: number;
+	block_mainhero: BlockMainHero | string | null;
+	organisation: Organisation | string | null;
+	sort: number;
 }
 
 export interface BlockMainHeroAnnouncement {
@@ -549,6 +558,7 @@ export interface Congress {
 	charges?: CongressCharge[] | string[] | null;
 	societies?: CongressSociety[] | string[] | null;
 	hotels?: CongressHotel[] | string[] | null;
+	organisations?: CongressOrganisation[] | string[] | null;
 }
 
 export interface RegistrationCharge {
@@ -654,6 +664,28 @@ export interface CongressSession {
 	events?: CongressEvent[];
 	section? : ApoaSection;
 	rooms?: CongressSessionRoom[] | string[] | null;
+	organisers?: CongressSessionOrganiser[];
+	tags?: ScientificTag[] | string[] | null;
+}
+
+export interface CongressOrganisation {
+	id: string;
+	sort?: string | null;
+	congress?: Congress | string | null;
+	organisation?: Organisation | string | null;
+}
+
+export interface ScientificTag {
+	id: string;
+	tag: string;
+	color?: string | null;
+}
+
+export interface CongressSessionOrganiser {
+	id: number;
+	session: CongressSession;
+	organisation: Organisation | string | null;
+	sort: string;
 }
 
 export interface CongressSessionRoom {
@@ -669,10 +701,15 @@ export interface ApoaSection {
 	user_created?: DirectusUser | string | null;
 	date_updated?: string | null;
 	user_updated?: DirectusUser | string | null;
-	name?: string | null;
-	color?: string | null;
-	slug?: string | null;
-	committee?: Committee;
+	committees?: ApoaSectionCommittee[] | string[] | null;
+	organisation?: Organisation | string | null;
+}
+
+export interface ApoaSectionCommittee {
+	id: number;
+	section: ApoaSection | string | null;
+	committee: Committee | string | null;
+
 }
 
 export interface CongressEvent {
@@ -1162,6 +1199,8 @@ export interface Organisation {
 	id: string;
 	sort?: number | null;
 	name?: string | null;
+	short_name?: string | null;
+	abbr?: string | null;
 	address?: string | null;
 	phone?: string | null;
 	email?: string | null;
@@ -1169,6 +1208,10 @@ export interface Organisation {
 	users?: OrganisationUser[] | string[] | null;
 	sites?: SiteOrganisations[] | string[] | null;
 	website?: string | null;
+	type?: 'apoa_sections' | 'sponsors' | 'noa';
+	apoa_section_details?: ApoaSection[] | string[] | null;
+	sponsor_details?: Sponsor[] | string[] | null;
+	description?: string | null;
 }
 
 export interface OrganisationUser {
@@ -1372,14 +1415,10 @@ export interface Redirect {
 	user_updated?: DirectusUser | string | null;
 }
 
+
 export interface Sponsor {
 	id: string;
 	/** @description Smaller copy shown above the headline to label a section or add extra context. */
-	name?: string | null;
-	congresses?: CongressSponsor[];
-	email? : string | null,
-	website? : string | null,
-	logo?: DirectusFile | string | null,
 	description? : string | null,
 	sort?: string | null;
 	date_created?: string | null;
@@ -1388,16 +1427,14 @@ export interface Sponsor {
 	user_updated?: DirectusUser | string | null;
 }
 
+
 export interface CongressSponsor {
 	id: string;
 	/** @description Smaller copy shown above the headline to label a section or add extra context. */
-	sponsors_id?: Sponsor | string | null;
-	congress_id?: Congress | string | null;
+	sponsor?: Organisation | string | null;
+	congress?: Congress | string | null;
 	tier?:  CongressSponsorTier | string | null;
 	sort?: string | null;
-	date_created?: string | null;
-	user_created?: DirectusUser | string | null;
-	date_updated?: string | null;
 }
 
 export interface CongressSponsorTier{

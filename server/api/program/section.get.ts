@@ -184,7 +184,7 @@ const sectionFields = [
 export default defineEventHandler(async (event) => {
     const query = getQuery(event);
 
-    const { preview, token: rawToken, id, slug} = query;
+    const { preview, token: rawToken, id} = query;
 
     const config = useRuntimeConfig();
     // Security: Only accept tokens when preview mode is explicitly enabled
@@ -205,17 +205,21 @@ export default defineEventHandler(async (event) => {
                     fields: sectionFields as any,
                     sort: 'starttime',
                     filter: {
-                        section: {
-                            slug:
-                                {
-                                     _eq: slug as string
-                                }
+                        organisers: {
+                            organisation: {
+                                id:
+                                    {
+                                        _eq: id as string
+                                    }
+                            }
+                            
                         },
                         schedule: {
                             status: {
                                 _eq: 'published'
                             }
                         }
+      
                     },
                     deep: {
                         day: {
@@ -229,13 +233,6 @@ export default defineEventHandler(async (event) => {
                                             _eq: config.public.siteId
                                         }
                                     }
-                                }
-                            }
-                        },
-                        section: {
-                            slug: {
-                                    _filter: {
-                                        _eq: slug as string
                                 }
                             }
                         },

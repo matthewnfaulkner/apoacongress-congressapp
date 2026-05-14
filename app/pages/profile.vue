@@ -359,9 +359,7 @@ onMounted(() => {
 	});
 });
 
-useHead({
-  title: `My Profile`
-})
+useSeoMeta({ title: 'My Profile', ogTitle: 'My Profile', robots: 'noindex' });
 
 type EventEntry = {
   id: string

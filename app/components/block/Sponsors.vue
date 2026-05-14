@@ -1,9 +1,5 @@
 <script setup lang="ts">
-import type { Base } from '#components';
-import type { DirectusField } from '@directus/sdk';
 import Text from '~/components/base/Text.vue';
-import { useDirectusTranslation } from '~/composables/useDirectusTranslation'
-import type { BlockRichtextTranslation } from '~~/shared/types/schema';
 
 const { locale } = useI18n();
 
@@ -18,13 +14,7 @@ interface RichTextProps {
             {
                 sponsor: {
                     id: string,
-                    sponsors_id: {
-                        id: string
-                        name?: string,
-                        logo?: DirectusFile | string | null
-                        description?: string
-                        website?: string
-                    },
+                    sponsor: Organisation,
                     tier: {
                         id: string
                         name?: string,
@@ -41,7 +31,7 @@ interface RichTextProps {
 type Sponsor = {
     sponsor: {
         id: string,
-        sponsors_id: {
+        sponsor: {
             id: string
             name?: string,
             logo?: DirectusFile | string | null
@@ -69,10 +59,11 @@ const props = defineProps<RichTextProps>();
 
 
 const sponsorsByTier = computed(() => {
-    return props.data.sponsors.sort((a, b) => a.sponsor.tier.sort - b.sponsor.tier.sort);
+    if (!props.data?.sponsors?.length) return [];
+    return [...props.data.sponsors].sort((a, b) => (a.sponsor?.tier?.sort ?? 0) - (b.sponsor?.tier?.sort ?? 0));
 })
 
-const groupedByTier = Object.values(
+const groupedByTier = computed(() => Object.values(
   sponsorsByTier.value.reduce<Record<string, TierGroup>>((acc, sponsor) => {
     const  tier  = sponsor.sponsor.tier;
 
@@ -90,8 +81,8 @@ const groupedByTier = Object.values(
 
     return acc;
   }, {})
-).sort((a, b) => a.sort - b.sort);
-
+).sort((a, b) => a.sort - b.sort)
+)
 
 const { setAttr } = useVisualEditing();
 </script>
@@ -124,62 +115,62 @@ const { setAttr } = useVisualEditing();
 		/>
 
         <UPageSection :ui="{
-		container: 'gap-0 sm:gap-0 lg:gap-0 lg:py-0'
-	}">
-		<div v-if="data.sponsors" v-for="(tier, index) in groupedByTier" class="pb-15">
-            <USeparator     
-                :label="tier.name" 
-                size="xl"
-                :style="{ '--tier-color': tier.color }"
-                :ui="{
-                    border: `border border-[var(--tier-color)]`,
-                }" >
-                <template #default>
-                    <Headline :headline="tier.name"/>
-                </template>
-                </USeparator>
-			<UPageGrid
-                class="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-8"
-                  :class="{
-                        'lg:grid-cols-2': index === 0,
-                        'lg:grid-cols-4': index === 1 || index >= 4,
-                    }">
-				<UPageCard
-					v-for="sponsor in tier.sponsors"
-					:key="sponsor.sponsor.id"
-					highlight-color="accent"
-					orientation="vertical"
-					class="text-center h-full justify-center ring-0"
-					:ui="{
-						wrapper: 'items-center'
-					}"
-				>
-					<template #header>
-						<Tagline
-							class="text-xs w-full"
-							:tagline="sponsor.sponsor.sponsors_id.name"
-						/>
-						<Text
-							class="text-xl font-heading"
-							:content="sponsor.sponsor.sponsors_id.description"
-						/>
-                        <Text
-							class="text-xl font-heading"
-							:content="sponsor.sponsor.tier.name"
-						/>
-					</template>
+            container: 'gap-0 sm:gap-0 lg:gap-0 lg:py-0'
+        }">
+            <div v-if="data.sponsors" v-for="(tier, index) in groupedByTier" class="pb-15">
+                <USeparator     
+                    :label="tier.name" 
+                    size="xl"
+                    :style="{ '--tier-color': tier.color }"
+                    :ui="{
+                        border: `border border-[var(--tier-color)]`,
+                    }" >
+                    <template #default>
+                        <Headline :headline="tier.name"/>
+                    </template>
+                    </USeparator>
+                <UPageGrid
+                    class="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-8"
+                    :class="{
+                            'lg:grid-cols-2': index === 0,
+                            'lg:grid-cols-4': index === 1 || index >= 4,
+                        }">
+                    <UPageCard
+                        v-for="sponsor in tier.sponsors"
+                        :key="sponsor.sponsor.id"
+                        highlight-color="accent"
+                        orientation="vertical"
+                        class="text-center h-full justify-center ring-0"
+                        :ui="{
+                            wrapper: 'items-center'
+                        }"
+                    >
+                        <template #header>
+                            <Tagline
+                                class="text-xs w-full"
+                                :tagline="sponsor.sponsor.sponsor.name"
+                            />
+                            <Text
+                                class="text-xl font-heading"
+                                :content="sponsor.sponsor.sponsor.description as string"
+                            />
+                            <Text
+                                class="text-xl font-heading"
+                                :content="sponsor.sponsor.tier.name as string"
+                            />
+                        </template>
 
-					<template #body>
-						<DirectusImage
-                            v-if="sponsor.sponsor.sponsors_id.logo"
-							class="h-50"
-							:uuid="sponsor.sponsor.sponsors_id.logo"
-						/>
-					</template>
-				</UPageCard>
-			</UPageGrid>
+                        <template #body>
+                            <DirectusImage
+                                v-if="sponsor.sponsor.sponsor.logo"
+                                class="h-50"
+                                :uuid="sponsor.sponsor.sponsor.logo"
+                            />
+                        </template>
+                    </UPageCard>
+                </UPageGrid>
 
-		</div>
-	</UPageSection>
+            </div>
+        </UPageSection>
 	</div>
 </template>

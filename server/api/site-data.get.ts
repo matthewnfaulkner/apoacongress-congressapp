@@ -14,6 +14,7 @@ export default defineEventHandler(async (event) => {
 						'title', 
 						'description', 
 						'logo',
+						'logo_dark_mode',
 						'social_links',
 						'preview',
 						'favicon',
@@ -51,6 +52,22 @@ export default defineEventHandler(async (event) => {
 									'venue' : [
 										'id',
 										'title'
+									]
+								},
+								{
+									organisations: [
+										'*',
+										{
+											organisation: [
+												'id',
+												'type',
+												'name',
+												'short_name',
+												'abbr',
+												'logo'
+											]
+										
+										}
 									]
 								},
 								{

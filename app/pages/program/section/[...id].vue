@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Assignment, CongressDay, CongressSession, DirectusUser } from '#shared/types/schema';
+import type { Assignment, CongressDay, CongressSession, DirectusUser, Organisation } from '#shared/types/schema';
 import type { TabsItem } from '@nuxt/ui'
 import { h, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
@@ -10,9 +10,13 @@ import BaseEventType from '~/components/eventTypes/BaseEventType.vue';
 const route = useRoute();
 const { enabled, state } = useLivePreview();
 const { isVisualEditingEnabled, apply, setAttr } = useVisualEditing();
+const pageUrl = useRequestURL();
+const siteDataStore = useSiteDataStore();
 
-
-const slugParam = Array.isArray(route.params.slug) ? route.params.slug[0] : route.params.slug
+const site = siteDataStore.siteData as Site;
+const congress = site?.congress ? site.congress[0] as Congress : null;
+const congressOrganisers = congress?.organisations as CongressOrganisation[] || [];
+const id = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id
 
 
 const {
@@ -24,11 +28,11 @@ const version = route.query.version === 'main' ? undefined : (route.query.versio
 
 
 const { data, error, refresh } = await useFetch<CongressSession[]>(() => `/api/program/section`, {
-	key: `section-${slugParam}`,
+	key: `section-${id}`,
 	query: {
 		preview: enabled.value ? true : undefined,
 		token: enabled.value ? state.token : undefined,
-		slug: slugParam,
+		id: id,
 		version,
 	},
 });
@@ -37,13 +41,25 @@ if (!data.value || error.value) {
 	throw createError({ statusCode: 404, statusMessage: 'Section not found', fatal: true });
 }
 
+
+
 const sectionSessions = computed(() => data.value);
 
 if (!sectionSessions.value || error.value) {
 	throw createError({ statusCode: 404, statusMessage: 'Section not found', fatal: true });
 }
 
-const section = sectionSessions?.value[0]?.section || null;
+
+const section = congressOrganisers.find((o) => (o?.organisation as Organisation).id == id)?.organisation as Organisation;
+
+
+useSeoMeta({
+	title: section.short_name + ' Schedule',
+	description:  '',
+	ogTitle: section.short_name + ' Schedule - ' + site.title,
+	ogDescription: '',
+	ogUrl: pageUrl.toString(),
+});
 
 const sessions: SessionEntry[] =
     sectionSessions?.value?.map((session, index) => ({
@@ -180,7 +196,7 @@ const columns: TableColumn<SessionEntry>[] = [
 		cell: ({ row }) => {
 		
 		const assignments = row.getValue('roles') as Assignment[];
-		console.log(assignments)
+
 		return h(
 				'div',
 				{ class: 'text-left font-medium text-wrap' },
@@ -207,7 +223,7 @@ function getRowClass(row) {
 <template>
 	<div v-if="sessions" ref="wrapperRef">
 		<Container class="py-12">
-		<Headline :headline="`Schedule - ${section?.name}`" />
+		<Headline :headline="`Schedule - ${section?.short_name}`" />
                 <div v-for="(day, index) in sessionsByDay" class="py-5">
                     <ULink :to="`/program/day/${day.day.key}`" class="text-2xl text-accent font-heading"> 
                             {{ day.day.title }}
@@ -245,7 +261,7 @@ function getRowClass(row) {
 	<div v-else>
 		<div class="text-center text-xl mt-[20%] w-full text-center">
 			<p class="text-center m-2">Schedule Coming Soon</p>
-			<UButton class="m-auto p-2" label="Get Notifed" color="accent" variant="solid" to="/register-interset" />
+			<UButton class="m-auto p-2" label="Get Notifed" color="accent" variant="solid" to="/register-interest" />
 		</div>
 	</div>
 </template>

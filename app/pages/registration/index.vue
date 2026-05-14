@@ -47,6 +47,15 @@ const { data: rawFlows } = await useAsyncData<FormFlow[]>('registration_flow', (
 
 const flow = computed(() => rawFlows.value?.[0] ?? null)
 
+const registrationUrl = useRequestURL();
+useSeoMeta({
+	title: flow.value?.title ?? 'Registration',
+	description: 'Register for APOA 2026 Taiwan.',
+	ogTitle: flow.value?.title ?? 'Registration',
+	ogDescription: 'Register for APOA 2026 Taiwan.',
+	ogUrl: registrationUrl.toString(),
+});
+
 const ready = ref(false)
 onMounted(() => { ready.value = true })
 </script>
