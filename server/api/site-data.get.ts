@@ -78,6 +78,7 @@ export default defineEventHandler(async (event) => {
 										'logo',
 										'address',
 										'phone',
+										
 									]
 								}
 							]

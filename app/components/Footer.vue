@@ -24,6 +24,7 @@ export interface FooterProps {
 		social_links?: SocialLink[];
 	},
 	organiser : {
+		id: string;
 		logo?: string | null;
 		name?: string | null;
 		email?: string | null;
@@ -121,7 +122,7 @@ const darkLogoUrl = computed(() =>
 				<div class="flex flex-col md:flex-row justify-between items-start gap-8 pt-8">
 					<div class="flex flex-col items-start flex-1">
 						<Tagline tagline="Conference Scretariat" class="text-white"> </Tagline>
-						<NuxtLink :to="props.organiser.website || ''" class="inline-block transition-opacity hover:opacity-70">
+						<NuxtLink :to="`/organisations/${props.organiser.id}`" class="inline-block transition-opacity hover:opacity-70">
 							<img
 								v-if="OrgLogoUrl"
 								:src="OrgLogoUrl"
