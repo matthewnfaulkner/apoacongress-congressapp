@@ -82,12 +82,7 @@ const pageFields = [
 						}
 					],
 					block_hero: [
-						'id',
-						'tagline',
-						'headline',
-						'description',
-						'layout',
-						'image',
+						'*',
 						{
 							button_group: [
 								'id',
@@ -128,27 +123,10 @@ const pageFields = [
 						'headline',
 						{
 							form: [
-								'id',
-								'title',
-								'submit_label',
-								'success_message',
-								'on_success',
-								'success_redirect_url',
-								'is_active',
+								'*',
 								{
 									fields: [
-										'id',
-										'name',
-										'type',
-										'label',
-										'placeholder',
-										'help',
-										'validation',
-										'width',
-										'choices',
-										'required',
-										'sort',
-										'use_user_data'
+										'*',
 									],
 								},
 							],
