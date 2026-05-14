@@ -191,7 +191,7 @@ onMounted(() => {
 				<div class="px-6 mx-auto sm:px-8 lg:px-12 xl:px-50 max-w-8xl flex justify-end-safe ">
 					<div class="w-full lg:w-2/3 xl:w-2/3 p-5 text-white bg-secondary/60 sm:bg-transparent lg:p-10 text-right text-shadow-black text-shadow-lg rounded-b-xl sm:h-auto">
 						<!-- tagline -->
-						<p class="tracking-tighter  mt-0 lg:mt-0 transition-all duration-500 ease-out"
+						<div class="tracking-tighter mt-0 lg:mt-0 transition-all duration-500 ease-out"
 							:class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'">
 							<Text class=" font-heading text-md sm:text-xl text-center sm:text-right text-white"
 							:content="data.tagline"
@@ -207,7 +207,7 @@ onMounted(() => {
 								:class="visible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'">
 								<DirectusImage
 									v-if="data.logo"
-									class="inline h-40 sm:h-50 xl:h-65"
+									class="block w-auto h-40 sm:h-50 xl:h-65"
 									:class="visible ? 'opacity-100 scale-100' : 'opacity-0 scale-105'"
 									:uuid="props.data.logo"
 									:data-directus="
@@ -231,7 +231,7 @@ onMounted(() => {
 									/>
 								</div>
 							</div>
-						</p>
+						</div>
 						<!-- description -->
 						<Label
 							class="mt-2 font-sans text-xs font-normal leading-7 text-white text-opacity-70 sm:text-lg italic transition-all duration-500 ease-out delay-250"
