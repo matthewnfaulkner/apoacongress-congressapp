@@ -101,7 +101,7 @@ export interface BlockButton {
 	id: string;
 	sort?: number | null;
 	/** @description What type of link is this? Page and Post allow you to link to internal content. URL is for external content. Group can contain other menu items. */
-	type?: 'page' | 'post' | 'url' | null;
+	type?: 'page' | 'post' | 'url' | 'modal' | null;
 	/** @description The internal page to link to. */
 	page?: Page | string | null;
 	/** @description The internal post to link to. */

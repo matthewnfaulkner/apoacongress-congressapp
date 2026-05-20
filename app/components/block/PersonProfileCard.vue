@@ -88,7 +88,7 @@ const props = defineProps<PersonProfileCardProps>();
 			<p :class="['font-heading text-xl', ui?.name]"><span v-if="showTitle && title" :class="['font-heading', ui?.title]">
 				{{ title }}.
 			</span> {{ firstName }} {{ lastName }}</p>
-			<div v-if="showCountry && country" class="flex items-center justify-center gap-1 mt-1 font-heading text-secondary">
+			<div v-if="showCountry && country" class="flex items-center justify-center gap-1 mt-1 font-sans text-secondary">
 				<CountryName
 					:country-codes="country.countryCodes"
 					:locale="country.locale"

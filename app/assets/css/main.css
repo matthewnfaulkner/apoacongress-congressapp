@@ -15,7 +15,8 @@
 
 
 @theme {
-  --font-heading: 'Cinzel', system-ui, sans-serif;
+  --font-heading: 'Nothing', system-ui, sans-serif;
+  --font-sans: 'Cagliostro', system-ui, sans-serif;
 
   --color-primary:    oklch(0.972 0.003 247.8);
   --color-primary-50: oklch(0.972 0.003 247.8);
@@ -106,9 +107,99 @@
 h1 { font-size: 2rem; font-weight: bold; }
 h3 { font-size: 1.5rem; font-weight: bold; margin-bottom: 15px; margin-top: 15px;}
 
+.countdown-badge {
+  background: url('/images/splash.png') center / cover !important;
+}
+
+/* Ink reveal transition — add .ink-reveal to a relative/overflow-hidden container,
+   place .ink-overlay as a sibling after the image, then toggle .is-active on the container. */
+.ink-framed::before {
+  background-image: url('/images/ink-photo-frame.png');
+  background-size: 100% 100%;
+  background-position: 50% 50%;
+  content: '';
+  height: 100%;
+  position: absolute;
+  width: 100%;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.ink-overlay {
+  background-image: url('/images/ink-transition-sprite-white.png');
+  background-size: 100% 100%;
+  height: 100%;
+  left: 50%;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  transform: translateX(-1.25%);
+  width: 4000%;
+  z-index: 10;
+}
+
+.ink-reveal.is-active .ink-overlay {
+  animation: ink-transition var(--ink-duration, 2s) steps(39) 0.5s forwards;
+}
+
+@keyframes ink-transition {
+  0%   { transform: translateX(-1.25%); }
+  100% { transform: translateX(-98.75%); }
+}
+
+/* Ink blot modal transition */
+.ink-modal-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.ink-modal-layer.visible {
+  opacity: 1;
+  visibility: visible;
+}
+.ink-modal-layer .ink-modal-bg {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translateY(-50%) translateX(-2%);
+  background: url('/images/ink-modal-sprite.png') no-repeat 0 0;
+  background-size: 100% 100%;
+}
+.ink-modal-layer.opening .ink-modal-bg {
+  animation: ink-modal-open 0.8s steps(24) forwards;
+}
+.ink-modal-layer.closing .ink-modal-bg {
+  animation: ink-modal-close 0.8s steps(24) forwards;
+}
+
+@keyframes ink-modal-open {
+  0%   { transform: translateY(-50%) translateX(-2%); }
+  100% { transform: translateY(-50%) translateX(-98%); }
+}
+@keyframes ink-modal-close {
+  0%   { transform: translateY(-50%) translateX(-98%); }
+  100% { transform: translateY(-50%) translateX(-2%); }
+}
+
+.ink-modal-content {
+  position: fixed;
+  inset: 0;
+  z-index: 101;
+  opacity: 0;
+  visibility: hidden;
+}
+.ink-modal-content.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
 
 body {
-  background-image: url('/images/bg.jpg');
+  /*background-image: url('/images/bg.jpg');*/
   background-size: cover;        /* stretches to fill */
   background-repeat: no-repeat;
   background-position: center;
@@ -116,7 +207,7 @@ body {
 }
 
 :root{
-    --ui-bg: var(--color-primary);
+    --ui-bg: #F9F9F9;
     --ui-bg-muted: var(--ui-color-neutral-50);
     --ui-bg-elevated: var(--ui-color-neutral-100);
     --ui-bg-accented: var(--ui-color-neutral-200);

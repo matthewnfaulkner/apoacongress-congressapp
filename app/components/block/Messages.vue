@@ -43,12 +43,25 @@ interface MessagesProps {
 const { setAttr } = useVisualEditing();
 const props = defineProps<MessagesProps>();
 
+const sectionRef = useTemplateRef('sectionRef');
+const visible = ref(false);
+
+onMounted(() => {
+	const observer = new IntersectionObserver((entries) => {
+		if (entries[0]?.isIntersecting) {
+			visible.value = true;
+			observer.disconnect();
+		}
+	}, { threshold: 0.1 });
+	if (sectionRef.value) observer.observe(sectionRef.value);
+});
 
 </script>
 
 
 <template>
-	<Headline 
+	<div ref="sectionRef">
+	<Headline
 		:headline="data.headline"
 		:data-directus="
 				setAttr({
@@ -86,7 +99,9 @@ const props = defineProps<MessagesProps>();
 						}"
 					>
 					<template #header class="mx-auto">
-						<Tagline 
+						<Tagline
+							class="transition-all duration-700 ease-out"
+							:class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'"
 							:tagline="item.tagline"
 							:data-directus="
 								setAttr({
@@ -96,9 +111,10 @@ const props = defineProps<MessagesProps>();
 									mode: 'popover',
 								})
 							"/>
-					</template>	
+					</template>
 					<template #body>
-						<div v-html="item.content" class="text-left lg:h-60"
+						<div v-html="item.content" class="text-left lg:h-60 transition-all duration-700 ease-out delay-150"
+							:class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'"
 						:data-directus="
 								setAttr({
 									collection: 'block_messages_message',
@@ -118,13 +134,18 @@ const props = defineProps<MessagesProps>();
 									mode: 'popover',
 								})
 							">
-							<div v-for="person in item.people" 
+							<div v-for="person in item.people"
 								>
-								<ProfileImage class="h-40 mx-auto" :image="person.person.image":ui="{ item: 'basis-1/2' }" />
-								<p class="font-heading">
+								<div class="relative overflow-hidden ink-reveal" :class="{ 'is-active': visible }" style="--ink-duration: 3s">
+									<ProfileImage class="h-40 mx-auto" :image="person.person.image" :ui="{ item: 'basis-1/2' }" />
+									<div class="ink-overlay" />
+								</div>
+								<p class="font-heading transition-all duration-700 ease-out delay-300"
+									:class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'">
 									{{ person.person.first_name }} {{ person.person.last_name }}
 								</p>
-								<p
+								<p class="transition-all duration-700 ease-out delay-400"
+									:class="visible ? 'opacity-100' : 'opacity-0'"
 									:data-directus="
 										setAttr({
 											collection: 'block_messages_message_persons',
@@ -172,7 +193,8 @@ const props = defineProps<MessagesProps>();
 							})">
 					<div v-for="person in message.people" class="text-center float-left mr-2 mb-4  w-1/2"
 						>
-							<ProfileImage class="mx-auto" :image="person.person.image":ui="{ item: 'basis-1/2' }"
+							<div class="relative overflow-hidden ink-reveal" :class="{ 'is-active': visible }" style="--ink-duration: 3s">
+							<ProfileImage class="mx-auto" :image="person.person.image" :ui="{ item: 'basis-1/2' }"
 								:data-directus="
 									setAttr({
 										collection: 'block_messages_message',
@@ -180,29 +202,35 @@ const props = defineProps<MessagesProps>();
 										fields: 'people',
 										mode: 'popover',
 									})" />
-							<h2 class="font-heading text-lg sm:text-2xl">
-								{{ person.person.first_name }} {{ person.person.last_name }}	
+							<div class="ink-overlay" />
+						</div>
+							<h2 class="font-heading text-lg sm:text-2xl transition-all duration-700 ease-out delay-150"
+								:class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'">
+								{{ person.person.first_name }} {{ person.person.last_name }}
 							</h2>
-							<p 
-								class="font-heading text-sm sm:text-lg text-accent"
+							<p
+								class="font-heading text-sm sm:text-lg text-accent transition-all duration-700 ease-out delay-250"
+								:class="visible ? 'opacity-100' : 'opacity-0'"
 								:data-directus="
 										setAttr({
 											collection: 'block_messages_message_persons',
 											item: person.id,
 											fields: 'extra',
 											mode: 'popover',
-										})"> 
+										})">
 								{{ person.extra }}
 							</p>
 							
 					</div>
-				<div 
-					v-html="message.content" 
-					class="text-left pt-10"
+				<div
+					v-html="message.content"
+					class="text-left pt-10 transition-all duration-700 ease-out delay-400"
+					:class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'"
 					>
 				</div>
 			</div>
 		</div>
 	</div>
-	
+	</div>
+
 </template>

@@ -1,7 +1,16 @@
-/* Unkempt Regular */
+
 @font-face {
-  font-family: 'Barlow';
-  src: url('../fonts/Barlow-Regular.ttf') format('truetype');
+  font-family: 'Nothing';
+  src: url('../fonts/NothingYouCouldDo-Regular.ttf') format('truetype');
+  font-weight: 400; /* normal */
+  font-style: normal;
+  font-display: swap;
+}
+
+
+@font-face {
+  font-family: 'Cagliostro';
+  src: url('../fonts/Cagliostro-Regular.ttf') format('truetype');
   font-weight: 400; /* normal */
   font-style: normal;
   font-display: swap;

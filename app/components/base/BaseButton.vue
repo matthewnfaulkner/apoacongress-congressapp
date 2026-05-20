@@ -10,8 +10,9 @@ export interface ButtonProps {
 	id: string;
 	label?: string | null;
 	variant?: string | null;
+	color?: string | null;
 	url?: string | null;
-	type?: 'page' | 'post' | 'url' | 'submit' | null;
+	type?: 'page' | 'post' | 'url' | 'submit' | 'modal' | null;
 	page?: { permalink: string | null };
 	post?: { slug: string | null };
 	size?: 'default' | 'sm' | 'lg' | 'icon';
@@ -39,6 +40,7 @@ const icons: Record<string, any> = {
 const Icon = computed(() => props.customIcon || (props.icon ? icons[props.icon] : null));
 
 const href = computed(() => {
+	if (props.type === 'modal') return undefined;
 	if (props.type === 'page' && props.page?.permalink) return props.page.permalink;
 	if (props.type === 'post' && props.post?.slug) return `/blog/${props.post.slug}`;
 	return props.url || undefined;
@@ -60,7 +62,7 @@ const linkComponent = computed(() => {
 <template>
 	<UButton
 		:variant="variant as any"
-		color="accent"
+		:color="(color as any) ?? 'accent'"
 		:size="size"
 		:class="buttonClasses"
 		:disabled="disabled"

@@ -60,7 +60,7 @@ interface MainHeroProps {
 				label: string | null;
 				variant: string | null;
 				url: string | null;
-				type: 'url' | 'page' | 'post';
+				type: 'url' | 'page' | 'post' | 'modal';
 				pagePermalink?: string | null;
 				postSlug?: string | null;
 			}>;
@@ -71,7 +71,7 @@ interface MainHeroProps {
 const { setAttr } = useVisualEditing();
 const props = defineProps<MainHeroProps>();
 
-type ButtonVariant = "solid" | "outline" | "ghost";
+type ButtonVariant = "solid" | "outline" | "ghost" | "soft";
 
 const baseClasses = `
   inline-flex
@@ -86,22 +86,32 @@ const baseClasses = `
 
 const variantClasses: Record<ButtonVariant, string> = {
   solid: `
-    text-black
-	ring-white
-	bg-white
+    text-white
+	ring-0
+	bg-accent
 	hover:text-white
+	hover:bg-accent-600
   `,
   outline: `
-    text-white
-	ring-white
+    text-secondary
+	bg-white/90
+	ring-black
 	hover:text-black
+	
 	hover:bg-white
-    focus:ring-white
+    
   `,
   ghost: `
     text-primary
     bg-transparent
     hover:bg-primary/10
+    focus:ring-primary
+  `,
+  soft: `
+  	text-primary
+	ring-secondary/90
+    bg-secondary/70
+    hover:bg-secondary/90
     focus:ring-primary
   `
 };
@@ -109,15 +119,63 @@ const variantClasses: Record<ButtonVariant, string> = {
 const announcement = computed(() => props.data.announcements?.[0] ?? null);
 const openAnnouncements = ref(false);
 const visible = ref(false);
+const textVisible = ref(false);
+const modalOpen = ref(false);
+const inkState = ref<'idle' | 'opening' | 'open' | 'closing'>('idle');
+const inkLayerRef = ref<HTMLElement | null>(null);
+const videoRef = ref<HTMLVideoElement | null>(null);
+const videoSrc = ref<string | null>(null);
+
+const FRAME_RATIO = 1.78;
+const FRAME_COUNT = 25;
+
+function setInkDimensions() {
+	const el = inkLayerRef.value as HTMLElement | null;
+	if (!el) return;
+	const w = window.innerWidth;
+	const h = window.innerHeight;
+	let lw, lh;
+	if (w / h > FRAME_RATIO) {
+		lw = w; lh = lw / FRAME_RATIO;
+	} else {
+		lh = h * 1.2; lw = lh * FRAME_RATIO;
+	}
+	el.style.width = (lw * FRAME_COUNT) + 'px';
+	el.style.height = lh + 'px';
+}
+
+watch(modalOpen, (open) => {
+	if (open) {
+		videoSrc.value = '/images/intro.mp4';
+		inkState.value = 'opening';
+		nextTick(setInkDimensions);
+		setTimeout(() => { inkState.value = 'open'; }, 1000);
+	} else {
+		inkState.value = 'closing';
+		if (videoRef.value) {
+			videoRef.value.pause();
+			videoRef.value.currentTime = 0;
+		}
+		setTimeout(() => {
+			inkState.value = 'idle';
+			videoSrc.value = null;
+		}, 800);
+	}
+});
+
 const button_group = props.data.button_group;
 
-const buttons = button_group?.buttons.map((button) => ({
+const allButtons = button_group?.buttons.map((button) => ({
 	...button,
-	  className: `
+	color: button.variant === 'outline' ? 'neutral' : 'accent',
+	className: `
 		${baseClasses}
 		${variantClasses[button?.variant]}
 	`
 })) ?? []
+
+const modalButtons = computed(() => allButtons.filter(b => b.type === 'modal'));
+const navButtons = computed(() => allButtons.filter(b => b.type !== 'modal'));
 
 const heroRef = useTemplateRef('heroRef');
 
@@ -125,9 +183,12 @@ onMounted(() => {
 	const observer = new IntersectionObserver((entries) => {
 		if (entries[0].isIntersecting) {
 			visible.value = true;
-			if (announcement.value) {
-				setTimeout(() => { openAnnouncements.value = true; }, 1500);
-			}
+			setTimeout(() => {
+				textVisible.value = true;
+				if (announcement.value) {
+					setTimeout(() => { openAnnouncements.value = true; }, 500);
+				}
+			}, 2500);
 			observer.disconnect();
 		}
 	});
@@ -141,10 +202,9 @@ onMounted(() => {
 		:style="{ '--herobg-color': data.bgcolor }"
 		:class="`bg-[var(--herobg-color)]`">
 			
-			<div class="absolute inset-0">
+			<div class="absolute inset-0 overflow-hidden ink-reveal ink-framed" :class="{ 'is-active': visible }" style="--ink-duration: 3s">
 				<DirectusImage
-					class="object-cover w-full h-full object-top-left transition-all duration-900 ease-out"
-					:class="visible ? 'opacity-100 scale-100' : 'opacity-0 scale-105'"
+					class="object-cover w-full h-full object-[25%_25%]"
 					:uuid="props.data.image"
 					:data-directus="
 						setAttr({
@@ -153,6 +213,7 @@ onMounted(() => {
 							fields: 'image',
 							mode: 'modal' })
 					"/>
+				<div class="ink-overlay" />
 				<Transition
 						enter-active-class="transition ease-out duration-300"
 						enter-from-class="opacity-0 translate-y-4"
@@ -165,7 +226,7 @@ onMounted(() => {
 						v-if="openAnnouncements"
 						class="text-shadow-none absolute top-5 left-1/2 -translate-x-1/2 z-40 w-[90%] max-w-lg px-10 max-h-[80%] md:bottom-auto md:top-1/2 md:left-6 md:translate-x-0 md:-translate-y-1/2 md:w-1/2 md:w-[50%] md:px-0 lg:left-12 xl:left-50"
 					>
-						<UCard class="shadow-xl bg-primary shadow-2xl shadow-black">
+						<UCard class="shadow-xl bg-primary/95 shadow-2xl shadow-black ring-gray-600 ring-2">
 							<div class="flex flex-col gap-2">
 								<div class="flex items-center gap-3">
 									<p class="font-semibold text-sm flex-1 text-center">{{ announcement?.headline }}</p>
@@ -187,13 +248,13 @@ onMounted(() => {
 				</Transition>
 			</div>
 
-			<div class="relative">
-				<div class="px-6 mx-auto sm:px-8 lg:px-12 xl:px-50 max-w-8xl flex justify-end-safe ">
-					<div class="w-full lg:w-2/3 xl:w-2/3 p-5 text-white bg-secondary/60 sm:bg-transparent lg:p-10 text-right text-shadow-black text-shadow-lg rounded-b-xl sm:h-auto">
+			<div class="relative z-10">
+				<div class="pl-6 mx-auto sm:px-8 lg:px-12 xl:px-50 max-w-8xl flex justify-end-safe ">
+					<div class="w-full lg:w-2/3 xl:w-2/3 p-5 text-accent sm:bg-transparent lg:p-10 text-right  rounded-b-xl sm:h-auto">
 						<!-- tagline -->
-						<div class="tracking-tighter mt-0 lg:mt-0 transition-all duration-500 ease-out"
-							:class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'">
-							<Text class=" font-heading text-md sm:text-xl text-center sm:text-right text-white"
+						<div class="tracking-tighter mt-0 lg:mt-0 transition-opacity duration-500 ease-out"
+							:class="textVisible ? 'opacity-100' : 'opacity-0'">
+							<Text class=" font-sans text-xl sm:text-xl text-right ml-10  text-black"
 							:content="data.tagline"
 							:data-directus="
 									setAttr({
@@ -203,12 +264,12 @@ onMounted(() => {
 										mode: 'modal' })">{{ props.data.tagline }}
 							</Text>
 							<!-- logo + headline -->
-							<div class="flex flex-row justify-end transition-all duration-500 ease-out delay-150"
-								:class="visible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'">
+							<div class="flex flex-row justify-end transition-opacity duration-500 ease-out delay-150"
+								:class="textVisible ? 'opacity-100' : 'opacity-0'">
 								<DirectusImage
 									v-if="data.logo"
 									class="block w-auto h-40 sm:h-50 xl:h-65"
-									:class="visible ? 'opacity-100 scale-100' : 'opacity-0 scale-105'"
+									:class="textVisible ? 'opacity-100' : 'opacity-0'"
 									:uuid="props.data.logo"
 									:data-directus="
 										setAttr({
@@ -219,7 +280,7 @@ onMounted(() => {
 									"/>
 								<div v-else class="flex ">
 									<NuxtImg  src="/images/apoalogo.png" class="inline h-auto max-h-65"/>
-									<Text class="font-heading italic font-normal text-7xl md:text-8xl inline text-white"
+									<Text class="font-heading italic font-normal text-7xl md:text-8xl inline text-black"
 										:content="data.headline"
 										:item-id="data.id"
 										:data-directus="
@@ -234,8 +295,8 @@ onMounted(() => {
 						</div>
 						<!-- description -->
 						<Label
-							class="mt-2 font-sans text-xs font-normal leading-7 text-white text-opacity-70 sm:text-lg italic transition-all duration-500 ease-out delay-250"
-							:class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'"
+							class="mt-2 font-sans text-xs font-sans leading-7 text-black text-opacity-70 sm:text-lg italic transition-opacity duration-500 ease-out delay-250"
+							:class="textVisible ? 'opacity-100' : 'opacity-0'"
 							:data-directus="
 										setAttr({
 											collection: 'block_mainhero',
@@ -245,10 +306,10 @@ onMounted(() => {
 							{{ data.description }}
 						</Label>
 						<!-- date + venue -->
-						<div class="transition-all duration-500 ease-out delay-400"
-							:class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'">
+						<div class="transition-opacity duration-500 ease-out delay-400"
+							:class="textVisible ? 'opacity-100' : 'opacity-0'">
 							<Text
-								class="mt-2 font-sans text-xl lg:text-2xl font-bold"
+								class=" font-heading text-2xl lg:text-4xl font-bold mt-0 lg:mt-4"
 								:content="date"
 								:data-directus="
 									setAttr({
@@ -257,7 +318,7 @@ onMounted(() => {
 										fields: 'startdate, enddate',
 										mode: 'modal' })"
 							/>
-							<Label class="mt-2 leading-7 text-accent-400 text-2xl sm:text-3xl font-heading font-bold "
+							<Label class="mt-2 leading-7 text-secondary text-2xl sm:text-3xl font-heading font-bold "
 								:label="congress?.venue?.title"
 								key="venue"
 								:item-id="congress?.venue.id"
@@ -272,18 +333,13 @@ onMounted(() => {
 						<!-- buttons -->
 						<div
 							v-if="data.button_group?.buttons?.length"
-							class="mt-6 flex justify-end image_left my-3 transition-all duration-500 ease-out delay-550"
-							:class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'">
-							<ButtonGroup
-								:buttons="buttons"
-								:data-directus="
-									setAttr({
-										collection: 'block_button_group',
-										item: data.button_group?.id,
-										fields: 'buttons',
-										mode: 'modal' })
-								"
-							/>
+							class="mt-6 flex justify-end gap-4 image_left my-3 transition-opacity duration-500 ease-out delay-550"
+							:class="textVisible ? 'opacity-100' : 'opacity-0'"
+							:data-directus="setAttr({ collection: 'block_button_group', item: data.button_group?.id, fields: 'buttons', mode: 'modal' })">
+							<div v-if="modalButtons.length" @click.capture.stop="modalOpen = true">
+								<ButtonGroup :buttons="modalButtons" />
+							</div>
+							<ButtonGroup v-if="navButtons.length" :buttons="navButtons" />
 						</div>
 						<!-- countdown -->
 						<ClientOnly v-if="data.countdown && secondsUntil"
@@ -296,23 +352,23 @@ onMounted(() => {
 								"
 						>
 							<vue-countdown :time="secondsUntil * 1000" v-slot="{ days, hours, minutes, seconds }" class="text-shadow-none">
-								<UBadge class="p-2 m-1 lg:m-2 text-xs lg:text-3xl text-center text-secondary flex-col w-14 lg:w-20 transition-all duration-400 ease-out delay-550"
-									:class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'"
+								<UBadge class="countdown-badge p-2 m-1 lg:m-2 text-lg lg:text-3xl text-center text-white bg-transparent flex-col w-14 lg:w-20 transition-opacity duration-400 ease-out delay-550"
+									:class="textVisible ? 'opacity-100' : 'opacity-0'"
 									variant="solid" color="primary">{{days}}
 									<template #trailing><p class="text-xs">Days</p></template>
 								</UBadge>
-								<UBadge class="p-2 m-1 lg:m-2 text-xs lg:text-3xl text-center text-secondary flex-col w-14 lg:w-20 transition-all duration-400 ease-out delay-650"
-									:class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'"
+								<UBadge class="countdown-badge p-2 m-1 lg:m-2 text-lg lg:text-3xl text-center text-white flex-col w-14 lg:w-20 transition-opacity duration-400 ease-out delay-650"
+									:class="textVisible ? 'opacity-100' : 'opacity-0'"
 									variant="solid" color="primary">{{hours}}
 									<template #trailing><p class="text-xs">Hours</p></template>
 								</UBadge>
-								<UBadge class="p-2 m-1 lg:m-2 text-xs lg:text-3xl text-center text-secondary flex-col w-14 lg:w-20 transition-all duration-400 ease-out delay-750"
-									:class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'"
+								<UBadge class="countdown-badge p-2 m-1 lg:m-2 text-lg lg:text-3xl text-center text-white flex-col w-14 lg:w-20 transition-opacity duration-400 ease-out delay-750"
+									:class="textVisible ? 'opacity-100' : 'opacity-0'"
 									variant="solid" color="primary">{{minutes}}
 									<template #trailing><p class="text-xs">Minutes</p></template>
 								</UBadge>
-								<UBadge class="p-2 m-1 lg:m-2 text-xs lg:text-3xl text-center text-secondary flex-col w-14 lg:w-20 transition-all duration-400 ease-out delay-850"
-									:class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'"
+								<UBadge class="countdown-badge p-2 m-1 lg:m-2 text-lg lg:text-3xl text-center text-white flex-col w-14 lg:w-20 transition-opacity duration-400 ease-out delay-850"
+									:class="textVisible ? 'opacity-100' : 'opacity-0'"
 									variant="solid" color="primary">{{seconds}}
 									<template #trailing><p class="text-xs">Seconds</p></template>
 								</UBadge>
@@ -325,13 +381,13 @@ onMounted(() => {
     		</div>
 
 
-			<div v-if="data.partners?.length" class="absolute top-0 left-0 right-0 pt-2 transition-all duration-700 ease-out delay-1000"
-				:class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'">
+			<div v-if="data.partners?.length" class="absolute top-0 left-0 right-0 pt-2 z-10 transition-opacity duration-700 ease-out delay-1000"
+				:class="textVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'">
 				<div class="px-6 mx-auto sm:px-8 lg:px-12 xl:px-50 max-w-8xl flex justify-end-safe">
 					<div class="w-full lg:w-2/3 xl:w-2/3 px-5 lg:px-10 pt-2 pb-2 sm:pb-3 flex flex-col items-end gap-1.5">
-						<div class="flex flex-col items-center gap-1.5">
-						<p class="text-white/70 text-[10px] sm:text-xs font-semibold uppercase tracking-widest whitespace-nowrap">In partnership with</p>
-						<div class="flex flex-row items-center gap-4 sm:gap-6 overflow-x-auto scrollbar-none"
+						<div class="flex flex-col items-center gap-1.5 overflow-visible">
+						<p class="text-black/70 text-[10px] sm:text-xs font-semibold uppercase tracking-widest whitespace-nowrap">In partnership with</p>
+						<div class="flex flex-row items-center gap-4 sm:gap-6  scrollbar-none overflow-visible"
 						:data-directus="
 									setAttr({
 										collection: 'block_mainhero',
@@ -349,7 +405,7 @@ onMounted(() => {
 									class="h-6 sm:h-8 lg:h-12 w-auto object-contain opacity-80 group-hover:opacity-100 transition-opacity"
 								/>
 								<NuxtImg v-else src="/images/apoalogo.png" class="h-6 sm:h-8 lg:h-12 w-auto object-contain opacity-80 group-hover:opacity-100 transition-opacity" />
-								<span class="text-white/70 text-[9px] sm:text-2xs font-medium group-hover:text-white transition-colors leading-tight text-center w-16 sm:w-20 lg:w-24">
+								<span class="text-gray-800/70 text-[9px] sm:text-2xs font-medium group-hover:text-black transition-colors leading-tight text-center w-16 sm:w-20 lg:w-24">
 									{{ partner.organisation?.name || partner.organisation?.abbr || partner.organisation?.short_name }}
 								</span>
 							</div>
@@ -360,4 +416,45 @@ onMounted(() => {
 			</div>
 
 		</div>
+
+		<Teleport to="body">
+			<!-- Ink blot transition layer -->
+			<div
+				class="ink-modal-layer"
+				:class="{
+					visible: inkState !== 'idle',
+					opening: inkState === 'opening',
+					closing: inkState === 'closing',
+				}"
+			>
+				<div :ref="el => inkLayerRef = el as HTMLElement" class="ink-modal-bg" />
+			</div>
+
+			<!-- Modal content -->
+			<div class="ink-modal-content" :class="{ visible: inkState === 'open' }">
+				<div class="relative flex flex-col h-full w-full" style="background-color: #de9260;">
+					
+					<div class="relative h-full p-10 flex align-middle">
+						<UButton
+							icon="i-lucide-x"
+							size="xl"
+							color="neutral"
+							variant="ghost"
+							class="absolute top-6 right-6 text-white"
+							@click="modalOpen = false"
+						/>
+						<video
+							v-if="videoSrc"
+							:ref="el => videoRef = el as HTMLVideoElement"
+							:src="videoSrc"
+							controls
+							autoplay
+							class="w-[90%] max-h-lvh m-auto"
+						/>
+						<slot name="modal-content" />
+					</div>
+
+				</div>
+			</div>
+		</Teleport>
 </template>

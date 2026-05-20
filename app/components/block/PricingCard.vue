@@ -134,7 +134,7 @@ watchEffect(() => {
 	>
 		<div class="flex justify-between items-start gap-2 mb-4">
 			<h3
-				class="text-2xl font-heading text-foreground"
+				class="text-2xl font-sans text-foreground"
 				:data-directus="
 					card.use_congress_charges
 						? setAttr({

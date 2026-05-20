@@ -30,7 +30,7 @@ const mapsUrl = computed(() => {
 	const coords = hotel.value.location?.coordinates;
 	if (!coords) return null;
 	const [lng, lat] = coords;
-	return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+	return `https://www.google.com/maps/search/?api=1&query=${hotel.value.name},${lat},${lng}`;
 });
 
 const {
