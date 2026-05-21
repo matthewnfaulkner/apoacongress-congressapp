@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import ButtonGroup from '../base/ButtonGroup.vue';
 
-import { CheckCircle2 } from 'lucide-vue-next';
-
 interface PricingCardProps {
 	card: PricingCard
 }
@@ -62,6 +60,7 @@ watchEffect(() => {
 	if (props.card.category === 'accommodation') {
 
 		const top = localCharges.shift();
+
 		topCharge.value = top?.charge;
 
 		const details = top?.charge.details as AccommodationChargeDetail[];
@@ -74,16 +73,16 @@ watchEffect(() => {
 		card.value = {
 			id: props.card.id,
 			category: 'accommodation',
-			title: props.card.title ? props.card.title : top?.charge.sub_category || '',
-			price: top?.charge.price || '',
-			description: `${dateStringToHumanStringBack(detail?.check_in)} - ${dateStringToHumanStringBack(detail?.check_out)}`,
+			title: props.card.title ? props.card.title : '',
+			price: detail?.stay_length || '',
+			description:  `${dateStringToHumanStringBack(detail?.check_in)} - ${dateStringToHumanStringBack(detail?.check_out)}`,
 			badge: props.card.badge,
 			button_group: props.card.button_group,
 			use_congress_charges: true,
 			is_highlighted: props.card.is_highlighted,
 			hotel,
-			features: localCharges.flatMap(c => {
-				return `${c.charge.price} - ${c.charge.sub_category}`;
+			features: [top, ...localCharges].flatMap(c => {
+				return `<b class="text-accent">${c.charge.price}</b> - ${c.charge.sub_category}`;
 			})
 		};
 
@@ -211,7 +210,7 @@ watchEffect(() => {
 
 		<p
 			v-if="card.description"
-			class="text-description mt-2 line-clamp-2"
+			class="text-description mt-2 line-clamp-2 text-xl font-bold"
 			:data-directus="
 				setAttr({ collection: 'block_pricing_cards', item: card.id, fields: ['description'], mode: 'popover' })
 			"
@@ -237,7 +236,7 @@ watchEffect(() => {
 				"
 			>
 				<li v-for="(feature, index) in card.features" :key="index" class="flex items-center gap-3 text-regular">
-					<p class="leading-relaxed" v-html="feature"></p>
+					<p class="leading-relaxed text-xl" v-html="feature"></p>
 				</li>
 			</ul>
 		</div>

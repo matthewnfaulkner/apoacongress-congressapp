@@ -136,7 +136,7 @@ onMounted(() => {
 							">
 							<div v-for="person in item.people"
 								>
-								<div class="relative overflow-hidden ink-reveal" :class="{ 'is-active': visible }" style="--ink-duration: 3s">
+								<div class="relative overflow-hidden ink-reveal" :class="{ 'is-active': visible }" style="--ink-duration: 2s">
 									<ProfileImage class="h-40 mx-auto" :image="person.person.image" :ui="{ item: 'basis-1/2' }" />
 									<div class="ink-overlay" />
 								</div>

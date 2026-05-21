@@ -139,7 +139,7 @@ h3 { font-size: 1.5rem; font-weight: bold; margin-bottom: 15px; margin-top: 15px
 }
 
 .ink-reveal.is-active .ink-overlay {
-  animation: ink-transition var(--ink-duration, 2s) steps(39) 0.5s forwards;
+  animation: ink-transition var(--ink-duration, 2s) steps(39) 0s forwards;
 }
 
 @keyframes ink-transition {

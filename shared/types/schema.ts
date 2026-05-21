@@ -189,6 +189,44 @@ export interface BlockChargeTable {
 	user_created?: DirectusUser | string | null;
 	date_updated?: string | null;
 	user_updated?: DirectusUser | string | null;
+	tabs?: BlockChargeTableTab[] | string[] | null;
+}
+
+export interface BlockChargeTableTab {
+	id: string;
+	/** @description Smaller copy shown above the headline to label a section or add extra context. */
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	heading?: string | null;
+	row_labels?: string | null;
+	chargetable?: BlockChargeTable | string | null;
+	charges?: BlockChargeTableColumnCharge[] | string[] | null;
+}
+
+export interface BlockChargeTableColumn {
+	id: string;
+	/** @description Smaller copy shown above the headline to label a section or add extra context. */
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	heading?: string | null;
+	tab?: BlockChargeTableTab | string | null;
+	charges?: BlockChargeTableColumnCharge[] | string[] | null;
+}
+
+export interface BlockChargeTableColumnCharge {
+	/** @primaryKey */
+	id: string;
+	/** @description Smaller copy shown above the headline to label a section or add extra context. */
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	sort?: string | null;
+	detail?: string | null;
 }
 
 export interface CongressCharge {

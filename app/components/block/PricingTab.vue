@@ -46,9 +46,9 @@ const sortedCards = computed(() =>
 			}"
 			:data-directus="
 				setAttr({
-					collection: 'block_pricing',
-					item: tab.id,
-					fields: ['pricing_cards'],
+					collection: 'block_pricing_tabs',
+					item: tab.id as string,
+					fields: ['label', 'pricing_cards'],
 					mode: 'modal',
 				})
 			"

@@ -186,9 +186,9 @@ onMounted(() => {
 			setTimeout(() => {
 				textVisible.value = true;
 				if (announcement.value) {
-					setTimeout(() => { openAnnouncements.value = true; }, 500);
+					setTimeout(() => { openAnnouncements.value = true; }, 1000);
 				}
-			}, 2500);
+			}, 1500);
 			observer.disconnect();
 		}
 	});
@@ -202,7 +202,7 @@ onMounted(() => {
 		:style="{ '--herobg-color': data.bgcolor }"
 		:class="`bg-[var(--herobg-color)]`">
 			
-			<div class="absolute inset-0 overflow-hidden ink-reveal ink-framed" :class="{ 'is-active': visible }" style="--ink-duration: 3s">
+			<div class="absolute inset-0 overflow-hidden ink-reveal ink-framed" :class="{ 'is-active': visible }" style="--ink-duration: 2s">
 				<DirectusImage
 					class="object-cover w-full h-full object-[25%_25%]"
 					:uuid="props.data.image"
@@ -224,9 +224,9 @@ onMounted(() => {
 					>
 					<div
 						v-if="openAnnouncements"
-						class="text-shadow-none absolute top-5 left-1/2 -translate-x-1/2 z-40 w-[90%] max-w-lg px-10 max-h-[80%] md:bottom-auto md:top-1/2 md:left-6 md:translate-x-0 md:-translate-y-1/2 md:w-1/2 md:w-[50%] md:px-0 lg:left-12 xl:left-50"
+						class="text-shadow-none absolute bottom-5 left-1/2 -translate-x-1/2 z-40 w-[90%] max-w-lg px-10 max-h-[80%] md:bottom-auto md:top-1/2 md:left-6 md:translate-x-0 md:-translate-y-1/2 md:w-1/2 md:px-0 lg:left-12 xl:left-50"
 					>
-						<UCard class="shadow-xl bg-primary/95 shadow-2xl shadow-black ring-gray-600 ring-2">
+						<UCard class=" bg-primary/95 shadow-2xl shadow-black ring-gray-600 ring-2">
 							<div class="flex flex-col gap-2">
 								<div class="flex items-center gap-3">
 									<p class="font-semibold text-sm flex-1 text-center">{{ announcement?.headline }}</p>
@@ -351,25 +351,25 @@ onMounted(() => {
 										mode: 'modal' })
 								"
 						>
-							<vue-countdown :time="secondsUntil * 1000" v-slot="{ days, hours, minutes, seconds }" class="text-shadow-none">
-								<UBadge class="countdown-badge p-2 m-1 lg:m-2 text-lg lg:text-3xl text-center text-white bg-transparent flex-col w-14 lg:w-20 transition-opacity duration-400 ease-out delay-550"
+							<vue-countdown :time="secondsUntil * 1000" v-slot="{ days, hours, minutes, seconds }" class="text-shadow-none text-black">
+								<UBadge class="countdown-badge p-2 m-1 lg:m-2 text-lg lg:text-3xl text-center bg-transparent flex-col w-14 lg:w-20 transition-opacity duration-400 ease-out delay-550"
 									:class="textVisible ? 'opacity-100' : 'opacity-0'"
-									variant="solid" color="primary">{{days}}
+									variant="solid" color="dark">{{days}}
 									<template #trailing><p class="text-xs">Days</p></template>
 								</UBadge>
-								<UBadge class="countdown-badge p-2 m-1 lg:m-2 text-lg lg:text-3xl text-center text-white flex-col w-14 lg:w-20 transition-opacity duration-400 ease-out delay-650"
+								<UBadge class="countdown-badge p-2 m-1 lg:m-2 text-lg lg:text-3xl text-center flex-col w-14 lg:w-20 transition-opacity duration-400 ease-out delay-650"
 									:class="textVisible ? 'opacity-100' : 'opacity-0'"
-									variant="solid" color="primary">{{hours}}
+									variant="solid" color="black">{{hours}}
 									<template #trailing><p class="text-xs">Hours</p></template>
 								</UBadge>
-								<UBadge class="countdown-badge p-2 m-1 lg:m-2 text-lg lg:text-3xl text-center text-white flex-col w-14 lg:w-20 transition-opacity duration-400 ease-out delay-750"
+								<UBadge class="countdown-badge p-2 m-1 lg:m-2 text-lg lg:text-3xl text-center flex-col w-14 lg:w-20 transition-opacity duration-400 ease-out delay-750"
 									:class="textVisible ? 'opacity-100' : 'opacity-0'"
-									variant="solid" color="primary">{{minutes}}
+									variant="solid" color="black">{{minutes}}
 									<template #trailing><p class="text-xs">Minutes</p></template>
 								</UBadge>
-								<UBadge class="countdown-badge p-2 m-1 lg:m-2 text-lg lg:text-3xl text-center text-white flex-col w-14 lg:w-20 transition-opacity duration-400 ease-out delay-850"
+								<UBadge class="countdown-badge p-2 m-1 lg:m-2 text-lg lg:text-3xl text-cente flex-col w-14 lg:w-20 transition-opacity duration-400 ease-out delay-850"
 									:class="textVisible ? 'opacity-100' : 'opacity-0'"
-									variant="solid" color="primary">{{seconds}}
+									variant="solid" color="black">{{seconds}}
 									<template #trailing><p class="text-xs">Seconds</p></template>
 								</UBadge>
 							</vue-countdown>
@@ -381,7 +381,7 @@ onMounted(() => {
     		</div>
 
 
-			<div v-if="data.partners?.length" class="absolute top-0 left-0 right-0 pt-2 z-10 transition-opacity duration-700 ease-out delay-1000"
+			<div v-if="data.partners?.length" class="absolute top-0 left-0 right-0 pt-2 z-10 transition-opacity duration-700 ease-out delay-1300"
 				:class="textVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'">
 				<div class="px-6 mx-auto sm:px-8 lg:px-12 xl:px-50 max-w-8xl flex justify-end-safe">
 					<div class="w-full lg:w-2/3 xl:w-2/3 px-5 lg:px-10 pt-2 pb-2 sm:pb-3 flex flex-col items-end gap-1.5">

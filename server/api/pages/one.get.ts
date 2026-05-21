@@ -136,7 +136,30 @@ const pageFields = [
 						'id',
 						'headline',
 						'tagline',
-						'category',
+						{
+							tabs: [
+								'id',
+								'title',
+								'label',
+								'row_labels',
+								{
+									columns: [
+										'*',
+										{
+											charges: [
+												'id',
+												'detail',
+												{
+													charge: [
+														'*'
+													]
+												}
+											]
+										}
+									]
+								}
+							]
+						}
 					],	
 					block_people: [
 						'*',

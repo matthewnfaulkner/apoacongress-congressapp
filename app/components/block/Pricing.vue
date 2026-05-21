@@ -55,6 +55,7 @@ const onTabChange = async () => {
 </script>
 
 <template>
+	
 	<section>
 		<Tagline
 			v-if="data.tagline"
@@ -62,7 +63,7 @@ const onTabChange = async () => {
 			:data-directus="
 				setAttr({
 					collection: 'block_pricing',
-					item: data.id,
+					item: data.id as string,
 					fields: 'tagline',
 					mode: 'popover',
 				})
@@ -74,7 +75,7 @@ const onTabChange = async () => {
 			:data-directus="
 				setAttr({
 					collection: 'block_pricing',
-					item: data.id,
+					item: data.id as string,
 					fields: 'headline',
 					mode: 'popover',
 				})
