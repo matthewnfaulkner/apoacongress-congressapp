@@ -698,7 +698,6 @@ export interface CongressSession {
 	starttime?: string | null;
 	endtime?: string | null;
 	schedule?: CongressSchedule;
-	room?: VenueRoom | string | null;
 	events?: CongressEvent[];
 	section? : ApoaSection;
 	rooms?: CongressSessionRoom[] | string[] | null;

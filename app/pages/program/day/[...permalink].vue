@@ -50,62 +50,81 @@ const hashRoom = rooms?.findIndex(room => room.id == route.hash.slice(1));
 const targetTab = hashRoom != -1 ? hashRoom : 0;
 
 const tabs: TabsItem[] = rooms.map(room => {
-  const sessions: SessionEntry[] = (
-	day?.value?.schedules
-	?.flatMap(schedule => schedule.sessions ?? [])
-	.filter(session => (session?.rooms as any[] | null)?.some(r => (typeof r.room === 'object' ? r.room?.id : r.room) === room.id))
-	.map(session => {
-		const sectionOrg = (session?.section as any)?.organisation
-		const sectionAbbr = sectionOrg?.abbr ?? null
-		const orgNames = ((session.organisers as any[]) ?? [])
-			.map(o => o.organisation?.short_name ?? o.organisation?.name ?? '')
-			.filter(Boolean)
-			.join(', ')
-		const rawTags = (session.tags as any[]) ?? []
-		const firstTagId = rawTags.length > 0 ? (rawTags[0]?.key ?? rawTags[0]?.id ?? rawTags[0]) : null
-		const tagColor = firstTagId ? (siteDataStore.scientificTags.find(t => t.id === firstTagId)?.color ?? null) : null
-		const tagName = rawTags
-			.map(raw => raw?.key ?? raw?.id ?? raw)
-			.map(id => siteDataStore.scientificTags.find(t => t.id === id)?.tag)
-			.filter(Boolean)
-			.join(', ')
-		return ({
-			id: session.id,
-			time: `${removeSeconds(session.starttime)} - ${removeSeconds(session.endtime)}`,
-			topic: {
-				label: session?.title ?? '',
-				orgNames,
-				tagName,
-				static: false,
-				link: sectionAbbr ? `/program/section/${sectionAbbr}` : null
-			},
-			roles: [''],
-			session: orgNames,
-			color: tagColor,
-			children: session?.events?.map<EventEntry>(myevent => ({
-				id: myevent.id,
-				time: addMinutesToTime(
-					session?.starttime || '',
-					myevent?.relative_start || 0
-				),
-				topic: myevent?.type? myevent?.type[0] : {},
-				color: tagColor,
-				active: eventId === myevent.id,
-				roles: myevent.assignments.flatMap(assignment => assignment),
-				children: myevent.children?.map<EventEntry>(child => ({
-					id: child.id,
-					active: eventId === child.id,
-					time: addMinutesToTime(
-						session?.starttime || '',
-						(myevent?.relative_start || 0) + (child?.relative_start || 0)
-					),
-					topic: child?.type? child?.type[0] : {},
-					color: tagColor,
-					roles: child.assignments.flatMap(assignment => assignment)
-				})) ?? []
-			})) ?? []
-		});
-	}) ?? []) as SessionEntry[];
+  const rawSessions = day?.value?.schedules
+    ?.flatMap(schedule => schedule.sessions ?? [])
+    .filter(session => (session?.rooms as any[] | null)?.some(r => (typeof r.room === 'object' ? r.room?.id : r.room) === room.id))
+    ?? []
+
+  const rawBreaks = day?.value?.schedules
+    ?.flatMap(schedule => (schedule as any).breaks ?? [])
+    .filter((b: any) => (b?.rooms ?? []).some((r: any) => r.room === room.id))
+    ?? []
+
+  const combined = [
+    ...rawSessions.map(s => ({ type: 'session' as const, starttime: s.starttime || '', data: s })),
+    ...rawBreaks.map((b: any) => ({ type: 'break' as const, starttime: b.starttime || '', data: b })),
+  ].sort((a, b) => a.starttime.localeCompare(b.starttime))
+
+  const sessions: SessionEntry[] = combined.map(item => {
+    if (item.type === 'break') {
+      const b = item.data as any
+      return {
+        id: b.id,
+        time: `${removeSeconds(b.starttime)} - ${removeSeconds(b.endtime)}`,
+        topic: { label: b.name || 'Break', orgNames: '', tagName: '', static: true, link: null },
+        roles: [],
+        session: '',
+        color: '#fbbf24',
+        children: [],
+      } as SessionEntry
+    }
+
+    const session = item.data
+    const sectionOrg = (session?.section as any)?.organisation
+    const sectionAbbr = sectionOrg?.abbr ?? null
+    const orgNames = ((session.organisers as any[]) ?? [])
+      .map(o => o.organisation?.short_name ?? o.organisation?.name ?? '')
+      .filter(Boolean)
+      .join(', ')
+    const rawTags = (session.tags as any[]) ?? []
+    const firstTagId = rawTags.length > 0 ? (rawTags[0]?.key ?? rawTags[0]?.id ?? rawTags[0]) : null
+    const tagColor = firstTagId ? (siteDataStore.scientificTags.find(t => t.id === firstTagId)?.color ?? null) : null
+    const tagName = rawTags
+      .map(raw => raw?.key ?? raw?.id ?? raw)
+      .map(id => siteDataStore.scientificTags.find(t => t.id === id)?.tag)
+      .filter(Boolean)
+      .join(', ')
+    return {
+      id: session.id,
+      time: `${removeSeconds(session.starttime)} - ${removeSeconds(session.endtime)}`,
+      topic: {
+        label: session?.title ?? '',
+        orgNames,
+        tagName,
+        static: false,
+        link: sectionAbbr ? `/program/section/${sectionAbbr}` : null
+      },
+      roles: [''],
+      session: orgNames,
+      color: tagColor,
+      children: session?.events?.map<EventEntry>(myevent => ({
+        id: myevent.id,
+        time: addMinutesToTime(session?.starttime || '', myevent?.relative_start || 0),
+        topic: myevent?.type ? myevent?.type[0] : {},
+        color: tagColor,
+        active: eventId === myevent.id,
+        roles: myevent.assignments.flatMap(assignment => assignment),
+        children: myevent.children?.map<EventEntry>(child => ({
+          id: child.id,
+          active: eventId === child.id,
+          time: addMinutesToTime(session?.starttime || '', (myevent?.relative_start || 0) + (child?.relative_start || 0)),
+          topic: child?.type ? child?.type[0] : {},
+          color: tagColor,
+          roles: child.assignments.flatMap(assignment => assignment)
+        })) ?? []
+      })) ?? []
+    }
+  })
 
 
   return {
@@ -281,7 +300,7 @@ function model(event) {
 					class="flex-1"	
 					:ui="{
 						base: 'border-separate border-spacing-0',
-						tbody: '[&>tr]:last:[&>td]:border-b-0 font-serif',
+						tbody: '[&>tr]:last:[&>td]:border-b-0',
 						tr: `group`,
 						td: 'empty:p-0 group-has-[td:not(:empty)]:border-b border-default'
 					}"

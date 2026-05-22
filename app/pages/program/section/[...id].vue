@@ -83,6 +83,7 @@ const sessions: SessionEntry[] =
 		roles: [''],
 		session: orgNames,
 		color: tagColor,
+		room: (session?.rooms as CongressSessionRoom[]).map((room) => (room.room as VenueRoom).title),
 		children: session?.events?.map<EventEntry>(myevent => ({
 			id: myevent.id,
 			time: addMinutesToTime(session?.starttime || '', (myevent?.relative_start || 0)),
@@ -175,6 +176,10 @@ const columns: TableColumn<SessionEntry>[] = [
 			]
 		)
 		}
+	},
+	{
+		accessorKey: 'room',
+		header: 'Room',
 	},
 	{
 		accessorKey: 'topic',
