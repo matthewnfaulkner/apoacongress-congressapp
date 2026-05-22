@@ -710,6 +710,8 @@ export interface CongressOrganisation {
 	sort?: string | null;
 	congress?: Congress | string | null;
 	organisation?: Organisation | string | null;
+	partnership_type?: string | null;
+	description?: string | null;
 }
 
 export interface ScientificTag {
@@ -2109,6 +2111,7 @@ export interface Schema {
 	policies: Policy[];
 	user_policy_agreements: UserPolicyAgreement[];
 	redirects: Redirect[];
+	scientific_tags: ScientificTag[];
 	Sponsors: Sponsor[];
 	symposiums: Symposium[];
 	talks: Talk[];
@@ -2203,6 +2206,7 @@ export enum CollectionNames {
 	policies = 'policies',
 	user_policy_agreements = 'user_policy_agreements',
 	redirects = 'redirects',
+	scientific_tags = 'scientific_tags',
 	sponsors = 'sponsors',
 	symposiums = 'symposiums',
 	talks = 'talks',

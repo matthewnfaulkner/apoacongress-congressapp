@@ -28,6 +28,8 @@ const typeLabel: Record<string, string> = {
 	apoa_sections: 'APOA Section',
 	sponsor: 'Sponsor',
 	noa: 'National Orthopaedic Association',
+	ioa: 'International Orthopaedic Association',
+	apoa_core: 'APOA'
 };
 
 type BadgeColor = 'primary' | 'warning' | 'success' | 'neutral';
@@ -67,7 +69,13 @@ useSeoMeta({
 							variant="subtle"
 						/>
 					</div>
-					
+					<div v-if="(org as any).partnership_type || (org as any).partnership_description" class="mt-3 space-y-1.5">
+						<p v-if="(org as any).partnership_type" class="text-sm font-semibold text-accent uppercase tracking-wide">
+							{{ (org as any).partnership_type }}
+						</p>
+						<p v-if="(org as any).partnership_description" class="text-sm text-muted" v-html="(org as any).partnership_description ">
+						</p>
+					</div>
 				</template>
 
 				<template #description>

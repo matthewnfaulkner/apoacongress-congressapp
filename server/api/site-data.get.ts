@@ -46,7 +46,7 @@ export default defineEventHandler(async (event) => {
 												'name',
 												'short_name',
 												'abbr',
-												'logo'
+												'logo',
 											]
 										
 										}

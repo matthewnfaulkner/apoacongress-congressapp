@@ -16,6 +16,8 @@ export default defineEventHandler(async (event) => {
             } as any,
             fields: [
                 'congress',
+                'partnership_type',
+                'description',
                 {
                     organisation: [
                         'id',
@@ -84,6 +86,8 @@ export default defineEventHandler(async (event) => {
 
     const congressId = (result as any).congress?.id ?? (result as any).congress;
     const org = result.organisation as any;
+    org.partnership_type = (result as any).partnership_type ?? null;
+    org.partnership_description = (result as any).description ?? null;
 
     // Filter committees to only those belonging to the current congress
     if (org.apoa_section_details) {

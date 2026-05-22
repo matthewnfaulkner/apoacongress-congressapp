@@ -216,7 +216,7 @@ export default defineEventHandler(async (event) => {
                 token as string,
                 readItems('congress_sessions', {
                     fields: sectionFields as any,
-                    sort: 'starttime',
+                    sort: ['schedule.day.date', 'starttime'] as any,
                     filter: {
                         organisers: {
                             organisation: {

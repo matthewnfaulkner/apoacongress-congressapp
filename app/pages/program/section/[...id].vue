@@ -125,7 +125,11 @@ const sessionsByDay = Object.values(
 
     return acc;
   }, {})
-);
+).sort((a, b) => {
+  const dateA = (a.day as any)?.date ?? '';
+  const dateB = (b.day as any)?.date ?? '';
+  return dateA < dateB ? -1 : dateA > dateB ? 1 : 0;
+});
 
     
 type SessionEntry = {
