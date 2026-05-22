@@ -16,8 +16,12 @@ const sectionFields = [
     'endtime',
     'tags',
     {
-        room: [
-            'title'
+        rooms: [
+            {
+                room: [
+                    'title'
+                ]
+            }
         ]
     },
     {
