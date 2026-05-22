@@ -28,6 +28,8 @@ if (siteError.value) {
 
 const siteDataStore = useSiteDataStore();
 siteDataStore.setSiteData(unref(siteData)?.site as Site);
+siteDataStore.setScientificTags(unref(siteData)?.scientific_tags ?? []);
+
 
 const auth = await useAuthStore();
 
@@ -41,6 +43,7 @@ const canPreview = ref();
 	const { $isAuthenticatedWithPolicy } = useNuxtApp();
 	canPreview.value = await $isAuthenticatedWithPolicy('Administrator');
 }*/
+
 
 
 useHead({

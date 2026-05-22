@@ -82,7 +82,7 @@ watchEffect(() => {
 			is_highlighted: props.card.is_highlighted,
 			hotel,
 			features: [top, ...localCharges].flatMap(c => {
-				return `<b class="text-accent">${c.charge.price}</b> - ${c.charge.sub_category}`;
+				return `<b class="text-accent text-lg">${c.charge.price}</b> - ${c.charge.sub_category}`;
 			})
 		};
 
@@ -115,7 +115,7 @@ watchEffect(() => {
 			features: filteredCharges.flatMap(c => {
 				const d = (c.charge.details as RegistrationChargeDetail[])?.[0];
 				return d
-					? `<b class="text-accent">${c.charge.price}</b> - ${d.cutoff_description} ${dateStringToHumanStringBack(d.cutoff_date)}`
+					? `<b class="text-accent text-lg">${c.charge.price}</b> - ${d.cutoff_description} ${dateStringToHumanStringBack(d.cutoff_date)}`
 					: c.charge.price || '';
 			}),
 		};
@@ -236,7 +236,7 @@ watchEffect(() => {
 				"
 			>
 				<li v-for="(feature, index) in card.features" :key="index" class="flex items-center gap-3 text-regular">
-					<p class="leading-relaxed text-xl" v-html="feature"></p>
+					<p class="leading-relaxed text-sm" v-html="feature"></p>
 				</li>
 			</ul>
 		</div>

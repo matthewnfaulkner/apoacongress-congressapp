@@ -14,9 +14,18 @@ const sectionFields = [
     'title',
     'starttime',
     'endtime',
+    'tags',
     {
         room: [
             'title'
+        ]
+    },
+    {
+        organisers: [
+            'id',
+            {
+                organisation: ['id', 'name', 'short_name', 'abbr', 'type']
+            }
         ]
     },
     {

@@ -1,6 +1,4 @@
 import { z } from 'zod';
-import type { CongressSchedule } from '~~/shared/types/schema';
-
 
 const querySchema = z.object({
 	limit: z.coerce.number().min(1).max(100).default(6),
@@ -27,6 +25,7 @@ const scheduleFields = [
 	{
 		days: [
 			'id',
+			'key',
 			'title',
 			'time_subdivision',
 			'starttime',
@@ -43,7 +42,7 @@ const scheduleFields = [
 					'id',
 					'name',
 					'status',
-					{
+					/*{
 						breaks: [
 							'id',
 							'starttime',
@@ -150,11 +149,11 @@ const scheduleFields = [
 								section: [
 									'id',
 									'name',
-									
+									'color'
 								]
 							}
 						]
-					},
+					},*/
 				]
 			}
 		]
@@ -174,7 +173,7 @@ export default defineEventHandler(async (event) => {
 	const { limit, page } = query.data;
 
 	try {
-		let schedule: CongressSchedule;
+		let schedule: Congress;
 
 		const scheduleData = await directusServer.request(
 			readItems('congress', {
@@ -210,7 +209,7 @@ export default defineEventHandler(async (event) => {
 			throw createError({ statusCode: 404, statusMessage: 'Schedule not found' });
 		}
 
-		schedule = scheduleData[0] as CongressSchedule;
+		schedule = scheduleData[0] as Congress;
 
 		return schedule;
 	} catch {

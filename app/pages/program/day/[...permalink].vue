@@ -1,14 +1,17 @@
 <script setup lang="ts">
-import type { ApoaSection, Assignment, CongressDay, DirectusUser } from '#shared/types/schema';
+import type { Assignment, CongressDay } from '#shared/types/schema';
 import type { TabsItem } from '@nuxt/ui'
 import { h, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import { addMinutesToTime, removeSeconds } from '~/utils/time-utils';
 import BaseEventType from '~/components/eventTypes/BaseEventType.vue';
 
+const UCheckbox = resolveComponent('UCheckbox')
+const UButton = resolveComponent('UButton')
 const route = useRoute();
 const { enabled, state } = useLivePreview();
 const { isVisualEditingEnabled, apply, setAttr } = useVisualEditing();
+const siteDataStore = useSiteDataStore();
 
 import { withLeadingSlash, withoutTrailingSlash } from 'ufo';
 const personUrl = useRequestURL();
@@ -34,6 +37,7 @@ const { data, error, refresh } = await useFetch<CongressDay>(() => `/api/program
 	},
 });
 
+
 if (!data.value || error.value) {
 	throw createError({ statusCode: 404, statusMessage: 'Day not found', fatal: true });
 }
@@ -46,43 +50,62 @@ const hashRoom = rooms?.findIndex(room => room.id == route.hash.slice(1));
 const targetTab = hashRoom != -1 ? hashRoom : 0;
 
 const tabs: TabsItem[] = rooms.map(room => {
-  const sessions: SessionEntry[] =
+  const sessions: SessionEntry[] = (
 	day?.value?.schedules
 	?.flatMap(schedule => schedule.sessions ?? [])
-	.filter(session => session.room === room.id)
-	.map(session => ({
-		id: session.id,
-		time: `${removeSeconds(session.starttime)} - ${removeSeconds(session.endtime)}`,
-		topic: {
-				label:`${session.section?.name} - ${session.title}`,
-				link: `/program/section/${session.section?.slug}`
+	.filter(session => (session?.rooms as any[] | null)?.some(r => (typeof r.room === 'object' ? r.room?.id : r.room) === room.id))
+	.map(session => {
+		const sectionOrg = (session?.section as any)?.organisation
+		const sectionAbbr = sectionOrg?.abbr ?? null
+		const orgNames = ((session.organisers as any[]) ?? [])
+			.map(o => o.organisation?.short_name ?? o.organisation?.name ?? '')
+			.filter(Boolean)
+			.join(', ')
+		const rawTags = (session.tags as any[]) ?? []
+		const firstTagId = rawTags.length > 0 ? (rawTags[0]?.key ?? rawTags[0]?.id ?? rawTags[0]) : null
+		const tagColor = firstTagId ? (siteDataStore.scientificTags.find(t => t.id === firstTagId)?.color ?? null) : null
+		const tagName = rawTags
+			.map(raw => raw?.key ?? raw?.id ?? raw)
+			.map(id => siteDataStore.scientificTags.find(t => t.id === id)?.tag)
+			.filter(Boolean)
+			.join(', ')
+		return ({
+			id: session.id,
+			time: `${removeSeconds(session.starttime)} - ${removeSeconds(session.endtime)}`,
+			topic: {
+				label: session?.title ?? '',
+				orgNames,
+				tagName,
+				static: false,
+				link: sectionAbbr ? `/program/section/${sectionAbbr}` : null
 			},
-		roles: [''],
-		session: session.section?.name,
-		color: session.section?.color,
-		children: session?.events?.map<EventEntry>(myevent => ({
-			id: myevent.id,
-			time: addMinutesToTime(
-				session?.starttime || '',
-				myevent?.relative_start || 0
-			),
-			topic: myevent?.type? myevent?.type[0] : {},
-			color: session.section?.color,
-			active: eventId === myevent.id,
-			roles: myevent.assignments.flatMap(assignment => assignment),
-			children: myevent.children?.map<EventEntry>(child => ({
-				id: child.id,
-				active: eventId === child.id,
+			roles: [''],
+			session: orgNames,
+			color: tagColor,
+			children: session?.events?.map<EventEntry>(myevent => ({
+				id: myevent.id,
 				time: addMinutesToTime(
-				session?.starttime || '',
-				(myevent?.relative_start || 0) + (child?.relative_start || 0)
+					session?.starttime || '',
+					myevent?.relative_start || 0
 				),
-				topic: child?.type? child?.type[0] : {},
-				color: session.section?.color,
-				roles: child.assignments.flatMap(assignment => assignment)
+				topic: myevent?.type? myevent?.type[0] : {},
+				color: tagColor,
+				active: eventId === myevent.id,
+				roles: myevent.assignments.flatMap(assignment => assignment),
+				children: myevent.children?.map<EventEntry>(child => ({
+					id: child.id,
+					active: eventId === child.id,
+					time: addMinutesToTime(
+						session?.starttime || '',
+						(myevent?.relative_start || 0) + (child?.relative_start || 0)
+					),
+					topic: child?.type? child?.type[0] : {},
+					color: tagColor,
+					roles: child.assignments.flatMap(assignment => assignment)
+				})) ?? []
 			})) ?? []
-		})) ?? []
-  }));
+		});
+	}) ?? []) as SessionEntry[];
 
 
   return {
@@ -102,12 +125,12 @@ const activeTab = ref(tabs[targetTab]?.value);
 type SessionEntry = {
   id: string
   time: string | null | undefined
-  topic: ApoaSection
+  topic: { label: string; orgNames: string; tagName: string; static: boolean; link: string | null }
   roles: string[] | null | undefined
   session: string;
   color: string | null | undefined;
   children?: EventEntry[]
-  active: boolean
+  active?: boolean
 }
 
 type EventEntry = {
@@ -153,14 +176,17 @@ const columns: TableColumn<SessionEntry>[] = [
 			row.depth === 1 ? 600 :
 			400;
 			if(row.depth == 0){
-				const topic = row.getValue('topic') as {label?: string, link?: string};
-				return h('a',{
-						style: {
-							paddingLeft: `${row.depth}rem`,
-							fontWeight,
-							},
-						class: 'wrap-break-word text-wrap',
-						href: topic?.link}, topic?.label)
+				const topic = row.getValue('topic') as {label?: string, link?: string, orgNames?: string, tagName?: string};
+				return h('a', {
+						style: { paddingLeft: `${row.depth}rem`, fontWeight },
+						class: 'flex flex-col wrap-break-word text-wrap',
+						href: topic?.link
+					}, [
+						topic?.orgNames ? h('span', { class: 'text-sm font-normal text-gray-500' }, topic.orgNames) : null,
+						h('span', topic?.label),
+						topic?.tagName ? h('i', { class: 'text-sm font-normal text-gray-500' }, topic.tagName) : null,
+					].filter(Boolean)
+				)
 			}else{
 				 return h(BaseEventType, 
 					{
@@ -200,11 +226,14 @@ onMounted(() => {
 });
 // Function to return a class for each row
 function getRowStyle(row) { 
-	return`background: ${row.original.color}10!important`;
+	if (row.depth === 0) return `background: ${row.original.color}30!important`;
+	return`background: ${row.original.color}15!important`;
 }
 
-function getRowClass(row) { 
-  if(row.original.active) return`ring ring-2 ring-secondary/50 animate-pulse`;
+function getRowClass(row) {
+  const classes: string[] = [];
+  if (row.original.active) classes.push('ring ring-2 ring-secondary/50 animate-pulse');
+  return classes.join(' ') || undefined;
 }
 
 const on2ndRow = ref(false);
@@ -236,7 +265,7 @@ function model(event) {
 				<UTable
 					:data="item.sessions"
 					:columns="columns"
-					:get-sub-rows="(row) => row.children"
+					:get-sub-rows="(row) => (row.children as any)"
 					:expanded="true";
 					:meta="{
 						style: {
@@ -252,7 +281,7 @@ function model(event) {
 					class="flex-1"	
 					:ui="{
 						base: 'border-separate border-spacing-0',
-						tbody: '[&>tr]:last:[&>td]:border-b-0',
+						tbody: '[&>tr]:last:[&>td]:border-b-0 font-serif',
 						tr: `group`,
 						td: 'empty:p-0 group-has-[td:not(:empty)]:border-b border-default'
 					}"
@@ -274,10 +303,5 @@ function model(event) {
 		</UTabs>
 		</Container>
 	</div>
-	<div v-else>
-		<div class="text-center text-xl mt-[20%] w-full text-center">
-			<p class="text-center m-2">Schedule Coming Soon</p>
-			<UButton class="m-auto p-2" label="Get Notifed" color="accent" variant="solid" to="/register-interest" />
-		</div>
-	</div>
+	<div v-else class="text-center text-xl mt-[20%]">Schedule Unavailable</div>
 </template>

@@ -1453,7 +1453,6 @@ export interface Redirect {
 	user_updated?: DirectusUser | string | null;
 }
 
-
 export interface Sponsor {
 	id: string;
 	/** @description Smaller copy shown above the headline to label a section or add extra context. */

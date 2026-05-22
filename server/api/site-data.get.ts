@@ -2,11 +2,17 @@ export default defineEventHandler(async (event) => {
 	try {
 		const config = useRuntimeConfig();
 
-		const [globals, site, headerNavigation, footerNavigation] = await Promise.all([
+		const [globals, scientific_tags, site, headerNavigation, footerNavigation] = await Promise.all([
 			directusServer.request(
 				readSingleton('globals', {
 					fields: ['title', 'description', 'logo', 'logo_dark_mode', 'social_links', 'accent_color', 'favicon'],
 				}),
+			),
+			directusServer.request(
+				readItems('scientific_tags', {
+					limit: -1,
+					fields: ['id', 'tag', 'color']
+				})
 			),
 			directusServer.request(
 				readItem('sites',  config.public.siteId, {
@@ -14,43 +20,19 @@ export default defineEventHandler(async (event) => {
 						'title', 
 						'description', 
 						'logo',
-						'logo_dark_mode',
 						'social_links',
 						'preview',
-						'favicon',
-						{
-							support_form: [
-								'id',
-								'title',
-								'submit_label',
-								'success_message',
-								'on_success',
-								'success_redirect_url',
-								'is_active',
-								{
-									fields: [
-										'id',
-										'name',
-										'type',
-										'label',
-										'placeholder',
-										'help',
-										'validation',
-										'width',
-										'choices',
-										'required',
-										'sort',
-										'use_user_data'
-									],
-								},
-							],
-						},
 						{
 							'congress' : [
 								'*',
 								{
+									days: [
+										'key',
+										'title'
+									]
+								},
+								{
 									'venue' : [
-										'id',
 										'title'
 									]
 								},
@@ -78,7 +60,6 @@ export default defineEventHandler(async (event) => {
 										'logo',
 										'address',
 										'phone',
-										
 									]
 								}
 							]
@@ -168,7 +149,7 @@ export default defineEventHandler(async (event) => {
 			),
 
 			directusServer.request(
-				readItems('navigation', {
+					readItems('navigation', {
 					limit: 1,
 					filter: {
 						_and: [
@@ -218,10 +199,8 @@ export default defineEventHandler(async (event) => {
 			),
 		]);
 
-		return { globals, site, headerNavigation, footerNavigation };
-	} catch (error){
-		
-		throw createError({ statusCode: 500, statusMessage: error instanceof Error ? error.message : String(error) });
-
+		return { globals, scientific_tags, site, headerNavigation, footerNavigation };
+	} catch {
+		throw createError({ statusCode: 500, statusMessage: 'Internal Server Error' });
 	}
 });

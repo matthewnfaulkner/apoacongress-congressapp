@@ -3,7 +3,7 @@ import type { Assignment, CongressDay, CongressSession, DirectusUser, Organisati
 import type { TabsItem } from '@nuxt/ui'
 import { h, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
-import { addMinutesToTime } from '~/utils/time-utils';
+import { addMinutesToTime, removeSeconds } from '~/utils/time-utils';
 import BaseEventType from '~/components/eventTypes/BaseEventType.vue';
 
 
@@ -62,19 +62,32 @@ useSeoMeta({
 });
 
 const sessions: SessionEntry[] =
-    sectionSessions?.value?.map((session, index) => ({
+    sectionSessions?.value?.map((session, index) => {
+		const orgNames = ((session.organisers as any[]) ?? [])
+			.map(o => o.organisation?.short_name ?? o.organisation?.name ?? '')
+			.filter(Boolean)
+			.join(', ')
+		const rawTags = (session.tags as any[]) ?? []
+		const firstTagId = rawTags.length > 0 ? (rawTags[0]?.key ?? rawTags[0]?.id ?? rawTags[0]) : null
+		const tagColor = firstTagId ? (siteDataStore.scientificTags.find(t => t.id === firstTagId)?.color ?? null) : null
+		const tagName = rawTags
+			.map(raw => raw?.key ?? raw?.id ?? raw)
+			.map(id => siteDataStore.scientificTags.find(t => t.id === id)?.tag)
+			.filter(Boolean)
+			.join(', ')
+		return ({
 		id: session.id,
 		time: `${removeSeconds(session.starttime)} - ${removeSeconds(session.endtime)}`,
-		topic: `${session.title} - ${session?.room?.title || ''}`,
+		topic: { label: session.title ?? '', orgNames, tagName, roomTitle: (session as any)?.room?.title ?? '' },
         day: session?.schedule?.day,
 		roles: [''],
-		session: session.section?.name,
-		color: session.section?.color,
+		session: orgNames,
+		color: tagColor,
 		children: session?.events?.map<EventEntry>(myevent => ({
 			id: myevent.id,
 			time: addMinutesToTime(session?.starttime || '', (myevent?.relative_start || 0)),
 			topic: myevent.type ? myevent.type[0] : {},
-			color: session.section?.color,
+			color: tagColor,
 			roles: myevent.assignments.flatMap(assignment => {
 				return assignment;
 			}),
@@ -82,13 +95,14 @@ const sessions: SessionEntry[] =
 				id: child.id,
 				time: addMinutesToTime(session?.starttime || '', (myevent?.relative_start + child?.relative_start)),
 				topic: child.type ? child.type[0] : {},
-				color: session.section?.color,
+				color: tagColor,
 				roles: child.assignments.flatMap(assignment => {
 					return assignment
 				})
 			})) ?? []
 		})) ?? []
-    }));
+    })});
+
 
 interface DaySessions {
   dayId: number | string;
@@ -119,9 +133,9 @@ const sessionsByDay = Object.values(
     
 type SessionEntry = {
   id: string
-  day: CongressDay
+  day?: CongressDay
   time: string | null | undefined
-  topic: string | null | undefined
+  topic: { label: string; orgNames: string; tagName: string; roomTitle: string }
   roles: string[] | null | undefined
   session: string;
   color: string | null | undefined
@@ -171,12 +185,17 @@ const columns: TableColumn<SessionEntry>[] = [
 			row.depth === 1 ? 600 :
 			400;
 			if(row.depth == 0){
-				return h('div',{
-						style: {
-							paddingLeft: `${row.depth}rem`,
-							fontWeight,
-							},
-						class: 'w-30 wrap-break-word'}, row.getValue('topic'))
+				const topic = row.getValue('topic') as SessionEntry['topic']
+				return h('div', {
+						style: { paddingLeft: `${row.depth}rem`, fontWeight },
+						class: 'flex flex-col wrap-break-word text-wrap'
+					}, [
+						topic.orgNames ? h('span', { class: 'text-sm font-normal text-gray-500' }, topic.orgNames) : null,
+						h('span', topic.label),
+						topic.tagName ? h('i', { class: 'text-sm font-normal text-gray-500' }, topic.tagName) : null,
+						topic.roomTitle ? h('span', { class: 'text-xs font-normal text-gray-400' }, topic.roomTitle) : null,
+					].filter(Boolean)
+				)
 			}else{
 				 return h(BaseEventType, 
 					{
@@ -213,12 +232,18 @@ onMounted(() => {
 		onSaved: () => refresh(),
 	});
 });
-// Function to return a class for each row
+
 function getRowClass(row) {
-  return `background: ${row.original.color}10!important`;
-  return row.isActive ? 'bg-green-100' : 'bg-red-100'
+  const classes: string[] = [];
+  if (row.original.active) classes.push('ring ring-2 ring-secondary/50 animate-pulse');
+  return classes.join(' ') || undefined;
 }
 
+// Function to return a class for each row
+function getRowStyle(row) { 
+	if (row.depth === 0) return `background: ${row.original.color}30!important`;
+	return`background: ${row.original.color}15!important`;
+}
 </script>
 <template>
 	<div v-if="sessions" ref="wrapperRef">
@@ -233,19 +258,24 @@ function getRowClass(row) {
                         :columns="columns"
                         :get-sub-rows="(row) => row.children"
                         :expanded="true";
-                        :meta="{
-                            style: {
-                                tr: (row) =>
-                                    getRowClass(row)
-                            }
-                            }"
                         class="flex-1"	
                         :ui="{
                             base: 'border-separate border-spacing-0',
-                            tbody: '[&>tr]:last:[&>td]:border-b-0',
+                            tbody: '[&>tr]:last:[&>td]:border-b-0 font-serif',
                             tr: `group`,
                             td: 'empty:p-0 group-has-[td:not(:empty)]:border-b border-default'
                         }"
+						:meta="{
+							style: {
+							tr: (row) =>
+								getRowStyle(row)
+						},
+						class: {
+							tr: (row) => 
+								getRowClass(row) || null
+						},
+						
+					}"
                     >
                     <template #roles-cell="row" >
                         <div v-for="speaker in row.getValue()" class="text-left text-wrap">

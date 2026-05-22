@@ -12,8 +12,17 @@ import type { CongressDay } from '#shared/types/schema';
 const dayFields = [
     'title',
     'id',
+    'key',
     'starttime',
-    'endtime',    
+    'endtime',
+    'time_subdivision',
+    {
+        timeslots: [
+            'id',
+            'starttime',
+            'endtime',
+        ]
+    },
     {
         congress: [
             'id',
@@ -31,13 +40,44 @@ const dayFields = [
     },
     {
         schedules: [
-            '*',
+            'id',
+            'name',
+            'status',
+            'parent',
+            'user_created',
+            {
+                breaks: [
+                    'id',
+                    'name',
+                    'starttime',
+                    'endtime',
+                    {
+                        rooms: [
+                            'id',
+                            'room'
+                        ]
+                    }
+                ]
+            },
             {
                 sessions: [
                     '*',
                     {
-                        section: [
-                            '*'
+                        section: ['id', { organisation: ['id', 'name', 'short_name', 'abbr'] }]
+                    },
+                    {
+                        organisers: [
+                            'id',
+                            {
+                                organisation: ['id', 'name', 'short_name', 'abbr', 'type']
+                            }
+                        ]
+                    },
+                    {
+                        rooms: [
+                            {
+                                room: ['*']
+                            }
                         ]
                     },
                     {
@@ -173,7 +213,7 @@ const dayFields = [
 export default defineEventHandler(async (event) => {
     const query = getQuery(event);
 
-    const { preview, token: rawToken, id, key} = query;
+    const { preview, token: rawToken, id, key, all } = query;
 
     const config = useRuntimeConfig();
     // Security: Only accept tokens when preview mode is explicitly enabled
@@ -195,7 +235,7 @@ export default defineEventHandler(async (event) => {
                     limit: 1,
                     fields: dayFields as any,
                     filter: {
-                        key:{ 
+                        key:{
                             _eq: key as string
                         },
                         congress: {
@@ -203,13 +243,18 @@ export default defineEventHandler(async (event) => {
                                 _eq: config.public.siteId
                             }
                         },
-                        schedules: {
-                            status: {
-                                _eq: 'published'
+                        ...(all !== 'true' && {
+                            schedules: {
+                                status: {
+                                    _eq: 'published'
+                                }
                             }
-                        }
+                        })
                     },
-                    deep: {
+                    deep: { 
+                        timeslots: {
+                            _sort: 'starttime'
+                        },
                         schedules: {
                             sessions: {
                                 events:{
