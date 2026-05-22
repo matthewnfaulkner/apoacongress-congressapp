@@ -235,11 +235,9 @@ export default defineEventHandler(async (event) => {
       
                     },
                     deep: {
-                        day: {
-                            _sort: 'sort'
-                        },
                         schedule: {
                             day: {
+                                _sort: 'sort',
                                 _filter: {
                                     congress: {
                                         site:{
