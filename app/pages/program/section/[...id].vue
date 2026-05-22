@@ -63,10 +63,6 @@ useSeoMeta({
 
 const sessions: SessionEntry[] =
     sectionSessions?.value?.map((session, index) => {
-		const orgNames = ((session.organisers as any[]) ?? [])
-			.map(o => o.organisation?.short_name ?? o.organisation?.name ?? '')
-			.filter(Boolean)
-			.join(', ')
 		const rawTags = (session.tags as any[]) ?? []
 		const firstTagId = rawTags.length > 0 ? (rawTags[0]?.key ?? rawTags[0]?.id ?? rawTags[0]) : null
 		const tagColor = firstTagId ? (siteDataStore.scientificTags.find(t => t.id === firstTagId)?.color ?? null) : null
@@ -78,10 +74,10 @@ const sessions: SessionEntry[] =
 		return ({
 		id: session.id,
 		time: `${removeSeconds(session.starttime)} - ${removeSeconds(session.endtime)}`,
-		topic: { label: session.title ?? '', orgNames, tagName, roomTitle: (session as any)?.room?.title ?? '' },
+		topic: { label: session.title ?? '', tagName, roomTitle: (session as any)?.room?.title ?? '' },
         day: session?.schedule?.day,
 		roles: [''],
-		session: orgNames,
+		session: session.id,
 		color: tagColor,
 		room: (session?.rooms as CongressSessionRoom[]).map((room) => (room.room as VenueRoom).title),
 		children: session?.events?.map<EventEntry>(myevent => ({
@@ -195,10 +191,8 @@ const columns: TableColumn<SessionEntry>[] = [
 						style: { paddingLeft: `${row.depth}rem`, fontWeight },
 						class: 'flex flex-col wrap-break-word text-wrap'
 					}, [
-						topic.orgNames ? h('span', { class: 'text-sm font-normal text-gray-500' }, topic.orgNames) : null,
 						h('span', topic.label),
-						topic.tagName ? h('i', { class: 'text-sm font-normal text-gray-500' }, topic.tagName) : null,
-						topic.roomTitle ? h('span', { class: 'text-xs font-normal text-gray-400' }, topic.roomTitle) : null,
+						topic.tagName ? h('i', { class: 'text-sm font-normal text-gray-500' }, `Tags: ${topic.tagName}`) : null,
 					].filter(Boolean)
 				)
 			}else{

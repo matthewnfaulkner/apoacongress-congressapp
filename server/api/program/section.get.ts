@@ -237,7 +237,7 @@ export default defineEventHandler(async (event) => {
                     deep: {
                         schedule: {
                             day: {
-                                _sort: 'sort',
+                                _sort: 'date',
                                 _filter: {
                                     congress: {
                                         site:{

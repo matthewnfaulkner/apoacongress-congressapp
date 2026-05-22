@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Assignment, CongressDay } from '#shared/types/schema';
+import type { Assignment, CongressDay, Organisation } from '#shared/types/schema';
 import type { TabsItem } from '@nuxt/ui'
 import { h, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
@@ -80,10 +80,12 @@ const tabs: TabsItem[] = rooms.map(room => {
     }
 
     const session = item.data
-    const sectionOrg = (session?.section as any)?.organisation
-    const sectionAbbr = sectionOrg?.abbr ?? null
-    const orgNames = ((session.organisers as any[]) ?? [])
-      .map(o => o.organisation?.short_name ?? o.organisation?.name ?? '')
+
+    const orgNames = ((session.organisers as CongressSessionOrganiser[]) ?? [])
+      .map(o => {
+		const organisation = o.organisation as Organisation;
+		return organisation?.name ?? organisation?.short_name ?? organisation?.abbr ?? ''
+		})
       .filter(Boolean)
       .join(', ')
     const rawTags = (session.tags as any[]) ?? []
@@ -102,7 +104,7 @@ const tabs: TabsItem[] = rooms.map(room => {
         orgNames,
         tagName,
         static: false,
-        link: sectionAbbr ? `/program/section/${sectionAbbr}` : null
+        //link: sectionAbbr ? `/program/section/${sectionAbbr}` : null
       },
       roles: [''],
       session: orgNames,
@@ -198,12 +200,12 @@ const columns: TableColumn<SessionEntry>[] = [
 				const topic = row.getValue('topic') as {label?: string, link?: string, orgNames?: string, tagName?: string};
 				return h('a', {
 						style: { paddingLeft: `${row.depth}rem`, fontWeight },
-						class: 'flex flex-col wrap-break-word text-wrap',
+						class: 'flex flex-col wrap-break-word text-wrap ',
 						href: topic?.link
 					}, [
 						topic?.orgNames ? h('span', { class: 'text-sm font-normal text-gray-500' }, topic.orgNames) : null,
 						h('span', topic?.label),
-						topic?.tagName ? h('i', { class: 'text-sm font-normal text-gray-500' }, topic.tagName) : null,
+						topic?.tagName ? h('i', { class: 'text-sm font-normal text-gray-500' }, `Tags; ${topic.tagName}`) : null,
 					].filter(Boolean)
 				)
 			}else{
@@ -297,7 +299,7 @@ function model(event) {
 						},
 						
 					}"
-					class="flex-1"	
+					class="flex-1 font-serif"	
 					:ui="{
 						base: 'border-separate border-spacing-0',
 						tbody: '[&>tr]:last:[&>td]:border-b-0',

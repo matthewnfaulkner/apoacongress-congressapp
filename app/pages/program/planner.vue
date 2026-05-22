@@ -234,37 +234,7 @@ onMounted(async () => {
 onBeforeUnmount(() => observer?.disconnect())
 
 const panEnabled = ref(true)
-let pressTimer: number | null = null
-let moved = false
 
-const onPointerDown = (e: PointerEvent) => {
-  if (!isOnGridItem(e)) { panEnabled.value = true; return }
-  panEnabled.value = false
-  moved = false
-  pressTimer = window.setTimeout(() => {
-    if (moved) return
-    panEnabled.value = false
-  }, 300)
-}
-
-const onPointerMove = () => {
-  moved = true
-  if (pressTimer) { clearTimeout(pressTimer); pressTimer = null }
-}
-
-const onPointerUp = () => {
-  if (pressTimer) { clearTimeout(pressTimer); pressTimer = null }
-  panEnabled.value = true
-}
-
-const isOnGridItem = (e: PointerEvent): boolean => {
-  const gridItem = (e.target as HTMLElement)?.closest('.vue-grid-item')
-  if (gridItem) {
-    const t = gridItem.getAttribute('data-grid-item-type') as any
-    if (t == GridItemTypes.Session || t == GridItemTypes.Break) return true
-  }
-  return false
-}
 
 watch(activeTab, async (newTab) => {
   const idx = Number(newTab)
@@ -348,10 +318,6 @@ function initialView() {
             :wheelZoomStep="0.03"
             :panEnabled="panEnabled"
             v-model:pan="panStates[index]"
-            @pointerdown="onPointerDown"
-            @pointermove="onPointerMove"
-            @pointerup="onPointerUp"
-            @pointerleave="onPointerUp"
             zoomOrigin="pointer"
           >
             <div class="grid-layout min-h-100 relative" ref="el">

@@ -121,6 +121,8 @@ const openAnnouncements = ref(false);
 const visible = ref(false);
 const textVisible = ref(false);
 const modalOpen = ref(false);
+const heroInView = ref(false);
+const spriteLoaded = ref(false);
 const inkState = ref<'idle' | 'opening' | 'open' | 'closing'>('idle');
 const inkLayerRef = ref<HTMLElement | null>(null);
 const videoRef = ref<HTMLVideoElement | null>(null);
@@ -180,8 +182,23 @@ const navButtons = computed(() => allButtons.filter(b => b.type !== 'modal'));
 const heroRef = useTemplateRef('heroRef');
 
 onMounted(() => {
+	const sprite = new Image();
+	const fallbackTimer = setTimeout(() => { spriteLoaded.value = true; }, 3000);
+	sprite.onload = () => { clearTimeout(fallbackTimer); spriteLoaded.value = true; };
+	sprite.onerror = () => { clearTimeout(fallbackTimer); spriteLoaded.value = true; };
+	sprite.src = '/images/ink-transition-sprite-white.png';
+
 	const observer = new IntersectionObserver((entries) => {
 		if (entries[0].isIntersecting) {
+			heroInView.value = true;
+			observer.disconnect();
+		}
+	});
+
+	if (heroRef.value) observer.observe(heroRef.value);
+
+	watchEffect(() => {
+		if (heroInView.value && spriteLoaded.value && !visible.value) {
 			visible.value = true;
 			setTimeout(() => {
 				textVisible.value = true;
@@ -189,11 +206,8 @@ onMounted(() => {
 					setTimeout(() => { openAnnouncements.value = true; }, 1000);
 				}
 			}, 1500);
-			observer.disconnect();
 		}
 	});
-
-	if (heroRef.value) observer.observe(heroRef.value);
 });
 </script>
 
@@ -205,6 +219,7 @@ onMounted(() => {
 			<div class="absolute inset-0 overflow-hidden ink-reveal ink-framed" :class="{ 'is-active': visible }" style="--ink-duration: 2s">
 				<DirectusImage
 					class="object-cover w-full h-full object-[25%_25%]"
+					:class="{ 'opacity-0': !visible }"
 					:uuid="props.data.image"
 					:data-directus="
 						setAttr({

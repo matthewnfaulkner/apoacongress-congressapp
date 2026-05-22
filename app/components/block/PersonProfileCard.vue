@@ -54,7 +54,7 @@ const props = defineProps<PersonProfileCardProps>();
 			wrapper: ui?.wrapper ?? 'mx-auto',
 			container: ui?.container ?? 'gap-y-0',
 			body: ui?.body,
-			footer: ui?.footer,
+			footer: ui?.footer + ' w-full',
 			header: ui?.header,
 		}"
 	>
@@ -85,10 +85,10 @@ const props = defineProps<PersonProfileCardProps>();
 		</template>
 
 		<template #footer>
-			<p :class="['font-heading text-xl', ui?.name]"><span v-if="showTitle && title" :class="['font-heading', ui?.title]">
+			<p :class="['font-heading text-xl text-center', ui?.name]"><span v-if="showTitle && title" :class="['font-heading', ui?.title]">
 				{{ title }}.
 			</span> {{ firstName }} {{ lastName }}</p>
-			<div v-if="showCountry && country" class="flex items-center justify-center gap-1 mt-1 font-sans text-secondary">
+			<div v-if="showCountry && country" class="flex items-center justify-center gap-1 mt-1 font-sans	 text-secondary">
 				<CountryName
 					:country-codes="country.countryCodes"
 					:locale="country.locale"
