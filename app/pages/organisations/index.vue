@@ -3,6 +3,9 @@ import type { Organisation } from '#shared/types/schema';
 
 const { data, error } = await useFetch<Organisation[]>('/api/organisation', {
 	key: 'organisations',
+	query: {
+		exclude: 'sponsors'
+	}
 });
 
 if (error.value) {
@@ -42,16 +45,16 @@ const grouped = computed(() => {
 const pageUrl = useRequestURL();
 useSeoMeta({
 	title: 'Organisations',
-	description: 'Organisations involved with APOA 2026 Taiwan.',
+	description: 'Organisations involved with APOA 2027 Taiwan.',
 	ogTitle: 'Organisations',
-	ogDescription: 'Organisations involved with APOA 2026 Taiwan.',
+	ogDescription: 'Organisations involved with APOA 2027 Taiwan.',
 	ogUrl: pageUrl.toString(),
 });
 </script>
 
 <template>
 	<Container class="py-12">
-		<h1 class="font-heading text-4xl mb-10">Organisations</h1>
+		<Headline class="font-heading text-4xl mb-10" headline="Congress Organisations"/>
 		<div v-if="!organisations.length" class="text-muted text-center py-20">
 			No organisations found.
 		</div>

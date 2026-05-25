@@ -118,7 +118,7 @@ onUnmounted(() => {
 				<div
 					class="absolute inset-0 bg-primary bg-opacity-60 opacity-0 group-hover:opacity-100 flex justify-center items-center transition-opacity duration-300"
 				>
-					<p v-if="item.caption" class="absolute top-5">{{ item.caption }}</p>
+					<p v-if="item.caption" class="absolute top-5 px-4">{{ item.caption }}</p>
 					<ZoomIn class="w-10 h-10 text-gray-800" />
 				</div>
 			</div>

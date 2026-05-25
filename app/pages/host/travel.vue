@@ -5,9 +5,9 @@ import type { VenueVisaInfo, CountryTravelInfo, Site } from '#shared/types/schem
 const travelPageUrl = useRequestURL();
 useSeoMeta({
 	title: 'Travel & Visa Information',
-	description: 'Visa requirements, travel information and entry guidance for APOA 2026 Taiwan.',
+	description: 'Visa requirements, travel information and entry guidance for APOA 2027 Taiwan.',
 	ogTitle: 'Travel & Visa Information',
-	ogDescription: 'Visa requirements, travel information and entry guidance for APOA 2026 Taiwan.',
+	ogDescription: 'Visa requirements, travel information and entry guidance for APOA 2027 Taiwan.',
 	ogUrl: travelPageUrl.toString(),
 });
 
