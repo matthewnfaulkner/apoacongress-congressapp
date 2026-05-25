@@ -81,7 +81,6 @@ onMounted(() => {
 </script>
 
 <template>
-	
 	<UError  v-if="siteError" :error="{
 			statusCode: 404,
 			statusMessage: 'Error',

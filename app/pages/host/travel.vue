@@ -325,7 +325,7 @@ watch(selectedCityCode, async (cityCode) => {
 			:items="[
 				{ label: `Visa Information${selectedCountryName ? ` — ${selectedCountryName}` : ''}`, icon: 'i-lucide-stamp', slot: 'visa', value: 'visa' },
 				{ label: `Travel Information${selectedCountryName ? ` — ${selectedCountryName}` : ''}`, icon: 'i-lucide-map-pin', slot: 'travel', value: 'travel' },
-				{ label: 'Flights', icon: 'i-lucide-plane', slot: 'flights', value: 'flights' },
+				//{ label: 'Flights', icon: 'i-lucide-plane', slot: 'flights', value: 'flights' },
 			]"
 		>
 			<!-- ── Visa Info ── -->
@@ -447,7 +447,7 @@ watch(selectedCityCode, async (cityCode) => {
 
 			<!-- ── Flights ── -->
 			<template #flights>
-				<div class="p-1">
+				<div class="p-1" >
 					<p class="text-sm text-muted mb-6">
 						Showing inbound flights on <strong>{{ departureDate }}</strong> and return flights on <strong>{{ returnDate }}</strong>.
 					</p>

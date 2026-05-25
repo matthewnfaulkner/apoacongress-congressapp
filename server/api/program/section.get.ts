@@ -216,7 +216,7 @@ export default defineEventHandler(async (event) => {
                 token as string,
                 readItems('congress_sessions', {
                     fields: sectionFields as any,
-                    sort: ['schedule.day.date', 'starttime'] as any,
+                    sort: ['schedule.day.sort', 'starttime'] as any,
                     filter: {
                         organisers: {
                             organisation: {
@@ -237,7 +237,7 @@ export default defineEventHandler(async (event) => {
                     deep: {
                         schedule: {
                             day: {
-                                _sort: 'date',
+                                _sort: 'sort',
                                 _filter: {
                                     congress: {
                                         site:{

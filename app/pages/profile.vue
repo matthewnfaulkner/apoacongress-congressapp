@@ -615,7 +615,7 @@ onMounted(async () => {
                                     </div>
                                     <div class="flex items-center gap-2 py-1">
                                         <span>Membership Missing?</span>
-                                        <UButton to="/contact" color="secondary" variant="outline" label="Get Help" />
+                                        <UButton to="/contact-us" color="secondary" variant="outline" label="Get Help" />
                                     </div>
                                 </div>
                                 
@@ -664,7 +664,7 @@ onMounted(async () => {
                         :ui="{ leadingIcon: 'text-accent' }"
                     />
                     <UPageCard
-                        to="/registration"
+                        to="/registration/congress"
                         title="Register for Congress"
                         description="Secure your place at APOA 2026 in Taiwan."
                         icon="i-lucide-calendar-check"
@@ -673,7 +673,7 @@ onMounted(async () => {
                         :ui="{ leadingIcon: 'text-accent' }"
                     />
                     <UPageCard
-                        to="/contact"
+                        to="/contact-us"
                         title="Get Help"
                         description="Need assistance? Reach out to the congress team."
                         icon="i-lucide-message-circle-question-mark"

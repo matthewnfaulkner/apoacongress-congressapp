@@ -17,9 +17,10 @@ export default defineEventHandler(async (event) => {
 			directusServer.request(
 				readItem('sites',  config.public.siteId, {
 					fields: [
-						'title', 
-						'description', 
+						'title',
+						'description',
 						'logo',
+						'logo_dark_mode',
 						'social_links',
 						'preview',
 						{

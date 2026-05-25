@@ -67,6 +67,14 @@ const scheduleFields = [
 								]
 							},
 							{
+								organisers: [
+									'id',
+									{
+										organisation: ['id', 'name', 'short_name', 'abbr']
+									}
+								]
+							},
+							{
 								events: [
 									'id',
 									'relative_start',
