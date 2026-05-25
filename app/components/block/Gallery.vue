@@ -5,6 +5,7 @@ interface GalleryItem {
 	id: string;
 	directus_file: string;
 	sort?: number;
+	caption?: string
 }
 
 interface GalleryProps {
@@ -98,12 +99,14 @@ onUnmounted(() => {
 			class="mt-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"
 			:data-directus="setAttr({ collection: 'block_gallery', item: data.id, fields: 'items', mode: 'modal' })"
 		>
+			
 			<div
 				v-for="(item, index) in sortedItems"
 				:key="item.id"
 				class="relative overflow-hidden rounded-lg group hover:shadow-lg transition-shadow duration-300 cursor-pointer h-[300px]"
 				@click="handleOpenLightbox(index)"
 			>
+
 				<DirectusImage
 					:uuid="item.directus_file"
 					:alt="`Gallery item ${item.id}`"
@@ -111,10 +114,11 @@ onUnmounted(() => {
 					sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
 					class="w-full h-full object-cover rounded-lg"
 				/>
-
+				
 				<div
-					class="absolute inset-0 bg-white bg-opacity-60 opacity-0 group-hover:opacity-100 flex justify-center items-center transition-opacity duration-300"
+					class="absolute inset-0 bg-primary bg-opacity-60 opacity-0 group-hover:opacity-100 flex justify-center items-center transition-opacity duration-300"
 				>
+					<p v-if="item.caption" class="absolute top-5">{{ item.caption }}</p>
 					<ZoomIn class="w-10 h-10 text-gray-800" />
 				</div>
 			</div>
@@ -137,6 +141,11 @@ onUnmounted(() => {
 						:alt="`Gallery item ${currentItem.id}`"
 						class="size-full object-contain"
 					/>
+					<div 
+						v-if="currentItem?.caption" 
+						class="bottom-0 absolute bg-black/70 text-white py-2 px-3 text-lg rounded-t max-w-[80%] text-center" >
+						{{ currentItem.caption }}
+					</div>
 				</div>
 
 				<div v-if="sortedItems.length > 1" class="absolute bottom-4 inset-x-0 flex justify-between px-4">

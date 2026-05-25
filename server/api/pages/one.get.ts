@@ -42,7 +42,7 @@ const pageFields = [
 							]
 						}
 					],
-					block_gallery: ['id', 'tagline', 'headline', { items: ['id', 'directus_file', 'sort'] }],
+					block_gallery: ['id', 'tagline', 'headline', { items: ['id', 'directus_file', 'sort', 'caption'] }],
 					block_pricing: [
 						'id',
 						'tagline',
