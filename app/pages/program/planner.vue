@@ -15,7 +15,7 @@ const dayIdQuery = route.query.day as string | undefined;
 const isAuthenticated = await $isAuthenticatedWithPolicy('Schedule - Editor');
 const isLoggedIn = computed(() => !!isAuthenticated);
 
-const loading = ref(false);
+const loading = ref(true);
 
 const {
   data: congress,
@@ -88,6 +88,9 @@ const tabs = reactive(
   Object.fromEntries(
     days.value.map((day, dayIndex) => {
       const dayTimeScale = 60 / (2 * (day.time_subdivision as number))
+      const dayRooms = rooms.value
+      const firstSchedule = (day.schedules as CongressSchedule[])?.[0]
+      const selectedScheduleId = firstSchedule?.id || null
       return [
         day.id,
         {
@@ -96,14 +99,14 @@ const tabs = reactive(
           dayId: day.id,
           dayKey: (day as any).key || '',
           schedules: day.schedules || [],
-          selectedScheduleId: day?.schedules?.[0]?.id || null,
+          selectedScheduleId,
           scheduleOptions: (day.schedules || []).map((s: any) => ({ label: s.name || 'Unnamed Schedule', value: s.id })),
-          loaded: false,
+          loaded: true,
           fullDay: null as CongressDay | null,
           timeScale: dayTimeScale,
           timeSubDivision: day.time_subdivision as number,
           published: (day.schedules?.length || 0) > 0,
-          timeSlots: rooms.value.flatMap((room, roomIndex) =>
+          timeSlots: dayRooms.flatMap((room, roomIndex) =>
             day.timeslots?.map((timeslot, timeslotIndex) => ({
               y: timeslotIndex + 1,
               x: roomIndex + 1,
@@ -118,8 +121,8 @@ const tabs = reactive(
               maxW: 1,
             }))
           ) || [],
-          sessions: reactive([]) as scheduleGridItem[],
-          breaks: reactive([]) as scheduleGridItem[],
+          sessions: reactive(buildSessionGridItems(firstSchedule, day as CongressDay, dayRooms)) as scheduleGridItem[],
+          breaks: reactive(buildBreakGridItems(firstSchedule, day as CongressDay, dayRooms)) as scheduleGridItem[],
           colHeaders: day?.timeslots?.map((slot, index) => ({
             y: index + 1,
             x: 0, w: 1, h: 1,
@@ -141,6 +144,8 @@ const tabs = reactive(
   )
 )
 
+loading.value = false
+
 const tabsArray = computed(() => Object.values(tabs) as any[])
 
 const initialTabIndex = dayIdQuery
@@ -158,8 +163,8 @@ tabsArray.value.forEach((_tab, index) => {
   panStates.value[index] = ref(initialView().pan)
 })
 
-function getTabRooms(tab: any): VenueRoom[] {
-  return (tab?.fullDay?.congress?.venue?.rooms as VenueRoom[]) || rooms.value
+function getTabRooms(_tab: any): VenueRoom[] {
+  return rooms.value
 }
 
 const gridItemRooms = computed(() =>
@@ -178,27 +183,13 @@ async function selectSchedule(dayId: string, scheduleId: string) {
   const tab = tabs[dayId]
   if (!tab) return
 
-  if (!tab.fullDay && tab.dayKey) {
-    const fullDay = await $fetch<CongressDay>('/api/program/day', {
-      query: { key: tab.dayKey, all: 'true' }
-    })
-    if (fullDay) {
-      tab.fullDay = fullDay
-      const scheds = (fullDay.schedules || []) as any[]
-      tab.schedules = scheds
-      tab.scheduleOptions = scheds.map((s: any) => ({ label: s.name || 'Unnamed Schedule', value: s.id }))
-      if (!scheduleId) scheduleId = scheds[0]?.id || ''
-    }
-  }
-  
-  const day = tab.fullDay as CongressDay
+  const day = days.value.find(d => d.id === dayId) as CongressDay
   if (!day) return
 
   const schedule = (day.schedules as CongressSchedule[])?.find(s => s.id === scheduleId)
-  const dayRooms = getTabRooms(tab)
+  const dayRooms = rooms.value
 
   tab.selectedScheduleId = scheduleId
-  console.log(schedule);
   tab.sessions = reactive(buildSessionGridItems(schedule, day, dayRooms))
   tab.breaks = reactive(buildBreakGridItems(schedule, day, dayRooms))
   tab.loaded = true

@@ -42,14 +42,15 @@ const scheduleFields = [
 					'id',
 					'name',
 					'status',
-					/*{
+					{
 						breaks: [
 							'id',
+							'name',
 							'starttime',
 							'endtime',
-							'name',
 							{
 								rooms: [
+									'id',
 									'room'
 								]
 							}
@@ -57,103 +58,75 @@ const scheduleFields = [
 					},
 					{
 						sessions: [
-							'id',
-							'title',
-							'starttime',
-							'endtime',
+							'*',
 							{
-								day: [
-									'id'
+								rooms: [
+									{
+										room: ['*']
+									}
 								]
 							},
 							{
 								events: [
 									'id',
-									'title',
 									'relative_start',
 									'duration',
-									{
-									children: [
-										'id',
-										'title',
-										'relative_start',
-										'duration',
-										{
-											type: [
-												'id',
-												'collection',
-												{
-													item: [
-														'id',
-														
-													]
-												},
-											]
-										},
-										{
-											assignments: [
-													{
-														person: [
-															'id',
-															'first_name',
-															'last_name'
-														]
-													},
-													{
-														role: [
-															'id',
-															'name'
-														]
-													}
-											]
-										}
-									]
-								},
+									'title',
 									{
 										type: [
 											'id',
 											'collection',
 											{
-												item: [
-													'id',
-													
-												]
+												item: {
+													plenaries: ['id', 'topic'],
+													discussion: ['id', 'topic'],
+													symposiums: ['*'],
+													workshops: ['id'],
+													talks: ['id', 'topic'],
+												}
 											},
 										]
 									},
 									{
+										children: [
+											'id',
+											'relative_start',
+											'duration',
+											'title',
+											{
+												type: [
+													'id',
+													'collection',
+													{
+														item: {
+															plenaries: ['id', 'topic'],
+															symposiums: ['id', 'topic'],
+															workshops: ['id'],
+															talks: ['id', 'topic'],
+														}
+													},
+												]
+											},
+											{
+												assignments: [
+													'*',
+													{ person: ['id', 'first_name', 'last_name', 'country'] },
+													{ role: ['*'] }
+												]
+											}
+										]
+									},
+									{
 										assignments: [
-												{
-													person: [
-														'id',
-														'first_name',
-														'last_name'
-													]
-												},
-												{
-													role: [
-														'id',
-														'name'
-													]
-												}
+											'*',
+											{ person: ['id', 'first_name', 'last_name', 'country'] },
+											{ role: ['*'] }
 										]
 									}
 								]
-							},
-							{
-								room: [
-									'id'
-								]
-							},
-							{
-								section: [
-									'id',
-									'name',
-									'color'
-								]
 							}
 						]
-					},*/
+					},
 				]
 			}
 		]
@@ -192,14 +165,22 @@ export default defineEventHandler(async (event) => {
 									_eq: 'published'
 								}
 							},
+							sessions: {
+								_sort: 'starttime',
+								events: {
+									_sort: 'relative_start',
+									children: {
+										_sort: 'relative_start'
+									}
+								}
+							}
 						},
 						timeslots: {
 							_sort: "starttime",
-							_limit: -1.
-						}
-								
+							_limit: -1
 						}
 					}
+				}
 			}),
 		);
 

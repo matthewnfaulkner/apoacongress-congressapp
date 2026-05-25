@@ -33,6 +33,7 @@ export default defineEventHandler(async (event) => {
 								},
 								{
 									'venue' : [
+										'id',
 										'title'
 									]
 								},
