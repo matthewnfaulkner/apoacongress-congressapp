@@ -3,8 +3,9 @@ import { withLeadingSlash, withoutTrailingSlash } from 'ufo';
 import * as z from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { createItem, readItems, deleteItem, updateItem } from '@directus/sdk';
-import type { AbstractSubmission, CongressAbstracts } from '~~/shared/types/schema';
+import type { AbstractSubmission, AbstractSubmissionValue, CongressAbstracts } from '~~/shared/types/schema';
 import type { AccordionItem } from '@nuxt/ui'
+
 
 const config = useRuntimeConfig();
 
@@ -25,17 +26,18 @@ const isLoggedIn = computed(() =>
 const turnstileToken = ref();
 
 const congressAbstract = ref<CongressAbstracts | null>(null);
-const submissions = ref<AbstractSubmission[] | string[] | null>(null)
+const submissions = ref<AbstractSubmission[] | null>(null)
 const storeReady = ref(false)
 const categories = ref([]);
 const guideLines = ref<AccordionItem>([]);
+
 
 const { data } = await useAsyncData <CongressAbstracts[]>('abstract_submit', async() => {
       return await $directus.request<CongressAbstracts[]>(readItems(
         'abstracts',
         {   
             limit: 1,
-            fields: ['id', 'categories', 'submission_deadline', 'description'],
+            fields: ['id', 'categories', 'submission_deadline', 'description', 'submission_limit'],
             filter: {
             congress: {
                 site:{
@@ -52,8 +54,11 @@ if(!data.value) {
 
 data.value = data.value as CongressAbstracts[];
 
-congressAbstract.value = data.value[0];
-categories.value = congressAbstract?.value?.categories;
+console.log(data.value)
+
+congressAbstract.value = data.value[0] || null;
+const submission_limit = congressAbstract.value?.submission_limit || 100;
+categories.value = congressAbstract?.value?.categories; 
 guideLines.value = [
     {
         label: 'Submission Guidelines',
@@ -61,6 +66,10 @@ guideLines.value = [
 
     }
 ]
+
+const submissionsClosed = false;
+
+
 // Watch for storeReady
 watch(
   storeReady,
@@ -73,7 +82,7 @@ watch(
       return await $directus.request<AbstractSubmission[]>(readItems(
         'abstract_submissions',
         {
-          limit: 1,
+          limit: -1,
           fields: [
                     'id',
                     'status',
@@ -98,30 +107,11 @@ watch(
         }
       ))
     })
-    console.log(data);
-    if(data.value && data.value.length > 0) {
-        data.value = data.value as AbstractSubmission[];
-        submissions.value = data.value;
-        if(submissions.value){
-            hasSubmissions.value = true;
-            submissionsTable.value = submissions?.value?.map(submission => {
-                // Convert submission_values array to an object
-                const valuesObj = submission.submission_values?.reduce((acc, curr) => {
-                    acc[curr.field] = curr.value;
-                    return acc;
-                }, {} as Record<string, any>);
 
-                // Merge with status and submitted
-                return {
-                    id: submission.id,
-                    status: submission.status,
-                    submitted: submission.date_created,
-                    ...valuesObj
-            };
-        });
+    if(data.value && data.value.length > 0) {
+        submissions.value = data.value as AbstractSubmission[];
     }
-}
-loading.value = false
+    loading.value = false
   }// run immediately if storeReady is already true
 )
 
@@ -137,9 +127,23 @@ type Submission = {
 }
 
 
-const hasSubmissions = ref(false);
-const submissionsCount = ref(submissions.value?.length || 0);
-const submissionsTable = ref<Submission[]>([]);
+const hasSubmissions = computed(() => (submissions.value?.length ?? 0) > 0);
+const submissionsCount = computed(() => submissions.value?.length ?? 0);
+const submissionsTable = computed<Submission[]>(() => {
+  if (!submissions.value) return [];
+  return submissions.value.map(submission => {
+    const valuesObj = (submission.submission_values as AbstractSubmissionValue[])?.reduce((acc, curr) => {
+      if (curr.field) acc[curr.field] = curr.value;
+      return acc;
+    }, {} as Record<string, any>) ?? {};
+    return {
+      id: submission.id,
+      status: submission.status,
+      submitted: submission.date_created,
+      ...valuesObj
+    } as Submission;
+  });
+});
 
 const columns: TableColumn<Submission>[] = [
 {
@@ -203,6 +207,7 @@ const columns: TableColumn<Submission>[] = [
 ]
 
 function getRowItems(row: Row<Submission>) {
+  if (submissionsClosed) return [];
   return [
     {
       label: 'Edit',
@@ -280,6 +285,15 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
 		error.value = 'Please complete the CAPTCHA before submitting.';
 		return;
 	}
+
+  if((submissions?.value?.length || 0) >= submission_limit) {
+    error.value = 'You have reached your submission limit.';
+		return;
+  }
+  if(submissionsClosed) {
+    error.value = 'The deadline for abstract submission has passed.';
+		return;
+  }
 	try {
         const formData = submission.data as Schema;
 
@@ -308,31 +322,42 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
                 }
             ]
         }
-        
+        console.log(payload);
         if(!state.id) {
             const response = await $directus.request<AbstractSubmission>(createItem(
                 'abstract_submissions', payload
-            )) 
+            ))
 
-            submissionsTable.value.push({
+            if (!submissions.value) submissions.value = [];
+            submissions.value.push({
                 id: response.id,
-                title: state.title || '',
-                submitted: response.date_created || '',
-                status: response.status || 'submitted',
-            }
-        );
+                status: response.status,
+                date_created: response.date_created,
+                submitter: (isAuthenticated as any).id,
+                submission_values: [
+                    { id: '', field: 'category', value: formData.category },
+                    { id: '', field: 'title', value: formData.title },
+                    { id: '', field: 'abstract', value: formData.abstract },
+                    { id: '', field: 'authors', value: JSON.stringify(formData.authors) },
+                ]
+            });
         } else{
             const response = await $directus.request<AbstractSubmission>(updateItem(
-                'abstract_submissions', state.id ,payload
-            )) 
-            
-            const updatedRow = submissionsTable.value.find(row => row.id == state.id)
-            
-            if(updatedRow) {
-                updatedRow.abstract = state.abstract || '';
-                updatedRow.authors = state.authors || [];
-                updatedRow.status = response.status;
-                updatedRow.title = state.title || '';
+                'abstract_submissions', state.id, payload
+            ))
+
+            const sub = submissions.value?.find(s => s.id === state.id);
+            if (sub) {
+                sub.status = response.status;
+                const updates: Record<string, string> = {
+                    category: formData.category,
+                    title: formData.title,
+                    abstract: formData.abstract,
+                    authors: JSON.stringify(formData.authors),
+                };
+                sub.submission_values = (sub.submission_values as AbstractSubmissionValue[])?.map(sv =>
+                    sv.field && updates[sv.field] !== undefined ? { ...sv, value: updates[sv.field] } : sv
+                );
             }
         }
         resetState();
@@ -347,14 +372,14 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
 
 
 const handleDelete = async() => {
-    try {   
+    try {
         if(!toBeDeleted.value) return;
-        $directus.request(deleteItem('abstract_submissions', toBeDeleted.value.id));
-        submissionsTable.value = submissionsTable.value.filter(submission => submission.id != toBeDeleted?.value?.id);
+        await $directus.request(deleteItem('abstract_submissions', toBeDeleted.value.id));
+        submissions.value = submissions.value?.filter(s => s.id !== toBeDeleted.value?.id) ?? null;
         openConfirmation.value = false;
-        toBeDeleted.value = '';
+        toBeDeleted.value = undefined;
     } catch (deletionError) {
-        console.log(error)
+        console.log(deletionError)
     }
 }
 
@@ -374,9 +399,7 @@ onMounted(async () => {
 
 useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robots: 'noindex' });
 </script>
-
 <template>
-
     <UError
       v-if="!isLoggedIn"
       redirect="/login"
@@ -448,14 +471,42 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                             <UFormField required label="Abstract" name="abstracr"  size="xl"  class="pb-5">
                                 <UTextarea v-model="state.abstract" class="w-full lg:w-200" :rows=15 color="secondary" variant="subtle"/>
                             </UFormField>
-                            <UFormField required label="Authors" name="authors" size="xl" class="text-center pb-5" >
-                                <div v-for="(author, index) in state.authors" :key="index" class="mb-5 lg:flex lg:gap-2 lg:items-center">
+                            <UFormField 
+                                required 
+                                label="Authors" 
+                                name="authors" 
+                                size="xl" 
+                                class="text-center pb-5" 
+                                :ui="{
+                                  hint: 'text-sm wrap max-w-150 text-left'
+                                }"
+                                hint="One by one enter the details of each author. Enter the presenter's details as the first entry. Take care when entering the full name as it will be used exactly as provided." 
+                                >
+                                <div v-for="(author, index) in state.authors" :key="index" class="mb-5 lg:flex lg:gap-2 lg:items-center pt-2">
                                     <div class="flex gap-2 mb-2 lg:mb-0 lg:contents">
-                                        <UInput v-model="author.title" placeholder="Title" class="w-24" color="secondary" variant="subtle"/>
-                                        <UInput v-model="author.name" placeholder="Name" class="flex-1" color="secondary" variant="subtle"/>
+                                        <UInput v-model="author.title" placeholder="title" class="w-24" color="secondary" variant="subtle" :ui="{ base: 'peer' }">
+                                          <label 
+                                            class="pointer-events-none absolute left-0 -top-2.5 text-highlighted text-xs font-medium px-1.5 transition-all peer-focus:-top-2.5 peer-focus:text-highlighted peer-focus:text-xs peer-focus:font-medium peer-placeholder-shown:text-lg peer-placeholder-shown:text-dimmed peer-placeholder-shown:top-1.5 peer-placeholder-shown:font-normal"
+                                            >
+                                            <span class="inline-flex bg-primary px-1">Title</span>
+                                          </label>
+                                        </UInput>
+                                        <UInput v-model="author.name" placeholder="Full Name"  class="flex-1" color="secondary" variant="subtle" :ui="{ base: 'peer' }">
+                                           <label 
+                                            class="pointer-events-none absolute left-0 -top-2.5 text-highlighted text-xs font-medium px-1.5 transition-all peer-focus:-top-2.5 peer-focus:text-highlighted peer-focus:text-xs peer-focus:font-medium peer-placeholder-shown:text-lg peer-placeholder-shown:text-dimmed peer-placeholder-shown:top-1.5 peer-placeholder-shown:font-normal"
+                                            >
+                                            <span class="inline-flex bg-primary px-1 peer-focus:text-sm">Full Name</span>
+                                          </label>
+                                        </UInput>
                                     </div>
                                     <div class="flex gap-2 items-center lg:contents">
-                                        <UInput v-model="author.institution" placeholder="Institution" class="flex-1" color="secondary" variant="subtle"/>
+                                        <UInput v-model="author.institution" placeholder="Institution" class="flex-1" color="secondary" variant="subtle" :ui="{ base: 'peer' }"> 
+                                          <label 
+                                            class="pointer-events-none absolute left-0 -top-2.5 text-highlighted text-xs font-medium px-1.5 transition-all peer-focus:-top-2.5 peer-focus:text-highlighted peer-focus:text-xs peer-focus:font-medium peer-placeholder-shown:text-lg peer-placeholder-shown:text-dimmed peer-placeholder-shown:top-1.5 peer-placeholder-shown:font-normal"
+                                            >
+                                            <span class="inline-flex bg-primary px-1">Institution</span>
+                                          </label>
+                                        </UInput>
                                         <UButton
                                             icon="i-lucide-trash"
                                             variant="outline"
@@ -501,15 +552,20 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
         </ClientOnly>
         <div class="flex flex-col items-center justify-center gap-4 p-4">
             <Headline headline="Abstract Submissions"/> 
-                    <UButton 
-                        v-if="submissionsCount < 5" 
-                        label="Submit New Abstract"
-                        color="accent"
-                        @click="() => {openSubmissionForm = true; resetState()}"
-                    />
-                    <p v-else>
-                        Cannot Submit Further Abstracts - Limit Reached
+                    <p v-if="submissionsClosed" class="text-muted">
+                        Abstract submissions are closed.
                     </p>
+                    <template v-else>
+                        <UButton
+                            v-if="(submissions?.length || 0) < submission_limit"
+                            label="Submit New Abstract"
+                            color="accent"
+                            @click="() => {openSubmissionForm = true; resetState()}"
+                        />
+                        <p v-else>
+                            Cannot Submit Further Abstracts - Limit Reached
+                        </p>
+                    </template>
                     <UProgress  v-if="loading" color="secondary" size="xl" :v-model="null" class="flex justify-center py-10 w-50"/>
                     <!-- Table with data -->
                     <UTable 

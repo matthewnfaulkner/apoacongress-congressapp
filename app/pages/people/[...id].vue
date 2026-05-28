@@ -46,6 +46,7 @@ const { data, error, refresh } = await useFetch<Person>(() => `/api/persons/one`
 	key: `person-${id}`,
 	query: {
 		preview: enabled.value ? true : undefined,
+        headers: useRequestHeaders(['cookie']),
 		token: enabled.value ? state.token : undefined,
 		id: id[0] as string,
 		version,

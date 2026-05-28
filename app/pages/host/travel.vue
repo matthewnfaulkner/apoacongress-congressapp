@@ -42,6 +42,7 @@ const { data: travelData, error } = await useFetch<{
 }>('/api/travel', {
 	query: { venueId },
 	key: `travel:${venueId}`,
+	headers: useRequestHeaders(['cookie']),
 	getCachedData: (key, nuxtApp) => nuxtApp.payload.data[key] ?? nuxtApp.static.data[key],
 });
 

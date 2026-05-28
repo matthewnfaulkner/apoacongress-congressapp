@@ -26,6 +26,7 @@ const {
 	refresh,
 } = await useFetch<Page>('/api/pages/one', {
 	key: `pages-${permalink}`,
+	headers: useRequestHeaders(['cookie']),
 	query: {
 		permalink,
 		preview: enabled.value ? true : undefined,

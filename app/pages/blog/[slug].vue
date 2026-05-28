@@ -22,6 +22,7 @@ const { data, error, refresh } = await useFetch<{
 	relatedPosts: Post[];
 }>(() => `/api/posts/${slug}`, {
 	key: `posts-${slug}`,
+	headers: useRequestHeaders(['cookie']),
 	query: {
 		preview: enabled.value ? true : undefined,
 		token: enabled.value ? state.token : undefined,

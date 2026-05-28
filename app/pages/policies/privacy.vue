@@ -3,6 +3,7 @@ import type { Policy } from '#shared/types/schema';
 
 const { data, error } = await useFetch<{ policy: Policy }>('/api/policies/privacy', {
 	key: 'privacy-policy',
+	headers: useRequestHeaders(['cookie']),
 	getCachedData: (key, nuxtApp) => nuxtApp.payload.data[key] ?? nuxtApp.static.data[key],
 });
 

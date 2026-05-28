@@ -1,5 +1,6 @@
 import { withoutTrailingSlash, withLeadingSlash } from 'ufo';
 import type { Page, PageBlock, BlockPost, Post } from '#shared/types/schema';
+import type { H3Event } from 'h3';
 
 /**
  * Page fields configuration for Directus queries
@@ -341,22 +342,19 @@ const pageFields = [
  * - Dynamic content blocks with real-time data fetching
  * - SEO metadata support
  */
-export default cachedEventHandler(async (event) => {
+const config = useRuntimeConfig();
+
+async function handler(event: H3Event) {
 	const query = getQuery(event);
 
 	const { preview, token: rawToken, permalink: rawPermalink, id, version, languageCode } = query;
 
-	
-	// Normalize permalink: ensure it starts with / and doesn't end with /
-	// This handles various URL formats consistently
 	const permalink = withoutTrailingSlash(withLeadingSlash(String(rawPermalink)));
-
-	// Security: Only accept tokens when preview mode is explicitly enabled
-	// This prevents unauthorized access to draft content
 	const token = preview === 'true' && rawToken ? String(rawToken) : null;
 
-	const config = useRuntimeConfig();
-
+	const cookies = parseCookies(event);
+	const sessionToken = cookies[config.sessionTokenName];
+	
 	try {
 		let page: Page;
 		let pageId = id as string;
@@ -395,7 +393,7 @@ export default cachedEventHandler(async (event) => {
 			try {
 				page = (await directusServer.request(
 					withToken(
-						token as string,
+						token ?? sessionToken as string,
 						readItem('pages', pageId, {
 							version: String(version),
 							fields: pageFields as any,
@@ -419,9 +417,9 @@ export default cachedEventHandler(async (event) => {
 			// - If no token: only fetch published content (for public viewing)
 			const pageData = await directusServer.request(
 				withToken(
-					token as string,
+					(token ?? sessionToken) as string,
 					readItems('pages', {
-						filter: token
+						filter: token 
 							? { permalink: { _eq: permalink }, site : {id: {_eq: config.public.siteId} }}
 							: { permalink: { _eq: permalink }, status: { _eq: 'published' }, site : {id: {_eq: config.public.siteId} } },
 						limit: 1,
@@ -482,15 +480,15 @@ export default cachedEventHandler(async (event) => {
 		console.log(error)
 		throw createError({ statusCode: 500, statusMessage: 'Page not found' });
 	}
-}, {
-  maxAge: 3600,
-  getKey: (event) => {
-    const { permalink, version } = getQuery(event)
-    return `pages-${permalink}`
-  },
-  shouldBypassCache: (event) => {
-	return true;
-    const config = useRuntimeConfig()
-    return config.public.isSandbox || getQuery(event).preview === 'true'
-  },
-});
+}
+
+export default config.public.isSandbox
+	? eventHandler(handler)
+	: cachedEventHandler(handler, {
+		maxAge: 3600,
+		getKey: (event) => {
+			const { permalink } = getQuery(event);
+			return `pages-${permalink}`;
+		},
+		shouldBypassCache: () => true,
+	});

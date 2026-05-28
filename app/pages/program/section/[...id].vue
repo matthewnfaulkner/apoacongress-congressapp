@@ -29,6 +29,7 @@ const version = route.query.version === 'main' ? undefined : (route.query.versio
 
 const { data, error, refresh } = await useFetch<CongressSession[]>(() => `/api/program/section`, {
 	key: `section-${id}`,
+	headers: useRequestHeaders(['cookie']),
 	query: {
 		preview: enabled.value ? true : undefined,
 		token: enabled.value ? state.token : undefined,

@@ -29,6 +29,7 @@ export interface CongressAbstracts {
 	submissions?: AbstractSubmission[] | string[] | null;
 	limit?: number | null;
 	acceptance_limit?: number;
+	submission_limit?: number;
 	required_reviewers?: number;
 }
 
@@ -1493,6 +1494,7 @@ export interface SupportCase {
 	user_created?: DirectusUser | string | null;
 	date_updated?: string | null;
 	user_updated?: DirectusUser | string | null;
+	site?: Site | string | null;
 	agent?: DirectusUser | string | null;
 	status?: string;
 	category?: string;

@@ -20,7 +20,7 @@ const loading = ref(true);
 const {
   data: congress,
   error,
-} = await useFetch<Congress>('/api/schedule', { key: 'schedule' });
+} = await useFetch<Congress>('/api/schedule', { key: 'schedule', headers: useRequestHeaders(['cookie']), });
 
 if (!congress.value || error.value) {
   throw createError({ statusCode: 404, statusMessage: 'Congress not found', fatal: true });

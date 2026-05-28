@@ -3,6 +3,7 @@ import type { Organisation } from '#shared/types/schema';
 
 const { data, error } = await useFetch<Organisation[]>('/api/organisation', {
 	key: 'partner-societies',
+	headers: useRequestHeaders(['cookie']),
 	query: {
 		exclude: 'apoa_core,sponsors'
 	}

@@ -17,6 +17,7 @@ type HotelWithCongress = Hotel & { congresses: Array<{ directions: string | null
 
 const { data, error } = await useFetch<HotelWithCongress>('/api/hotel/one', {
 	key: `hotel-${id}`,
+	headers: useRequestHeaders(['cookie']),
 	query: { id },
 });
 

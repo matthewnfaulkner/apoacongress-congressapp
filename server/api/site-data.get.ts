@@ -1,203 +1,135 @@
-export default defineEventHandler(async (event) => {
-	try {
-		const config = useRuntimeConfig();
+import type { H3Event } from 'h3';
 
+const config = useRuntimeConfig();
+
+async function handler(event: H3Event) {
+	const cookies = parseCookies(event);
+	const sessionToken = cookies[config.sessionTokenName];
+
+	try {
 		const [globals, scientific_tags, site, headerNavigation, footerNavigation] = await Promise.all([
 			directusServer.request(
-				readSingleton('globals', {
-					fields: ['title', 'description', 'logo', 'logo_dark_mode', 'social_links', 'accent_color', 'favicon'],
-				}),
+				sessionToken
+					? withToken(sessionToken, readSingleton('globals', {
+						fields: ['title', 'description', 'logo', 'logo_dark_mode', 'social_links', 'accent_color', 'favicon'],
+					}))
+					: readSingleton('globals', {
+						fields: ['title', 'description', 'logo', 'logo_dark_mode', 'social_links', 'accent_color', 'favicon'],
+					}),
 			),
 			directusServer.request(
-				readItems('scientific_tags', {
-					limit: -1,
-					fields: ['id', 'tag', 'color']
-				})
+				sessionToken
+					? withToken(sessionToken, readItems('scientific_tags', {
+						limit: -1,
+						fields: ['id', 'tag', 'color'],
+					}))
+					: readItems('scientific_tags', {
+						limit: -1,
+						fields: ['id', 'tag', 'color'],
+					}),
 			),
 			directusServer.request(
-				readItem('sites',  config.public.siteId, {
-					fields: [
-						'title',
-						'description',
-						'logo',
-						'logo_dark_mode',
-						'social_links',
-						'preview',
-						{
-							'congress' : [
-								'*',
-								{
-									days: [
-										'key',
-										'title'
-									]
-								},
-								{
-									'venue' : [
-										'id',
-										'title'
-									]
-								},
-								{
-									organisations: [
-										'*',
-										{
-											organisation: [
-												'id',
-												'type',
-												'name',
-												'short_name',
-												'abbr',
-												'logo',
-											]
-										
-										}
-									]
-								},
-								{
-									'organiser' : [
-										'id',
-										'name',
-										'email',
-										'logo',
-										'address',
-										'phone',
-									]
-								}
-							]
-						}
-					],
-				}),
+				sessionToken
+					? withToken(sessionToken, readItem('sites', config.public.siteId, {
+						fields: [
+							'title', 'description', 'logo', 'logo_dark_mode', 'social_links', 'preview',
+							{
+								'congress': [
+									'*',
+									{ days: ['key', 'title'] },
+									{ 'venue': ['id', 'title'] },
+									{ organisations: ['*', { organisation: ['id', 'type', 'name', 'short_name', 'abbr', 'logo'] }] },
+									{ 'organiser': ['id', 'name', 'email', 'logo', 'address', 'phone'] },
+								],
+							},
+						],
+					}))
+					: readItem('sites', config.public.siteId, {
+						fields: [
+							'title', 'description', 'logo', 'logo_dark_mode', 'social_links', 'preview',
+							{
+								'congress': [
+									'*',
+									{ days: ['key', 'title'] },
+									{ 'venue': ['id', 'title'] },
+									{ organisations: ['*', { organisation: ['id', 'type', 'name', 'short_name', 'abbr', 'logo'] }] },
+									{ 'organiser': ['id', 'name', 'email', 'logo', 'address', 'phone'] },
+								],
+							},
+						],
+					}),
 			),
 			directusServer.request(
-				readItems('navigation', {
-					limit: 1,
-					filter: {
-						_and: [
-						{
-							'key' : {
-								_eq : 'main'}
-						},
-						{
-							'site': {
-								'id': {
-									_eq: config.public.siteId
-								}
-							}
-						}
-						
-						]
-					},
-					fields: [
-						'id',
-						'title',
-						{
-							items: [
-								'id',
-								'title',
-								'url',
-								'type',
-								{
-									translations:[
-										'languages_code',
-										'title'
-									]
-								},
-								{
-									page: ['id', 'permalink'],
-									post: ['id', 'slug'],
+				sessionToken
+					? withToken(sessionToken, readItems('navigation', {
+						limit: 1,
+						filter: { _and: [{ key: { _eq: 'main' } }, { site: { id: { _eq: config.public.siteId } } }] },
+						fields: ['id', 'title', {
+							items: ['id', 'title', 'url', 'type',
+								{ translations: ['languages_code', 'title'] },
+								{ page: ['id', 'permalink'], post: ['id', 'slug'],
 									children: ['id', 'title', 'url', 'type',
-										{
-											translations:[
-												'languages_code',
-												'title'
-											]
-										},
-										{
-											page: ['id', 'permalink'],
-											post: ['id', 'slug'],
+										{ translations: ['languages_code', 'title'] },
+										{ page: ['id', 'permalink'], post: ['id', 'slug'],
 											children: ['id', 'title', 'url', 'type',
-												{
-													translations:[
-														'languages_code',
-														'title'
-													]
-												},
-												{
-													page: ['id', 'permalink'],
-													post: ['id', 'slug'],
-
-												}
+												{ translations: ['languages_code', 'title'] },
+												{ page: ['id', 'permalink'], post: ['id', 'slug'] },
 											],
-
-										}
+										},
 									],
 								},
 							],
-						},
-					],
-					deep: {
-						items: {
-							_sort: ['sort'],
-							children: {
-								children: {
-									_sort: ['sort'],
-								},
-								_sort: ['sort'],
-							},
-						},
-					},
-				}),
-			),
-
-			directusServer.request(
-					readItems('navigation', {
-					limit: 1,
-					filter: {
-						_and: [
-						{
-							'key' : {
-								_eq : 'footer'}
-						},
-						{
-							'site': {
-								'id': {
-									_eq: config.public.siteId
-								}
-							}
-						}
-						
-						]
-					},
-					fields: [
-						'id',
-						'title',
-						{
-							items: [
-								'id',
-								'title',
-								'url',
-								'type',
-								{
-									page: ['id', 'permalink'],
-									post: ['id', 'slug'],
-									children: ['id', 'title', 'url', 'type', {
-										page: ['id', 'permalink'],
-										post: ['id', 'slug']
-									}],
+						}],
+						deep: { items: { _sort: ['sort'], children: { children: { _sort: ['sort'] }, _sort: ['sort'] } } },
+					}))
+					: readItems('navigation', {
+						limit: 1,
+						filter: { _and: [{ key: { _eq: 'main' } }, { site: { id: { _eq: config.public.siteId } } }] },
+						fields: ['id', 'title', {
+							items: ['id', 'title', 'url', 'type',
+								{ translations: ['languages_code', 'title'] },
+								{ page: ['id', 'permalink'], post: ['id', 'slug'],
+									children: ['id', 'title', 'url', 'type',
+										{ translations: ['languages_code', 'title'] },
+										{ page: ['id', 'permalink'], post: ['id', 'slug'],
+											children: ['id', 'title', 'url', 'type',
+												{ translations: ['languages_code', 'title'] },
+												{ page: ['id', 'permalink'], post: ['id', 'slug'] },
+											],
+										},
+									],
 								},
 							],
-						},
-					],
-					deep: {
-						items: {
-							_sort: ['sort'],
-							children: {
-								_sort: ['sort'],
-							},
-						},
-					},
-				}),
+						}],
+						deep: { items: { _sort: ['sort'], children: { children: { _sort: ['sort'] }, _sort: ['sort'] } } },
+					}),
+			),
+			directusServer.request(
+				sessionToken
+					? withToken(sessionToken, readItems('navigation', {
+						limit: 1,
+						filter: { _and: [{ key: { _eq: 'footer' } }, { site: { id: { _eq: config.public.siteId } } }] },
+						fields: ['id', 'title', {
+							items: ['id', 'title', 'url', 'type',
+								{ page: ['id', 'permalink'], post: ['id', 'slug'],
+									children: ['id', 'title', 'url', 'type', { page: ['id', 'permalink'], post: ['id', 'slug'] }],
+								},
+							],
+						}],
+						deep: { items: { _sort: ['sort'], children: { _sort: ['sort'] } } },
+					}))
+					: readItems('navigation', {
+						limit: 1,
+						filter: { _and: [{ key: { _eq: 'footer' } }, { site: { id: { _eq: config.public.siteId } } }] },
+						fields: ['id', 'title', {
+							items: ['id', 'title', 'url', 'type',
+								{ page: ['id', 'permalink'], post: ['id', 'slug'],
+									children: ['id', 'title', 'url', 'type', { page: ['id', 'permalink'], post: ['id', 'slug'] }],
+								},
+							],
+						}],
+						deep: { items: { _sort: ['sort'], children: { _sort: ['sort'] } } },
+					}),
 			),
 		]);
 
@@ -205,4 +137,12 @@ export default defineEventHandler(async (event) => {
 	} catch {
 		throw createError({ statusCode: 500, statusMessage: 'Internal Server Error' });
 	}
-});
+}
+
+export default config.public.isSandbox
+	? eventHandler(handler)
+	: cachedEventHandler(handler, {
+		maxAge: 60,
+		getKey: () => 'site-data',
+		shouldBypassCache: () => true,
+	});

@@ -15,6 +15,7 @@ const breadcrumbs = computed(() => {
 
 const { data, error } = await useFetch<Organisation>('/api/organisation/one', {
 	key: `organisation-${id}`,
+	headers: useRequestHeaders(['cookie']),
 	query: { id },
 });
 

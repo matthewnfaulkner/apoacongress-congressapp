@@ -1,42 +1,46 @@
 import type { Hotel } from '#shared/types/schema';
+import type { H3Event } from 'h3';
 
-export default defineEventHandler(async (event) => {
-    const { id } = getQuery(event);
-    const config = useRuntimeConfig();
+const config = useRuntimeConfig();
 
-    if (!id) {
-        throw createError({ statusCode: 400, statusMessage: 'Hotel ID required' });
-    }
+async function handler(event: H3Event) {
+	const { id } = getQuery(event);
 
-    const hotels = await directusServer.request(
-        readItem('hotels' as any, id as string, {
-            filter: {
-                congresses: { congress: { site: { _eq: config.public.siteId } } },
-            } as any,
-            fields: [
-                'id',
-                'name',
-                'star_rating',
-                'website',
-                'phone',
-                'address',
-                'image',
-                'rooms',
-                'location',
-                'ammenities',
-                {
-                    congresses: [
-                        'directions'
-                    ]
-                }
+	if (!id) {
+		throw createError({ statusCode: 400, statusMessage: 'Hotel ID required' });
+	}
 
-            ] as any,
-        }),
-    );
+	const cookies = parseCookies(event);
+	const sessionToken = cookies[config.sessionTokenName];
 
-    if (!hotels) {
-        throw createError({ statusCode: 404, statusMessage: 'Hotel not found' });
-    }
+	const hotelParams = {
+		filter: {
+			congresses: { congress: { site: { _eq: config.public.siteId } } },
+		} as any,
+		fields: [
+			'id', 'name', 'star_rating', 'website', 'phone',
+			'address', 'image', 'rooms', 'location', 'ammenities',
+			{ congresses: ['directions'] },
+		] as any,
+	};
 
-    return hotels as Hotel & { congresses: Array<{ directions: string | null }> };
-});
+	const hotel = await directusServer.request(
+		sessionToken
+			? withToken(sessionToken, readItem('hotels' as any, id as string, hotelParams))
+			: readItem('hotels' as any, id as string, hotelParams),
+	);
+
+	if (!hotel) {
+		throw createError({ statusCode: 404, statusMessage: 'Hotel not found' });
+	}
+
+	return hotel as Hotel & { congresses: Array<{ directions: string | null }> };
+}
+
+export default config.public.isSandbox
+	? eventHandler(handler)
+	: cachedEventHandler(handler, {
+		maxAge: 3600,
+		getKey: (event) => `hotel-${getQuery(event).id}`,
+		shouldBypassCache: () => true,
+	});
