@@ -345,6 +345,10 @@ const pageFields = [
 const config = useRuntimeConfig();
 
 async function handler(event: H3Event) {
+	if (config.public.isSandbox) {
+		setResponseHeader(event, 'cache-control', 'no-store');
+	}
+
 	const query = getQuery(event);
 
 	const { preview, token: rawToken, permalink: rawPermalink, id, version, languageCode } = query;
