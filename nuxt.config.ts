@@ -222,7 +222,7 @@ export default defineNuxtConfig({
 		async 'prerender:routes'(ctx) {
 		// Ensure we only do this during a production build
 		if (process.env.NODE_ENV === 'development') return
-
+		if (isSandbox) return	
 		const directusUrl = process.env.DIRECTUS_URL || 'https://admin.congress.apoaonline.com'
 		const token = process.env.DIRECTUS_SERVER_TOKEN // Use a static token if your collections are private
 
