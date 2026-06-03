@@ -10,16 +10,16 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     const auth = useAuthStore();
 
     await $isAuthenticated().then((result) => {auth.setAuth(result as AuthResult)});
-
+    
     const config = useRuntimeConfig();
+
     if(config.public.isSandbox) {
         if (import.meta.server) return;
         const result = await $isAuthenticatedWithPolicy('Sandbox - Access');
-        auth.setAuth(result);
         
         if (!result && auth.checked) {
-            if (to.name?.startsWith("forgotten_password") || to.name?.startsWith("reset_password")  || to.name?.startsWith("admin_login")) return;
-                return navigateTo("/admin_login");
+            if (to.name?.startsWith("forgotten_password") || to.name?.startsWith("reset_password")  || to.name?.startsWith("admin_login") || to.name?.startsWith("no-access")|| to.name?.startsWith("logout") ) return;
+                return navigateTo("/no-access");
         }
         else if (result && auth.checked) {
             if (to.name?.startsWith("admin_login")) {

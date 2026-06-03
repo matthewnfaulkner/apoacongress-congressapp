@@ -103,7 +103,7 @@ useSeoMeta({ title: 'Sign In', ogTitle: 'Sign In', robots: 'noindex' });
 </script>
 <template>
     <div>
-     <div class="text-black w-full min-h-lvh flex items-center justify-center">
+      <div class="text-black w-full min-h-lvh flex items-center justify-center flex-col">
         <UProgress color="secondary" size="xl" :v-model="null" class="flex justify-center py-10 w-50"/>
       </div>
     </div>

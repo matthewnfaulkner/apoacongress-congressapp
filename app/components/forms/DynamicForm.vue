@@ -87,7 +87,6 @@ const onSubmitForm = handleSubmit(async (formValues) => {
 </script>
 
 <template>
-
 	<form
 		v-if="schema"
 		:validation-schema="schema"
