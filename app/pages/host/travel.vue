@@ -56,7 +56,7 @@ onMounted(async () => {
 		const raw = (me as any)?.country;
 		if (!raw) return;
 		const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
-		const code = (parsed?.countryCodes?.[0] ?? '').toUpperCase();
+		const code = parsed?.key;
 		if (code) selectedCountryCode.value = code;
 	} catch {
 		// silently ignore — country pre-population is best-effort

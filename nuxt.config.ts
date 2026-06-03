@@ -30,6 +30,7 @@ export default defineNuxtConfig({
 		// Auth pages must always run fresh SSR to read cookies
 		'/login': { isr: false },
 		'/admin_login': { isr: false },
+		'/host/travel': { isr: false },
 
 		// Cache all page routes
 		'/**': { isr: 60 },
@@ -144,6 +145,7 @@ export default defineNuxtConfig({
 			cacheTtl: isSandbox ? 0 : 60,
 			enableChatAgent: process.env.NUXT_PUBLIC_ENABLE_CHAT != 'false',
 			refreshTokenName: process.env.DIRECTUS_REFRESH_TOKEN_NAME as string || 'directus_refresh_token',
+			userAvatarFolder: process.env.NUXT_PUBLIC_USER_AVATAR_FOLDER as string
 			
 		},
 		directusServerToken: process.env.DIRECTUS_SERVER_TOKEN,

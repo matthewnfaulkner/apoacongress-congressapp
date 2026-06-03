@@ -514,6 +514,7 @@ const onAvatarChange = async (e: Event) => {
     avatarUploading.value = true;
     try {
         const fd = new FormData();
+        fd.append('folder', config.public.userAvatarFolder as string);
         fd.append('file', file, file.name);
         const uploaded = await $directus.request(uploadFiles(fd)) as { id?: string };
         if (!uploaded?.id) throw new Error('Upload failed');

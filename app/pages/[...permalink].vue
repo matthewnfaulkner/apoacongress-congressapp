@@ -37,10 +37,6 @@ const {
 
 });
 
-if (!page.value || error.value) {
-	throw createError({ statusCode: 404, statusMessage: 'Page not found', fatal: true });
-}
-
 const pageBlocks = computed(() => (page.value?.blocks as PageBlock[]) || []);
 
 useSeoMeta({
@@ -86,7 +82,8 @@ onMounted(() => {
 			statusCode: 404,
 			statusMessage: 'Page not found',
 			message: 'The page you are looking for does not exist.'
-			}"></UError>
+			}">
+		</UError>
 		<PageBuilder v-if="pageBlocks" :sections="pageBlocks" />
 		<div
 			v-if="isVisualEditingEnabled && page"

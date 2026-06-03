@@ -1,90 +1,88 @@
 export default defineEventHandler(async (event) => {
 	try {
-        const config = useRuntimeConfig()
+		const config = useRuntimeConfig()
 
-        // Skip API routes, Nitro assets, favicon, etc.
-        if (
-        event.path.startsWith('/api') ||
-        event.path.startsWith('/_nuxt') ||
-        event.path.startsWith('/_ipx') ||
-        event.path === '/favicon.ico' ||
-        event.path.startsWith('/public') ||
-        event.path.startsWith('/admin_login') ||
-        event.path.startsWith('/login')
-        ) {
-        return
-        }
-        
-        const sessionToken = getCookie(event, config.sessionTokenName)
+		if (
+			event.path.startsWith('/api') ||
+			event.path.startsWith('/_nuxt') ||
+			event.path.startsWith('/_ipx') ||
+			event.path === '/favicon.ico' ||
+			event.path.startsWith('/public') ||
+			event.path.startsWith('/admin_login') ||
+			event.path.startsWith('/login') ||
+			event.path.startsWith('/no-access')
+		) {
+			return
+		}
 
+		const sessionToken = getCookie(event, config.sessionTokenName)
 
-        // Fetch backend settings for redirect
-        const site = await directusServer.request(
-            readItem('sites', config.public.siteId, {
-                fields: ['preview']
-            })
-            )
+		if (config.public.isSandbox) {
+			if (!sessionToken) {
+				return sendRedirect(event, '/admin_login', 302)
+			}
 
-        const redirectPath = '/preview'
-        
+			let userPolicies: string[] = []
+			try {
+				const me = await directusServer.request(withToken(sessionToken, readMe({
+					fields: [
+						'id',
+						{ policies: [{ policy: ['name'] }] },
+						{ role: [{ policies: [{ policy: ['name'] }] }] }
+					]
+				})))
 
-        // Skip redirect if toggle is off or already at target
-        if (!site?.preview || event.path === redirectPath) return
+				userPolicies = [
+					...((me as any).policies?.map((p: any) => p.policy?.name).filter(Boolean) ?? []),
+					...((me as any).role?.policies?.map((p: any) => p.policy?.name).filter(Boolean) ?? []),
+				]
+			} catch {
+				return sendRedirect(event, '/admin_login', 302)
+			}
 
-        const policy = "Admin - Bypass Preview";
+			if (!userPolicies.includes('Sandbox - Access')) {
+				return sendRedirect(event, '/no-access', 302)
+			}
 
-        if(sessionToken){
-            try {
-                const me = await directusServer.request(withToken(sessionToken, readMe({
-                fields: [
-                    'id',
-                    'email',
-                    'first_name',
-                    'last_name',
-                    {
-                        policies: [{
-                            policy: ['name']
-                        }]
-                    },
-                    {
-                        role: [{
-                            policies: [{
-                                policy: ['name']
-                            }]
-                        }]
-                    }
-                ],
-                filter: {
-                    _or: [
-                        {
-                            policies: {
-                                policy: {
-                                    name: { _eq: policy }
-                                }
-                            }
-                        },
-                        {
-                            role: {
-                                policies: {
-                                    policy: {
-                                        name: { _eq: policy }
-                                    }
-                                }
-                            }
-                        }
-                    ]
-                }
-                })));
-                if (me.policies) return;
-            } catch(error) {
-                console.log(error);
-            }
-        }
-        
-        
-        // Do the actual HTTP redirect
-        return sendRedirect(event, redirectPath, 302)
-	} catch (error){
-		throw createError({ statusCode: 500, statusMessage: 'Internal Server Error' });
+			// Sandbox access confirmed — check preview bypass
+			const site = await directusServer.request(
+				readItem('sites', config.public.siteId, { fields: ['preview'] })
+			)
+			if (!site?.preview || event.path === '/preview') return
+			if (userPolicies.includes('Admin - Bypass Preview')) return
+			return sendRedirect(event, '/preview', 302)
+		}
+
+		// Non-sandbox: existing preview redirect logic
+		const site = await directusServer.request(
+			readItem('sites', config.public.siteId, { fields: ['preview'] })
+		)
+
+		if (!site?.preview || event.path === '/preview') return
+
+		if (sessionToken) {
+			try {
+				const me = await directusServer.request(withToken(sessionToken, readMe({
+					fields: [
+						'id',
+						{ policies: [{ policy: ['name'] }] },
+						{ role: [{ policies: [{ policy: ['name'] }] }] }
+					],
+					filter: {
+						_or: [
+							{ policies: { policy: { name: { _eq: 'Admin - Bypass Preview' } } } },
+							{ role: { policies: { policy: { name: { _eq: 'Admin - Bypass Preview' } } } } }
+						]
+					}
+				})))
+				if (me.policies) return
+			} catch (error) {
+				console.log(error)
+			}
+		}
+
+		return sendRedirect(event, '/preview', 302)
+	} catch (error) {
+		throw createError({ statusCode: 500, statusMessage: 'Internal Server Error' })
 	}
-});
+})
