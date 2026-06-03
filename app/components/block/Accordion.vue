@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { icon } from '#build/ui/prose';
+
 
 interface AccordionItem {
     id: string;
@@ -35,7 +37,11 @@ const props = defineProps<AccordionProps>();
             item: 'rounded  px-5'
         }">
         <template #leading="{item}">
-            <UIcon v-if="item.icon" :name="`i-lucide-${item.icon}`" class="size-10 text-accent" />
+            <UIcon 
+                v-if="item.icon" 
+                :name="`i-material-symbols-${item.icon}`"
+                class="text-[1.5rem] text-accent" 
+            />
         </template>
         <template #content="{item}">
             <div v-html="item.content" class="p-10"/>

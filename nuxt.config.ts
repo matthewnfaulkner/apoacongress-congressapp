@@ -126,6 +126,11 @@ export default defineNuxtConfig({
 		}
 
 	},
+	icon: {
+		customCollections: [
+			{ prefix: 'apoa', dir: './app/assets/images' }
+		]
+	},
 	css: ['~/assets/css/main.css'],
 	runtimeConfig: {
 		public: {

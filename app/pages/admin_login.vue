@@ -1,12 +1,12 @@
 <script setup lang="ts">
-
-definePageMeta({
-  layout: 'login',
-})
 import { z } from 'zod'
 import type { FormSubmitEvent, AuthFormField } from '@nuxt/ui'
 import { readMe, readPolicies, enableTwoFactor, generateTwoFactorSecret } from '@directus/sdk'
 import QRCode from 'qrcode';
+
+definePageMeta({
+  layout: 'login',
+})
 
 const { t } = useI18n();
 const config = useRuntimeConfig();
@@ -175,6 +175,10 @@ async function login(data: any) {
   }
 }
 
+function goToApoaOnline() {
+  window.location.href = config.public.loginUrl
+}
+
 </script>
   <template>
 
@@ -204,38 +208,49 @@ async function login(data: any) {
               }"
 
         >
-      <template #header>
-        <UUser
-          :name="siteData?.title"
-          description="Admin Login"
-          class="m-auto"
-          size="3xl"
-          orientation="vertical"
-        >
-          <template #avatar>
-            <DirectusImage :uuid="siteData?.logo" class="h-25 w-25"/>
+          <template #providers>
+            
+            <UButton
+              label="APOA Online"
+              icon="i-apoa-apoalogo"
+              color="neutral"
+              variant="subtle"
+              class="w-full justify-center"
+              @click="goToApoaOnline"
+            />
           </template>
-        </UUser>
-      </template>
-      <template #leading>
-        <div v-if="step === 'password' && !enforceTfa" class="text-sm text-gray-500 mb-2">
-          Logging in as <span class="font-medium text-gray-800">{{ emailValue }}</span>
-          <UButton variant="link" size="xs" class="ml-2" @click="step = 'email'">Change</UButton>
-        </div>
-        <div v-if="enforceTfa">
-          <h3 class="text-2xl">Setup 2FA</h3>
-          <p>Scan the code in your authenticator app to finish setting up 2FA</p>
-          <img class="m-auto" :src="qrCodeUrl"/>
-          <p>{{ qrCodeSecret }}</p>
-        </div>
-      </template>
-      <template #password-hint>
-        <ULink to="/forgotten_password" class="text-accent font-medium" tabindex="-1">Forgot password?</ULink>
-      </template>
-      <template #validation>
-        <UAlert v-if="showValidationErrors" color="warning" class="text-black" icon="i-lucide-info" :title="validationError" />
-      </template>
-      </UAuthForm>
+          <template #header>
+            <UUser
+              :name="(siteData as any)?.title"
+              description="Admin Login"
+              class="m-auto"
+              size="3xl"
+              orientation="vertical"
+            >
+              <template #avatar>
+                <DirectusImage :uuid="(siteData as any)?.logo" class="h-25 w-25"/>
+              </template>
+            </UUser>
+          </template>
+          <template #leading>
+            <div v-if="step === 'password' && !enforceTfa" class="text-sm text-gray-500 mb-2">
+              Logging in as <span class="font-medium text-gray-800">{{ emailValue }}</span>
+              <UButton variant="link" size="xs" class="ml-2" @click="step = 'email'">Change</UButton>
+            </div>
+            <div v-if="enforceTfa">
+              <h3 class="text-2xl">Setup 2FA</h3>
+              <p>Scan the code in your authenticator app to finish setting up 2FA</p>
+              <img class="m-auto" :src="qrCodeUrl"/>
+              <p>{{ qrCodeSecret }}</p>
+            </div>
+          </template>
+          <template #password-hint>
+            <ULink to="/forgotten_password" class="text-accent font-medium" tabindex="-1">Forgot password?</ULink>
+          </template>
+          <template #validation>
+            <UAlert v-if="showValidationErrors" color="warning" class="text-black" icon="i-lucide-info" :title="validationError" />
+          </template>
+        </UAuthForm>
       </UPageCard>
     </div>
 </template>
