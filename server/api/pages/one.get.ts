@@ -28,6 +28,12 @@ const pageFields = [
 			{
 				// Different block types with their specific fields:
 				item: {	
+					block_accordion: [
+						'*',
+						{
+							items: ['*']
+						}
+					],
 					block_richtext: [
 						'id', 
 						'tagline', 

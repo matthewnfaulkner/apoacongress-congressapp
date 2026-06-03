@@ -97,6 +97,34 @@ export interface AiPrompt {
 	user_updated?: DirectusUser | string | null;
 }
 
+export interface BlockAccordion {
+	/** @primaryKey */
+	id: string;
+	/** @description Larger main headline for this page section. */
+	headline?: string | null;
+	/** @description Smaller copy shown above the headline to label a section or add extra context. */
+	tagline?: string | null;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	items?: BlockAccordionItem[] | string[] | null;
+}
+
+export interface BlockAccordionItem {
+	/** @primaryKey */
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	sort?: number | null;
+	label?: string | null;
+	icon?: string | null;
+	content?: string | null;
+
+}
+
 export interface BlockButton {
 	/** @primaryKey */
 	id: string;
@@ -1274,7 +1302,7 @@ export interface PageBlock {
 	/** @description The id of the page that this block belongs to. */
 	page?: Page | string | null;
 	/** @description The data for the block. */
-	item?: BlockHero | BlockMainHero | BlockRichtext | BlockForm | BlockPost | BlockGallery | BlockPricing | BlockPeople | BlockMessages | BlockChargeTable | string | null;
+	item?: BlockAccordion | BlockHero | BlockMainHero | BlockRichtext | BlockForm | BlockPost | BlockGallery | BlockPricing | BlockPeople | BlockMessages | BlockChargeTable | string | null;
 	/** @description The collection (type of block). */
 	collection?: string | null;
 	/** @description Temporarily hide this block on the website without having to remove it from your page. */

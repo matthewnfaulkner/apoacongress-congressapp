@@ -12,21 +12,12 @@ const route = useRoute();
 const { enabled, state } = useLivePreview();
 const pageUrl = useRequestURL();
 const { isVisualEditingEnabled, apply, setAttr } = useVisualEditing();
-const { $directus, $isAuthenticated } = useNuxtApp();
 
 const { locale, defaultLocale } = useI18n();
 
 const path = withoutTrailingSlash(withLeadingSlash(route.path));
 const permalink = locale.value === defaultLocale ?  path : '/';
 
-const toast = useToast()
-
-const auth = await useAuthStore();
-const log = await $isAuthenticated();
-const isLoggedIn = computed(() =>
-  auth.isAuthenticated === true ||
-  typeof auth.isAuthenticated === 'object'
-)
 
 // Handle Live Preview adding version=main which is not required when fetching the main version.
 const version = route.query.version === 'main' ? undefined : (route.query.version as string);

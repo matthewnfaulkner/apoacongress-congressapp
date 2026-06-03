@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Accordion from '~/components/block/Accordion.vue';
 import Hero from '~/components/block/Hero.vue';
 import RichText from '~/components/block/RichText.vue';
 import Gallery from '~/components/block/Gallery.vue';
@@ -24,6 +25,7 @@ const props = defineProps<BaseBlockProps>();
 const blockRef = ref<HTMLElement | null>(null);
 
 const components: Record<string, any> = {
+	block_accordion: Accordion,
 	block_hero: Hero,
 	block_mainhero: MainHero,
 	block_richtext: RichText,

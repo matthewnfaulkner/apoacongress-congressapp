@@ -1,5 +1,10 @@
 <script setup lang="ts">
 
+
+definePageMeta({
+  layout: 'login',
+})
+
 const { $directus, $directusTokenStorage, $isAuthenticated } = useNuxtApp()
 
 const route = useRoute();
