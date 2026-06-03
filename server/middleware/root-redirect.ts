@@ -17,6 +17,9 @@ export default defineEventHandler(async (event) => {
         
         const sessionToken = getCookie(event, config.sessionTokenName)
 
+        // Skip redirect if toggle is off or already at target
+        if (!site?.preview || event.path === redirectPath) return
+        
         // Fetch backend settings for redirect
         const site = await directusServer.request(
             readItem('sites', config.public.siteId, {
@@ -75,8 +78,7 @@ export default defineEventHandler(async (event) => {
                 console.log(error);
             }
         }
-        // Skip redirect if toggle is off or already at target
-        if (!site?.preview || event.path === redirectPath) return
+        
         
         // Do the actual HTTP redirect
         return sendRedirect(event, redirectPath, 302)

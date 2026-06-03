@@ -11,10 +11,12 @@ definePageMeta({
 const { t } = useI18n();
 const config = useRuntimeConfig();
 
+const isSandbox = config.public.isSandbox;
+
 const siteDataStore = useSiteDataStore();
 const siteData = siteDataStore.siteData;
 
-const { $directus, $isAuthenticatedWithPolicy } = useNuxtApp();
+const { $directus, $isAuthenticatedWithPolicy, $isAuthenticated } = useNuxtApp();
 
 type LoginStep = 'email' | 'password'
 
@@ -128,9 +130,10 @@ async function login(data: any) {
         qrCodeUrl.value = await QRCode.toDataURL(await tfaSecret.otpauth_url)
       }
 
-      const me = await $isAuthenticatedWithPolicy('Dashboard - Access')
+      const me = isSandbox ? await $isAuthenticatedWithPolicy('Sandbox - Access') : await $isAuthenticated();
+
       if (!me) {
-        validationError.value = "You don't have permission to access the dashboard."
+        validationError.value = "You don't have permission to access this." 
         showValidationErrors.value = true
         await $directus.logout()
         loading.value = false
@@ -153,9 +156,9 @@ async function login(data: any) {
       showValidationErrors.value = false
       await $directus.login({ email: emailValue.value, password: data.password, otp: data.otp })
 
-      const me = await $isAuthenticatedWithPolicy('Dashboard - Access')
+      const me = isSandbox ? await $isAuthenticatedWithPolicy('Sandbox - Access') : await $isAuthenticated();
       if (!me) {
-        validationError.value = "You don't have permission to access the dashboard."
+        validationError.value = "You don't have permission to access this." 
         showValidationErrors.value = true
         await $directus.logout()
         loading.value = false
