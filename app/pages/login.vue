@@ -3,7 +3,7 @@ definePageMeta({
   layout: 'login',
 })
 
-const { $directus, $directusTokenStorage, $isAuthenticated } = useNuxtApp()
+const { $directus, $directusTokenStorage, $isAuthenticated, $isAuthenticatedWithPolicy } = useNuxtApp()
 
 const route = useRoute();
 const user = ref(null);
@@ -20,10 +20,14 @@ const cookieToken = useState('login_cookie_token', () => refreshCookie.value ?? 
 const checkLoginStatus = async () => {
   try {
     const response = await $isAuthenticated();
+    console.log(response)
     if (response) {
       isLoggedIn.value = true;
       if (redirect) navigateTo(redirect);
       else navigateTo('/');
+    }
+    else {
+      navigateTo('/admin_login');
     }
   } catch (error) {
     isLoggedIn.value = false;

@@ -11,8 +11,6 @@ definePageMeta({
 const { t } = useI18n();
 const config = useRuntimeConfig();
 
-const isSandbox = config.public.isSandbox;
-
 const siteDataStore = useSiteDataStore();
 const siteData = siteDataStore.siteData;
 
@@ -130,8 +128,8 @@ async function login(data: any) {
         qrCodeUrl.value = await QRCode.toDataURL(await tfaSecret.otpauth_url)
       }
 
-      const me = isSandbox ? await $isAuthenticatedWithPolicy('Sandbox - Access') : await $isAuthenticated();
-
+      const me = await $isAuthenticated();
+      console.log(me)
       if (!me) {
         validationError.value = "You don't have permission to access this." 
         showValidationErrors.value = true
@@ -155,8 +153,8 @@ async function login(data: any) {
     try {
       showValidationErrors.value = false
       await $directus.login({ email: emailValue.value, password: data.password, otp: data.otp })
-
-      const me = isSandbox ? await $isAuthenticatedWithPolicy('Sandbox - Access') : await $isAuthenticated();
+      console.log(me)
+      const me = await $isAuthenticated();
       if (!me) {
         validationError.value = "You don't have permission to access this." 
         showValidationErrors.value = true

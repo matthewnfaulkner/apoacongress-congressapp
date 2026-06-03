@@ -14,7 +14,7 @@ export default defineNuxtRouteMiddleware(async (to, from) => {
     const config = useRuntimeConfig();
     if(config.public.isSandbox) {
         if (import.meta.server) return;
-        const result = await $isAuthenticatedWithPolicy('Abstracts - Reviewer');
+        const result = await $isAuthenticatedWithPolicy('Sandbox - Access');
         auth.setAuth(result);
         
         if (!result && auth.checked) {

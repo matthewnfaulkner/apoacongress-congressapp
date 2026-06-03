@@ -50,6 +50,11 @@ export default defineNuxtPlugin(() => {
 
 
     const isAuthenticated = async () => {
+
+        if(config.public.isSandbox) {
+            return isAuthenticatedWithPolicy('Sandbox - Access');
+        }
+        
         try {
             const me = await directus.request(readMe({
                 fields: ['id', 'email', 'first_name', 'last_name', 'user_policy_agreements']
@@ -118,7 +123,7 @@ export default defineNuxtPlugin(() => {
             // token may be missing or already expired — still clear local state
         }
         tokenStorage.set(null);
-
+``
         const auth = useAuthStore();
         auth.reset();
 
