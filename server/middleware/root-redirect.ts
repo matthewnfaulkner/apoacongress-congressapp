@@ -17,9 +17,7 @@ export default defineEventHandler(async (event) => {
         
         const sessionToken = getCookie(event, config.sessionTokenName)
 
-        // Skip redirect if toggle is off or already at target
-        if (!site?.preview || event.path === redirectPath) return
-        
+
         // Fetch backend settings for redirect
         const site = await directusServer.request(
             readItem('sites', config.public.siteId, {
@@ -29,6 +27,10 @@ export default defineEventHandler(async (event) => {
 
         const redirectPath = '/preview'
         
+
+        // Skip redirect if toggle is off or already at target
+        if (!site?.preview || event.path === redirectPath) return
+
         const policy = "Admin - Bypass Preview";
 
         if(sessionToken){
