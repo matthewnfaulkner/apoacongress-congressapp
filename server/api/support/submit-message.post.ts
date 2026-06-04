@@ -2,7 +2,7 @@ import { createDirectus, rest, withToken, uploadFiles, createItem } from '@direc
 
 export default defineEventHandler(async (event) => {
     const config = useRuntimeConfig();
-    const TOKEN = config.directusServerToken as string;
+    const TOKEN = config.directusSupportUserToken as string;
 
     if (!TOKEN) {
         throw createError({ statusCode: 500, statusMessage: 'DIRECTUS_SERVER_TOKEN is not defined.' });
