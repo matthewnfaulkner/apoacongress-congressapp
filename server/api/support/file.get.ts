@@ -2,7 +2,7 @@ import { createDirectus, rest, withToken, readMe, readItems } from '@directus/sd
 
 export default defineEventHandler(async (event) => {
     const config = useRuntimeConfig();
-    const TOKEN = config.directusServerToken as string;
+    const TOKEN = config.directusSupportUserToken as string;
     const { id: fileId } = getQuery(event) as { id?: string };
 
     if (!fileId) throw createError({ statusCode: 400, statusMessage: 'Missing file ID.' });
@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
         records = await serverDirectus.request(
             withToken(TOKEN, readItems('case_message_files', {
                 filter: { file: { _eq: fileId } },
-                fields: ['id', { message: [{ case: [{ customer: ['id'] }] }] }],
+                fields: ['id', { message: [{ case: ['customer'] }] }],
                 limit: 1,
             }))
         ) as any[];
@@ -45,9 +45,10 @@ export default defineEventHandler(async (event) => {
     }
 
     if (!records.length) throw createError({ statusCode: 404, statusMessage: 'File not found.' });
-
+    
     const customer = records[0]?.message?.case?.customer;
     const customerId = typeof customer === 'object' ? customer?.id : customer;
+
     if (customerId !== currentUserId) throw createError({ statusCode: 403, statusMessage: 'Forbidden.' });
 
     // Proxy the file from Directus using the server token

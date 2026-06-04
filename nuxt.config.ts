@@ -150,6 +150,7 @@ export default defineNuxtConfig({
 			
 		},
 		directusServerToken: process.env.DIRECTUS_SERVER_TOKEN,
+		directusSupportUserToken: process.env.DIRECTUS_SUPPORT_USER_TOKEN,
 		authExchangeSecret: process.env.AUTH_EXCHANGE_SECRET,
 		anthropicApiKey: process.env.ANTHROPIC_API_KEY,
 		voyageApiKey: process.env.VOYAGE_API_KEY,

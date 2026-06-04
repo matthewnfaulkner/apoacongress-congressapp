@@ -28,7 +28,7 @@ const statusLabel: Record<string, string> = {
 
 const { data: ticket, pending } = useAsyncData<SupportCase>(
     'support-ticket-' + ticketId,
-    () => $fetch<SupportCase>('/api/support/get-ticket', { query: { id: ticketId } }),
+    () => $fetch<SupportCase>('/api/support/get-ticket', {headers: useRequestHeaders(['cookie']), query: { id: ticketId } }),
     { server: false }
 );
 

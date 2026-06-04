@@ -2,7 +2,7 @@ import { createDirectus, rest, withToken, readItem, readMe } from '@directus/sdk
 
 export default defineEventHandler(async (event) => {
     const config = useRuntimeConfig();
-    const TOKEN = config.directusServerToken as string;
+    const TOKEN = config.directusSupportUserToken as string;
     const ticketId = getQuery(event).id as string | undefined;
 
     if (!ticketId) {
@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
     }
 
     if (!TOKEN) {
-        throw createError({ statusCode: 500, statusMessage: 'DIRECTUS_SERVER_TOKEN is not defined.' });
+        throw createError({ statusCode: 500, statusMessage: 'DIRECTUS_SUPPORT_USER_TOKEN is not defined.' });
     }
 
     // Verify the requesting user is authenticated
