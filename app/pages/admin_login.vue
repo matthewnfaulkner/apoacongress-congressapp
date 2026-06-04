@@ -139,7 +139,7 @@ async function login(data: any) {
       }
 
       navigateTo('/')
-    } catch (error) {
+    } catch (error: any) {
       if (error.message === 'Invalid user OTP.') {
         otpRequired.value = true
       } else {
@@ -152,8 +152,7 @@ async function login(data: any) {
   } else {
     try {
       showValidationErrors.value = false
-      await $directus.login({ email: emailValue.value, password: data.password, otp: data.otp })
-      console.log(me)
+      await $directus.login({ email: emailValue.value, password: data.password}, {otp : data.otp})
       const me = await $isAuthenticated();
       if (!me) {
         validationError.value = "You don't have permission to access this." 
@@ -164,8 +163,7 @@ async function login(data: any) {
       }
 
       navigateTo('/')
-    } catch (error) {
-      console.log(error)
+    } catch (error: any) {
       if (error.message === 'Invalid user OTP.') {
         validationError.value = 'Incorrect OTP'
         showValidationErrors.value = true
@@ -212,6 +210,7 @@ function goToApoaOnline() {
           <template #providers>
             
             <UButton
+              v-if="step === 'email'"
               label="APOA Online"
               icon="i-apoa-apoalogo"
               color="neutral"

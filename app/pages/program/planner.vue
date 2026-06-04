@@ -6,13 +6,14 @@ import { type scheduleGridItem, GridItemTypes } from '../../types/grid-types';
 import { minutesBetween, toMinutes, removeSeconds } from "@/utils/time-utils";
 import type { CongressDay, CongressSchedule, CongressSessionRoom, VenueRoom } from '#shared/types/schema';
 
-const { $isAuthenticatedWithPolicy } = useNuxtApp();
+
 const route = useRoute();
 const siteDataStore = useSiteDataStore();
 
 const dayIdQuery = route.query.day as string | undefined;
 
-const isAuthenticated = await $isAuthenticatedWithPolicy('Schedule - Editor');
+const authStore = useAuthStore()
+const isAuthenticated = authStore.isAuthenticated;
 const isLoggedIn = computed(() => !!isAuthenticated);
 
 const loading = ref(true);

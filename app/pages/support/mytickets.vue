@@ -105,7 +105,7 @@ const { data: tickets, pending } = useAsyncData<SupportCase[]>(
                     color="accent"
                     variant="solid"
                     class="mt-4"
-                    to="/contact"
+                    to="/contact-us"
                 />
             </div>
             
@@ -115,7 +115,7 @@ const { data: tickets, pending } = useAsyncData<SupportCase[]>(
                     color="accent"
                     variant="solid"
                     class="mt-4"
-                    to="/contact"
+                    to="/contact-us"
                 />
                 <UCard
                     v-for="ticket in tickets"

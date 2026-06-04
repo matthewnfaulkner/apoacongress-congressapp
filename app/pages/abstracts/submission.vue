@@ -5,15 +5,15 @@ import type { FormSubmitEvent } from '@nuxt/ui'
 import { createItem, readItems, deleteItem, updateItem } from '@directus/sdk';
 import type { AbstractSubmission, AbstractSubmissionValue, CongressAbstracts } from '~~/shared/types/schema';
 import type { AccordionItem } from '@nuxt/ui'
-
-
+import { UBadge, UDropdownMenu, UButton } from '#components';
+import type { TableColumn, TableRow } from '@nuxt/ui';
 const config = useRuntimeConfig();
 
 const route = useRoute();
 const pageUrl = useRequestURL();
 const { $directus, $isAuthenticatedWithPolicy } = useNuxtApp();
 
-const { locale, locales, defaultLocale } = useI18n();
+const { locale, defaultLocale } = useI18n();
 const path = withoutTrailingSlash(withLeadingSlash(route.path));
 const permalink = locale.value === defaultLocale ?  path : '/';
 const loading = ref(true)
@@ -53,8 +53,6 @@ if(!data.value) {
 }
 
 data.value = data.value as CongressAbstracts[];
-
-console.log(data.value)
 
 congressAbstract.value = data.value[0] || null;
 const submission_limit = congressAbstract.value?.submission_limit || 100;
@@ -126,9 +124,6 @@ type Submission = {
   authors: string[] | { name: string; title: string; institution: string }[],
 }
 
-
-const hasSubmissions = computed(() => (submissions.value?.length ?? 0) > 0);
-const submissionsCount = computed(() => submissions.value?.length ?? 0);
 const submissionsTable = computed<Submission[]>(() => {
   if (!submissions.value) return [];
   return submissions.value.map(submission => {
@@ -206,7 +201,7 @@ const columns: TableColumn<Submission>[] = [
 
 ]
 
-function getRowItems(row: Row<Submission>) {
+function getRowItems(row: TableRow<Submission>) {
   if (submissionsClosed) return [];
   return [
     {
@@ -386,8 +381,6 @@ const handleDelete = async() => {
 const openSubmissionForm = ref(false)
 const openConfirmation = ref(false);
 const toBeDeleted = ref<Submission>();
-const deletionError = ref();
-
 
 onMounted(async () => {
   // if your store has a fetch method, call it here
@@ -397,7 +390,7 @@ onMounted(async () => {
 
 })
 
-useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robots: 'noindex' });
+useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robots: 'noindex', ogUrl: pageUrl.toString(), });
 </script>
 <template>
     <UError
@@ -482,7 +475,9 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                                 }"
                                 hint="One by one enter the details of each author. Enter the presenter's details as the first entry. Take care when entering the full name as it will be used exactly as provided." 
                                 >
-                                <div v-for="(author, index) in state.authors" :key="index" class="mb-5 lg:flex lg:gap-2 lg:items-center pt-2">
+                                <div v-for="(author, index) in state.authors" :key="index" class="mb-2 lg:flex lg:gap-2 lg:items-center p-2 rounded-lg" :class="index == 0 ? 'bg-accent/40 ring-2 ring-accent mt-5' : ''">
+                                    <p v-if="index === 0 " class="text-accent-600"><small>Presenter / Author 1</small></p>
+                                    <p v-else class=""><small>{{ `Author ${index+1}` }}</small></p>
                                     <div class="flex gap-2 mb-2 lg:mb-0 lg:contents">
                                         <UInput v-model="author.title" placeholder="title" class="w-24" color="secondary" variant="subtle" :ui="{ base: 'peer' }">
                                           <label 
@@ -508,6 +503,7 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                                           </label>
                                         </UInput>
                                         <UButton
+                                            v-if="index > 0"
                                             icon="i-lucide-trash"
                                             variant="outline"
                                             color="secondary"
