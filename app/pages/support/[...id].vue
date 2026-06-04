@@ -97,11 +97,23 @@ const submitReply = async () => {
             body: fd,
         });
 
+        // createItem returns file entries as bare IDs; enrich with local File metadata
+        // so the attachment list renders correctly before a page reload.
+        if ((newMessage as any).files?.length) {
+            (newMessage as any).files = (newMessage as any).files.map((f: any, i: number) => ({
+                ...f,
+                file: {
+                    id: typeof f.file === 'string' ? f.file : f.file?.id,
+                    filename_download: attachments.value[i]?.name ?? '',
+                    filesize: attachments.value[i]?.size ?? 0,
+                },
+            }));
+        }
 
         if (ticket.value) {
             ticket.value = {
                 ...ticket.value,
-                messages: timelineReversed ?  [newMessage, ...(ticket.value.messages as CaseMessage[])] :  [...(ticket.value.messages as CaseMessage[]), newMessage],
+                messages: [...(ticket.value.messages as CaseMessage[]), newMessage],
             };
         }
 
@@ -248,8 +260,8 @@ const submitReply = async () => {
                         <p class="font-medium">Reply</p>
                         <Transition name="hint">
                             <div v-if="showScrollHint" class="flex items-center gap-1 text-xs text-accent font-medium">
-                                <UIcon name="i-lucide-arrow-up" class="animate-bounce" />
-                                New message at top
+                                <UIcon name="i-lucide-arrow-down" class="animate-bounce" />
+                                New message at bottom
                             </div>
                         </Transition>
                     </div>

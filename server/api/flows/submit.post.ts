@@ -79,6 +79,7 @@ export default defineEventHandler(async (event) => {
 		}
 
 		const payload = {
+			site: config.public.siteId,
 			flow: flowId,
 			values,
 		}

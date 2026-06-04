@@ -1302,7 +1302,7 @@ export interface PageBlock {
 	/** @description The id of the page that this block belongs to. */
 	page?: Page | string | null;
 	/** @description The data for the block. */
-	item?: BlockAccordion | BlockHero | BlockMainHero | BlockRichtext | BlockForm | BlockPost | BlockGallery | BlockPricing | BlockPeople | BlockMessages | BlockChargeTable | string | null;
+	item?: BlockAccordion | BlockHero | BlockMainHero | BlockRichtext | BlockForm | BlockFormFlow | BlockPost | BlockGallery | BlockPricing | BlockPeople | BlockMessages | BlockChargeTable | string | null;
 	/** @description The collection (type of block). */
 	collection?: string | null;
 	/** @description Temporarily hide this block on the website without having to remove it from your page. */
