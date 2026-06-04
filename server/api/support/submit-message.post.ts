@@ -48,7 +48,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const payload: Record<string, unknown> = {
-        case: { id: ticketId, customer: userId },
+        case: ticketId,
         sender: userId,
         sender_role: 'customer',
         sender_email: userEmail,
