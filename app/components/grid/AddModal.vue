@@ -397,6 +397,7 @@ function getRowItems(row: Row<EventEntry>) {
             :get-sub-rows="(row) => row.children"
             class="flex-1"
             :meta="meta"
+            empty="Coming Soon"
             :ui="{
               base: 'border-separate border-spacing-0',
               tbody: '[&>tr:last-child>td]:border-b-0',

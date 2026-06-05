@@ -32,6 +32,9 @@ export default defineNuxtConfig({
 		'/admin_login': { isr: false },
 		'/host/travel': { isr: false },
 
+		// User-specific pages — nothing to gain from caching
+		'/support/**': { isr: false },
+
 		// Cache all page routes
 		'/**': { isr: 60 },
 	},
