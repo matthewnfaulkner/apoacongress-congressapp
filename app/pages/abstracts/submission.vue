@@ -281,7 +281,7 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
 		return;
 	}
 
-  if((submissions?.value?.length || 0) >= submission_limit) {
+  if(!state.id && (submissions?.value?.length || 0) >= submission_limit) {
     error.value = 'You have reached your submission limit.';
 		return;
   }
@@ -295,29 +295,33 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
         if(congressAbstract.value == null || congressAbstract.value == undefined) {
             throw new Error('Congress Abstracts Missing');
         }
+        // When editing, look up existing submission_values IDs so Directus updates
+        // the existing records rather than trying to create new ones.
+        const existingSvIds: Record<string, string> = {};
+        if (state.id) {
+            const existingSub = submissions.value?.find(s => s.id === state.id);
+            for (const sv of (existingSub?.submission_values as AbstractSubmissionValue[]) ?? []) {
+                if (sv.field && sv.id) existingSvIds[sv.field] = sv.id;
+            }
+        }
+
+        const sv = (field: string, value: string) => ({
+            ...(existingSvIds[field] ? { id: existingSvIds[field] } : {}),
+            field,
+            value,
+        });
+
         const payload = {
             congress_abstract: congressAbstract.value?.id || null,
             submitter: isAuthenticated.id,
             submission_values: [
-                {
-                    value: formData.category,
-                    field: 'category'
-                },
-                {
-                    value: formData.title,
-                    field: 'title'
-                },
-                {
-                    value: formData.abstract,
-                    field: 'abstract'
-                },
-                {
-                    value: JSON.stringify(formData.authors),
-                    field: 'authors'
-                }
+                sv('category', formData.category),
+                sv('title', formData.title),
+                sv('abstract', formData.abstract),
+                sv('authors', JSON.stringify(formData.authors)),
             ]
         }
-        console.log(payload);
+
         if(!state.id) {
             const response = await $directus.request<AbstractSubmission>(createItem(
                 'abstract_submissions', payload
