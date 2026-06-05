@@ -26,9 +26,18 @@ const statusLabel: Record<string, string> = {
     closed:      'Closed',
 };
 
+const config = useRuntimeConfig();
+const { $directusTokenStorage } = useNuxtApp();
+
 const { data: ticket, pending } = useAsyncData<SupportCase>(
     'support-ticket-' + ticketId,
-    () => $fetch<SupportCase>('/api/support/get-ticket', {headers: useRequestHeaders(['cookie']), query: { id: ticketId } }),
+    () => {
+        const accessToken = config.public.isSandbox ? null : ($directusTokenStorage as any).get()?.access_token;
+        return $fetch<SupportCase>('/api/support/get-ticket', {
+            headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+            query: { id: ticketId },
+        });
+    },
     { server: false }
 );
 
@@ -129,6 +138,15 @@ const submitReply = async () => {
     }
 };
 
+const openFile = async (fileId: string) => {
+    const accessToken = config.public.isSandbox ? null : ($directusTokenStorage as any).get()?.access_token;
+    const response = await fetch(`/api/support/file?id=${fileId}`, {
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+    });
+    if (!response.ok) { (toast.add as any)({ title: 'Could not open file', color: 'error' }); return; }
+    const blob = await response.blob();
+    window.open(URL.createObjectURL(blob), '_blank');
+};
 
 </script>
 
@@ -235,17 +253,17 @@ const submitReply = async () => {
                         <template #description="{ item }">
                             <p class="whitespace-pre-wrap text-sm">{{ item.message }}</p>
                             <div v-if="(item.files as any[])?.length" class="mt-2 space-y-1 border-t border-default pt-2">
-                                <a
+                                <button
                                     v-for="f in (item.files as any[])"
                                     :key="f.id"
-                                    :href="`/api/support/file?id=${f.file?.id}`"
-                                    target="_blank"
-                                    class="flex items-center gap-2 text-xs rounded px-2 py-1 bg-muted hover:bg-elevated transition-colors"
+                                    type="button"
+                                    class="flex items-center gap-2 text-xs rounded px-2 py-1 bg-muted hover:bg-elevated transition-colors w-full text-left"
+                                    @click="openFile(f.file?.id)"
                                 >
                                     <UIcon name="i-lucide-paperclip" class="shrink-0" />
                                     <span class="truncate">{{ f.file?.filename_download }}</span>
                                     <span class="text-muted shrink-0">{{ formatFileSize(f.file?.filesize) }}</span>
-                                </a>
+                                </button>
                             </div>
                         </template>
                     </UTimeline>
