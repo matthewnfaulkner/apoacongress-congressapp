@@ -1,5 +1,3 @@
-import { createDirectus, createItem, rest, uploadFiles, withToken } from '@directus/sdk'
-
 interface FieldMeta {
 	id: string
 	name: string
@@ -15,8 +13,10 @@ interface SubmissionValue {
 export default defineEventHandler(async (event) => {
 	const config = useRuntimeConfig()
 	const formData = await readMultipartFormData(event)
-	const cookie = getHeader(event, 'cookie') ?? ''
 	const cookies = parseCookies(event)
+	const bearerToken = getHeader(event, 'authorization')?.replace(/^Bearer\s+/, '') || null
+	const sessionToken = cookies[config.sessionTokenName as string] || null
+	const userToken = bearerToken ?? sessionToken
 	const TOKEN = config.directusServerToken as string
 
 	if (!formData) {
@@ -29,15 +29,6 @@ export default defineEventHandler(async (event) => {
 			statusMessage: 'DIRECTUS_SERVER_TOKEN is not defined. Check your .env file.',
 		})
 	}
-
-	const userDirectus = createDirectus(config.public.directusUrl as string).with(
-		rest({
-			onRequest: (options) => ({
-				...options,
-				headers: { ...options.headers, cookie },
-			}),
-		})
-	)
 
 	try {
 		let flowId = ''
@@ -62,7 +53,7 @@ export default defineEventHandler(async (event) => {
 			if (!matched) continue
 
 			if (part.filename) {
-				const blob = new Blob([part.data], { type: part.type })
+				const blob = new Blob([new Uint8Array(part.data)], { type: part.type })
 				const uploadFormData = new FormData()
 				uploadFormData.append('file', blob, part.filename)
 
@@ -84,13 +75,9 @@ export default defineEventHandler(async (event) => {
 			values,
 		}
 
-		const isAuthenticated = !!cookies[config.sessionTokenName as string]
+		const token = userToken ?? TOKEN
 
-		if (isAuthenticated) {
-			await userDirectus.request(createItem('form_flow_submissions', payload))
-		} else {
-			await userDirectus.request(withToken(TOKEN, createItem('form_flow_submissions', payload)))
-		}
+		await directusServer.request(withToken(token, createItem('form_flow_submissions' as any, payload)))
 
 		return { success: true }
 	} catch (err: any) {

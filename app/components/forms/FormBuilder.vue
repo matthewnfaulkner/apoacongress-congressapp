@@ -44,10 +44,14 @@ const handleSubmit = async (data: Record<string, any>) => {
 			}
 		}
 
+		const config = useRuntimeConfig();
+		const { $directusTokenStorage } = useNuxtApp();
+		const accessToken = config.public.isSandbox ? null : ($directusTokenStorage as any).get()?.access_token;
+
 		await $fetch('/api/forms/submit', {
 			method: 'POST',
 			body: formData,
-			headers: useRequestHeaders(['cookie']),
+			headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
 		});
 
 		if (props.form.on_success === 'redirect' && props.form.success_redirect_url) {

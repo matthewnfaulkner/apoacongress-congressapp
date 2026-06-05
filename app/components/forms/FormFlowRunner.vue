@@ -151,7 +151,15 @@ async function submit() {
       body.append(key, val instanceof File ? val : String(val ?? ''))
     }
 
-    await $fetch('/api/flows/submit', { method: 'POST', body, headers: useRequestHeaders(['cookie']), })
+    const config = useRuntimeConfig();
+    const { $directusTokenStorage } = useNuxtApp();
+    const accessToken = config.public.isSandbox ? null : ($directusTokenStorage as any).get()?.access_token;
+
+    await $fetch('/api/flows/submit', {
+      method: 'POST',
+      body,
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+    })
     if (props.flow.success_redirect_url) {
       navigateTo(props.flow.success_redirect_url)
     } else {
