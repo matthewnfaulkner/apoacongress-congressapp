@@ -47,6 +47,7 @@ const handleSubmit = async (data: Record<string, any>) => {
 		await $fetch('/api/forms/submit', {
 			method: 'POST',
 			body: formData,
+			headers: useRequestHeaders(['cookie']),
 		});
 
 		if (props.form.on_success === 'redirect' && props.form.success_redirect_url) {

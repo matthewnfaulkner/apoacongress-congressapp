@@ -151,7 +151,7 @@ async function submit() {
       body.append(key, val instanceof File ? val : String(val ?? ''))
     }
 
-    await $fetch('/api/flows/submit', { method: 'POST', body })
+    await $fetch('/api/flows/submit', { method: 'POST', body, headers: useRequestHeaders(['cookie']), })
     if (props.flow.success_redirect_url) {
       navigateTo(props.flow.success_redirect_url)
     } else {
