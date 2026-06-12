@@ -124,18 +124,32 @@ const tabs = reactive(
           ) || [],
           sessions: reactive(buildSessionGridItems(firstSchedule, day as CongressDay, dayRooms)) as scheduleGridItem[],
           breaks: reactive(buildBreakGridItems(firstSchedule, day as CongressDay, dayRooms)) as scheduleGridItem[],
-          colHeaders: day?.timeslots?.map((slot, index) => ({
-            y: index + 1,
-            x: 0, w: 1, h: 1,
-            i: 'grid-' + slot.id,
-            label: index % dayTimeScale === 0 ? (slot.starttime as string)?.slice(0, 5) || '' : '',
-            static: true,
-            isResizable: false,
-            isDraggable: false,
-            type: GridItemTypes.Header,
-            color: '',
-            maxW: 1,
-          })) || [],
+          timeHeaders: [
+            ...(day?.timeslots?.map((slot, index) => ({
+              y: index + 1,
+              x: 0, w: 1, h: 1,
+              i: 'grid-' + slot.id,
+              label: index % dayTimeScale === 0 ? (slot.starttime as string)?.slice(0, 5) || '' : '',
+              static: true,
+              isResizable: false,
+              isDraggable: false,
+              type: GridItemTypes.Header,
+              color: '',
+              maxW: 1,
+            })) || []),
+            ...(day.timeslots?.length ? [{
+              y: day.timeslots.length + 1,
+              x: 0, w: 1, h: 1,
+              i: 'grid-end',
+              label: (day.timeslots[day.timeslots.length - 1].endtime as string)?.slice(0, 5) || '',
+              static: true,
+              isResizable: false,
+              isDraggable: false,
+              type: GridItemTypes.Header,
+              color: '',
+              maxW: 1,
+            }] : []),
+          ],
           startTime: day.starttime,
           endTime: day.endtime,
           numCols: Math.ceil(minutesBetween(day.starttime, day.endtime) / (day?.time_subdivision as number)) || 0,
@@ -217,7 +231,7 @@ onMounted(async () => {
   await nextTick()
   const gridEl = document.querySelector<HTMLElement>('.grid')
   if (gridEl) {
-    gridEl.style.setProperty('--rows', '56')
+    gridEl.style.setProperty('--rows', String(currentTab.value?.timeHeaders?.length || 0))
     gridEl.style.setProperty('--columns', (rooms.value.length + 1).toString())
     gridEl.style.setProperty('--row-height', '20px')
   }
@@ -244,7 +258,7 @@ watch(activeTab, (newTab) => {
   if (!tab) return
   gridEl.style.setProperty('--columns', String((rooms.value.length || 0) + 1))
   gridEl.style.setProperty('--grid-scale', String(tab?.timeScale))
-  gridEl.style.setProperty('--rows', String((tab?.colHeaders?.length || 0) + 1))
+  gridEl.style.setProperty('--rows', String((tab?.timeHeaders?.length || 0)))
 })
 
 const overlay = useOverlay()
@@ -318,7 +332,7 @@ function initialView() {
                 v-if="item.published"
                 class="w-200 grid"
                 :id="`grid-${index}`"
-                :layout.sync="[...gridItemRooms, ...item.colHeaders, ...item.sessions, ...item.breaks]"
+                :layout.sync="[...gridItemRooms, ...item.timeHeaders, ...item.sessions, ...item.breaks]"
                 :col-num="rooms.length + 1"
                 :maxRows="item.numCols + 1"
                 :row-height="20"
@@ -334,7 +348,7 @@ function initialView() {
                 :prevent-collision="true"
               >
                 <grid-item
-                  v-for="griditem in [...gridItemRooms, ...item.colHeaders, ...item.sessions, ...item.breaks]"
+                  v-for="griditem in [...gridItemRooms, ...item.timeHeaders, ...item.sessions, ...item.breaks]"
                   :x="griditem.x"
                   :y="griditem.y"
                   :w="griditem.w"
@@ -397,7 +411,7 @@ function initialView() {
   content: '';
   position: absolute;
   width: calc(100% - var(--margin));
-  height: calc(var(--rows) * var(--row-height));
+  height: calc((var(--rows) + .1) * var(--row-height));
   background-size: calc((100% - var(--margin)) / var(--columns)) var(--row-height);
   background-image:
     linear-gradient(to right, rgb(233, 230, 230) 1px, transparent 1px),
