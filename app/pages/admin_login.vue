@@ -16,9 +16,9 @@ const siteData = siteDataStore.siteData;
 
 const { $directus, $isAuthenticatedWithPolicy, $isAuthenticated } = useNuxtApp();
 
-type LoginStep = 'email' | 'password'
+type LoginStep = 'providers' | 'email' | 'password'
 
-const step = ref<LoginStep>('email')
+const step = ref<LoginStep>('providers')
 const emailValue = ref('')
 const otpRequired = ref(false)
 const loading = ref(false)
@@ -29,6 +29,9 @@ const qrCodeSecret = ref('');
 const enforceTfa = ref(false);
 
 const fields = computed((): AuthFormField[] => {
+  if (step.value === 'providers') {
+    return []
+  }
   if (step.value === 'email') {
     return [{ name: 'email', type: 'email', label: t('Email') }]
   }
@@ -45,6 +48,9 @@ const fields = computed((): AuthFormField[] => {
 })
 
 const schema = computed(() => {
+  if (step.value === 'providers') {
+    return z.object({ email: z.string().email('Invalid email') })
+  }
   if (step.value === 'email') {
     return z.object({ email: z.string().email('Invalid email') })
   }
@@ -180,13 +186,12 @@ function goToApoaOnline() {
 
 </script>
   <template>
-
     <div class="flex flex-col items-center justify-center gap-4 p-4 h-lvh">
       <UPageCard class="w-full max-w-md ">
         <UButton 
-            v-if="step === 'password'" 
+            v-if="step !== 'providers'" 
             icon="i-lucide-arrow-left" 
-            @click="step = 'email'" 
+            @click="step = step === 'email' ? 'providers' : 'email'" 
             variant="ghost" 
             color="secondary"
             class="w-fit">
@@ -207,10 +212,10 @@ function goToApoaOnline() {
               }"
 
         >
-          <template #providers>
-            
+          <template #providers v-if="step === 'providers'" class="text-center">
+            <div class="text-center gap-2 flex flex-col">
+            <p class="">Choose Sign-In Method</p>
             <UButton
-              v-if="step === 'email'"
               label="APOA Online"
               icon="i-apoa-apoalogo"
               color="neutral"
@@ -218,6 +223,16 @@ function goToApoaOnline() {
               class="w-full justify-center"
               @click="goToApoaOnline"
             />
+            Or
+            <UButton
+              label="Email"
+              icon="i-lucide-mail"
+              color="neutral"
+              variant="subtle"
+              class="w-full justify-center"
+              @click="step = 'email'"
+            />
+          </div>    
           </template>
           <template #header>
             <UUser

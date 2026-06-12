@@ -480,7 +480,7 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                                 hint="One by one enter the details of each author. Enter the presenter's details as the first entry. Take care when entering the full name as it will be used exactly as provided." 
                                 >
                                 <div v-for="(author, index) in state.authors" :key="index" class="mb-2 lg:flex lg:gap-2 lg:items-center p-2 rounded-lg" :class="index == 0 ? 'bg-accent/40 ring-2 ring-accent mt-5' : ''">
-                                    <p v-if="index === 0 " class="text-accent-600"><small>Presenter / Author 1</small></p>
+                                    <p v-if="index === 0 " class="text-accent-600 mb-3"><small>Presenter / Author 1</small></p>
                                     <p v-else class=""><small>{{ `Author ${index+1}` }}</small></p>
                                     <div class="flex gap-2 mb-2 lg:mb-0 lg:contents">
                                         <UInput v-model="author.title" placeholder="title" class="w-24" color="secondary" variant="subtle" :ui="{ base: 'peer' }">
