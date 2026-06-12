@@ -32,7 +32,7 @@ async function handler(event: H3Event) {
 				sessionToken
 					? withToken(sessionToken, readItem('sites', config.public.siteId, {
 						fields: [
-							'title', 'description', 'logo', 'logo_dark_mode', 'social_links', 'preview',
+							'title', 'description', 'logo', 'logo_dark_mode', 'social_links', 'preview', 'favicon',
 							{
 								'congress': [
 									'*',
@@ -46,7 +46,7 @@ async function handler(event: H3Event) {
 					}))
 					: readItem('sites', config.public.siteId, {
 						fields: [
-							'title', 'description', 'logo', 'logo_dark_mode', 'social_links', 'preview',
+							'title', 'description', 'logo', 'logo_dark_mode', 'social_links', 'preview', 'favicon',
 							{
 								'congress': [
 									'*',

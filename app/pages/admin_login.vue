@@ -84,7 +84,7 @@ async function checkProvider(email: string) {
     const result = await $fetch<{ provider: string }>('/api/auth/provider', {
       query: { email }
     })
-    if (result.provider === 'moodle') {
+    if (result.provider === config.public.samlProviderName) { 
       window.location.href = config.public.loginUrl
       return
     }
@@ -228,7 +228,7 @@ function goToApoaOnline() {
               orientation="vertical"
             >
               <template #avatar>
-                <DirectusImage :uuid="(siteData as any)?.logo" class="h-25 w-25"/>
+                <DirectusImage :uuid="(siteData as any)?.logo" class="h-40 w-auto"/>
               </template>
             </UUser>
           </template>

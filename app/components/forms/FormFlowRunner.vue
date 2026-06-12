@@ -96,6 +96,7 @@ function resolveNextStep(stepIndex: number, values: Record<string, any>): number
 }
 
 async function onNext(values: Record<string, any>) {
+  console.log(values);
   stepValues[currentStepIndex.value] = values
   direction.value = 'forward'
   if (returnToSummary.value) {
@@ -151,10 +152,10 @@ async function submit() {
       body.append(key, val instanceof File ? val : String(val ?? ''))
     }
 
-    const config = useRuntimeConfig();
-    const { $directusTokenStorage } = useNuxtApp();
-    const accessToken = config.public.isSandbox ? null : ($directusTokenStorage as any).get()?.access_token;
-
+ const config = useRuntimeConfig();
+		const { $directusTokenStorage } = useNuxtApp();
+		const accessToken = config.public.isSandbox ? null : ($directusTokenStorage as any).get()?.access_token;
+    
     await $fetch('/api/flows/submit', {
       method: 'POST',
       body,
@@ -175,6 +176,7 @@ async function submit() {
 </script>
 
 <template>
+
   <div v-if="success" class="flex flex-col items-center gap-6 py-16 text-center">
     <UIcon name="i-lucide-circle-check-big" class="text-8xl text-success" />
     <Headline headline="Submitted!" />

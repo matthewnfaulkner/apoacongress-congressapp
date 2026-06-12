@@ -22,9 +22,9 @@ const { data: rawFlows } = await useAsyncData<FormFlow[]>('registration_flow', (
           'id', 'title', 'description', 'sort',
           {
             fields: [
-              'id', 'name', 'type', 'label', 'placeholder',
+              'id', 'name', 'type', 'copy', 'label', 'placeholder',
               'help', 'validation', 'width', 'choices',
-              'required', 'sort', 'use_user_data',
+              'required', 'sort', 'use_user_data', 'readonly'
             ],
           },
           {

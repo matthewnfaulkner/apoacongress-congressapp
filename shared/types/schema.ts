@@ -1062,6 +1062,8 @@ export interface FormFlowField {
 	name?: string | null;
 	/** @description Input type for the field */
 	type?: 'text' | 'textarea' | 'checkbox' | 'checkbox_group' | 'radio' | 'file' | 'select' | 'hidden' | null;
+	copy?: boolean | null;
+	readonly?: boolean | null;
 	/** @description Text label shown to form users. */
 	label?: string | null;
 	/** @description Default text shown in empty input. */
@@ -1095,6 +1097,7 @@ export interface FormFlowSubmission {
 	form?: Form | string | null;
 	/** @description Submitted field responses */
 	values?: FormSubmissionValue[] | string[];
+	user_created?: DirectusUser | string | null;
 }
 
 export interface FormFlowSubmissionValue {

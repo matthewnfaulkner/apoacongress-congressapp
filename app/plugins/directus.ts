@@ -52,7 +52,7 @@ export default defineNuxtPlugin(() => {
     const isAuthenticated = async () => {
         try {
             const me = await directus.request(readMe({
-                fields: ['id', 'email', 'first_name', 'last_name', 'user_policy_agreements']
+                fields: ['id', 'email', 'first_name', 'last_name', 'has_subscription', 'user_policy_agreements', 'membership_number']
             }));
             return me;
         } catch (error) {
@@ -69,6 +69,7 @@ export default defineNuxtPlugin(() => {
                     'email',
                     'first_name',
                     'last_name',
+                    'has_subscription',
                     {
                         policies: [{
                             policy: ['name']

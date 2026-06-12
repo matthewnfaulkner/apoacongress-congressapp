@@ -27,7 +27,7 @@ const sortedFields = computed(() =>
 )
 
 const visibleFields = computed(() =>
-  sortedFields.value
+  sortedFields.value.filter(f => f.type !== 'hidden')
 )
 
 const hiddenFields = computed(() =>
@@ -73,6 +73,7 @@ function widthClass(width: FormFlowField['width']): string {
 </script>
 
 <template>
+
   <form @submit.prevent="onSubmit">
     <input
       v-for="field in hiddenFields"
@@ -82,7 +83,7 @@ function widthClass(width: FormFlowField['width']): string {
       :value="initialValues[field.name] || values[field.name]"
     />
 
-    <div v-if="description" v-html="description" class="prose dark:prose-invert max-w-none mb-4 text-sm text-muted" />
+    <div v-if="description" v-html="description" class="prose dark:prose-invert max-w-none mb-4 text-lg text-muted" />
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
       <BaseFormField

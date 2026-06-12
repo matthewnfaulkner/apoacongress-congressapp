@@ -283,7 +283,7 @@ onMounted(() => {
 								:class="textVisible ? 'opacity-100' : 'opacity-0'">
 								<DirectusImage
 									v-if="data.logo"
-									class="block w-auto h-40 sm:h-50 xl:h-65"
+									class="block w-auto h-40 sm:h-50 xl:h-55 2xl:h-90"
 									:class="textVisible ? 'opacity-100' : 'opacity-0'"
 									:uuid="props.data.logo"
 									:data-directus="

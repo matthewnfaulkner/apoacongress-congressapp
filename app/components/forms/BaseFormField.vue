@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { FormField } from '#shared/types/schema';
 import { useField } from 'vee-validate';
-import { Info } from 'lucide-vue-next';
 
 import Input from '~/components/ui/input/Input.vue';
 import { Textarea } from '~/components/ui/textarea';
@@ -42,31 +41,25 @@ const getComponentProps = (field: FormField) => {
 		return { ...baseProps, label: field.label ?? '' };
 	}
 
+	if (field.type === 'text') {
+		return { ...baseProps, enableCopy: field.copy ?? false, readonly: field.readonly ?? false };
+	}
+
 	return baseProps;
 };
 </script>
 
 <template>
-
 	<div v-if="props.field.type !== 'hidden'" :class="`field-width-${field.width ?? '100'}`">
 		<FormItem class="pt-2">
 			<FormLabel :for="field.name ?? ''" class="flex items-center justify-between text-base">
-				<div class="flex items-center space-x-1 h-[20px]">
-					<span v-if="field.type !== 'checkbox'">{{ field.label ?? '' }}</span>
-					<TooltipProvider v-if="field.help">
-						<Tooltip>
-							<TooltipTrigger>
-								<Info class="w-4 h-4 text-gray-500 cursor-pointer" />
-							</TooltipTrigger>
-							<TooltipContent>{{ field.help }}</TooltipContent>
-						</Tooltip>
-					</TooltipProvider>
-				</div>
+				<span v-if="field.type !== 'checkbox'">{{ field.label ?? '' }}</span>
 				<span v-if="field.required" class="text-sm text-gray-400">*Required</span>
 			</FormLabel>
 			<FormControl class="h-10">
 				<component :is="getFieldComponent()" v-bind="getComponentProps(field)" />
 			</FormControl>
+			<p v-if="field.help" class="text-sm text-muted-foreground mt-1">{{ field.help }}</p>
 			<FormMessage v-if="errorMessage" class="text-red-500 italic text-sm">{{ errorMessage }}</FormMessage>
 		</FormItem>
 	</div>

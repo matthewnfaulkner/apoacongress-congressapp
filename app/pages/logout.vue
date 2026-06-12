@@ -4,9 +4,9 @@ definePageMeta({
   layout: 'login',
 })
 
-const { $directus } = useNuxtApp();
+const { $logout } = useNuxtApp();
 
-$directus.logout();
+$logout();
 
 </script>
   <template>
