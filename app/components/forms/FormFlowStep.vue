@@ -12,6 +12,9 @@ const props = defineProps<{
   description?:  string | null
   storedValues?: Record<string, any>
   backLabel?:    string
+  submitLabel?:  string
+  isFinalSubmit?: boolean
+  loading?:      boolean
 }>()
 
 const emit = defineEmits<{
@@ -46,10 +49,11 @@ const initialValues = computed(() => {
   return sortedFields.value.reduce((acc, field) => {
     if (!field.name) return acc
     const key = field.name.replace(/-/g, '_') as keyof typeof auth
+    console.log(auth[key])
     switch (field.type) {
       case 'checkbox':       acc[field.name] = false; break
       case 'checkbox_group': acc[field.name] = [];    break
-      default:               acc[field.name] = key in auth ? (auth[key] ?? '') : ''
+      default: { const v = key in auth ? (auth[key] ?? '') : ''; acc[field.name] = Array.isArray(v) ? (v[0] ?? '') : v; break }
     }
     return acc
   }, {} as Record<string, any>)
@@ -73,7 +77,6 @@ function widthClass(width: FormFlowField['width']): string {
 </script>
 
 <template>
-
   <form @submit.prevent="onSubmit">
     <input
       v-for="field in hiddenFields"
@@ -109,11 +112,12 @@ function widthClass(width: FormFlowField['width']): string {
 
       <UButton
         type="submit"
-        :label="isLast ? 'Review' : 'Next'"
+        :label="isLast ? (submitLabel ?? (isFinalSubmit ? 'Submit' : 'Review')) : 'Next'"
         color="accent"
         variant="solid"
         size="xl"
-        trailing-icon="i-lucide-arrow-right"
+        :trailing-icon="isLast && isFinalSubmit ? 'i-lucide-send' : 'i-lucide-arrow-right'"
+        :loading="isLast && isFinalSubmit && loading"
       />
     </div>
   </form>

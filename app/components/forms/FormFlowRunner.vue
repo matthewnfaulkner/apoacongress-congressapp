@@ -31,6 +31,7 @@ const returnToSummary = ref(false)
 
 const currentStep = computed(() => steps.value[currentStepIndex.value])
 const isLastStep = computed(() => currentStepIndex.value >= steps.value.length - 1)
+const summaryEnabled = computed(() => props.flow.show_summary !== false)
 
 function formatSummaryValue(val: any, type?: string | null): string {
   if (val === undefined || val === null || val === '') return '—'
@@ -108,8 +109,10 @@ async function onNext(values: Record<string, any>) {
   if (next < steps.value.length) {
     stepHistory.value.push(currentStepIndex.value)
     currentStepIndex.value = next
-  } else {
+  } else if (summaryEnabled.value) {
     showSummary.value = true
+  } else {
+    await submit()
   }
 }
 
@@ -161,8 +164,8 @@ async function submit() {
       body,
       headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
     })
-    if (props.flow.success_redirect_url) {
-      navigateTo(props.flow.success_redirect_url)
+    if (props.flow.on_success === 'redirect' && props.flow.success_redirect) {
+      window.location.href = props.flow.success_redirect
     } else {
       success.value = true
     }
@@ -176,7 +179,6 @@ async function submit() {
 </script>
 
 <template>
-
   <div v-if="success" class="flex flex-col items-center gap-6 py-16 text-center">
     <UIcon name="i-lucide-circle-check-big" class="text-8xl text-success" />
     <Headline headline="Submitted!" />
@@ -192,6 +194,8 @@ async function submit() {
       <span class="text-sm font-medium">{{ showSummary ? 'Review' : (currentStep?.title ?? `Step ${currentStepIndex + 1}`) }}</span>
       <span class="text-xs text-muted">{{ showSummary ? steps.length + 1 : currentStepIndex + 1 }} / {{ steps.length + 1 }}</span>
     </div>
+
+    <UAlert v-if="submitError" color="error" variant="subtle" :description="submitError" class="mb-4" />
 
     <Transition :name="transitionName" mode="out-in" appear>
       <div v-if="showSummary" key="summary">
@@ -217,8 +221,6 @@ async function submit() {
           </div>
         </div>
 
-        <UAlert v-if="submitError" color="error" variant="subtle" :description="submitError" class="mb-4" />
-
         <div class="flex justify-between items-center pt-2">
           <UButton type="button" label="Back" color="neutral" variant="outline" size="xl" leading-icon="i-lucide-arrow-left" @click="onPrev" />
           <UButton :label="flow.submit_label ?? 'Submit'" color="accent" variant="solid" size="xl" trailing-icon="i-lucide-send" :loading="isSubmitting" @click="submit" />
@@ -233,6 +235,9 @@ async function submit() {
         :is-first="currentStepIndex === 0 && !returnToSummary"
         :is-last="isLastStep"
         :back-label="returnToSummary ? 'Back to Summary' : 'Back'"
+        :submit-label="isLastStep && !summaryEnabled ? (flow.submit_label ?? 'Submit') : undefined"
+        :is-final-submit="isLastStep && !summaryEnabled"
+        :loading="isSubmitting"
         :stored-values="stepValues[currentStepIndex]"
         @next="onNext"
         @prev="onPrev"

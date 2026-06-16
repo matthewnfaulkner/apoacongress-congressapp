@@ -626,6 +626,7 @@ export interface Congress {
 	societies?: CongressSociety[] | string[] | null;
 	hotels?: CongressHotel[] | string[] | null;
 	organisations?: CongressOrganisation[] | string[] | null;
+	vouchers?: CongressVoucher[] | string[] | null;
 }
 
 export interface RegistrationCharge {
@@ -760,6 +761,43 @@ export interface CongressSessionRoom {
 	id: number;
 	session: CongressSession | string | null;
 	room: VenueRoom | string | null;
+}
+
+
+export interface CongressVoucher {
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	congress?: Congress | string | null;
+	voucher_codes?: CongressVoucherCode[] | string [] | null,
+	name?: string | null,
+	description? : string | null
+}
+
+export interface CongressVoucherCode {
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	voucher?: CongressVoucher | string | null;
+	status?: 'redeemed' | 'expired' | 'active';
+	user?: DirectusUser | string | null,
+	code?: string | null,
+	expires? : string | null
+	redemptions?: CongressVoucherCode[] | string[] | null;
+	type?: 'general' | 'personal';
+	redemption_limit?: number | null;
+}
+
+
+export interface CongressVoucherCodeRedemption {
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	voucher_code?: CongressVoucherCode | string | null;
 }
 
 export interface ApoaSection {
@@ -908,7 +946,7 @@ export interface FormField {
 	/** @description Unique field identifier, not shown to users (lowercase, hyphenated) */
 	name?: string | null;
 	/** @description Input type for the field */
-	type?: 'text' | 'textarea' | 'checkbox' | 'checkbox_group' | 'radio' | 'file' | 'select' | 'hidden' | null;
+	type?: 'text' | 'textarea' | 'checkbox' | 'checkbox_group' | 'radio' | 'file' | 'select' | 'hidden' | 'voucher' | null;
 	/** @description Text label shown to form users. */
 	label?: string | null;
 	/** @description Default text shown in empty input. */
@@ -1000,10 +1038,11 @@ export interface FormFlow {
 	date_updated?: string | null;
 	user_updated?: DirectusUser | string | null;
 	submit_label?: string | null;
+	on_success?: 'redirect' | 'message' | null;
 	/** @description Message shown after successful submission. */
 	success_message?: string | null;
 	/** @description Destination URL after successful submission. */
-	success_redirect_url?: string | null;
+	success_redirect?: string | null;
 	/** @description Show or hide this form from the site. */
 	is_active?: boolean | null;
 	show_summary?: boolean | null;
@@ -1061,7 +1100,9 @@ export interface FormFlowField {
 	/** @description Unique field identifier, not shown to users (lowercase, hyphenated) */
 	name?: string | null;
 	/** @description Input type for the field */
-	type?: 'text' | 'textarea' | 'checkbox' | 'checkbox_group' | 'radio' | 'file' | 'select' | 'hidden' | null;
+	type?: 'text' | 'textarea' | 'checkbox' | 'checkbox_group' | 'radio' | 'file' | 'select' | 'hidden' | 'relation' | null;
+	/** @description Repeater config for relation fields — each entry maps a user field to a display input */
+	relation_repeater?: Array<{ field_name: string; value_index?: number | null; label?: string | null }> | null;
 	copy?: boolean | null;
 	readonly?: boolean | null;
 	/** @description Text label shown to form users. */
@@ -1942,6 +1983,7 @@ export interface DirectusUser {
 	membership_number?: string | null;
 	user_policy_agreements?: UserPolicyAgreement[] | string[] | null;
 	organisations: OrganisationUser[] | string[] | null;
+	voucher_codes: CongressVoucherCode[] | string[] | null;
 }
 
 export interface DirectusWebhook {

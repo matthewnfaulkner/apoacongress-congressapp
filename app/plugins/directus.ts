@@ -61,6 +61,41 @@ export default defineNuxtPlugin(() => {
         }
     };
 
+    //get extra user fields for registration
+    const isAuthenticatedRegistration = async () => {
+        try {
+            const me = await directus.request(readMe({
+                fields: [
+                    'id', 
+                    'email', 
+                    'first_name', 
+                    'last_name', 
+                    'has_subscription', 
+                    'user_policy_agreements', 
+                    'membership_number', 
+                    'voucher_codes.code'
+                ],
+                deep: {
+                    'voucher_codes' : {
+                        '_filter': {
+                            'voucher' : {
+                                'congress' : {
+                                    'site' : {
+                                        '_eq' : config.public.siteId
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }));
+            return me;
+        } catch (error) {
+            console.error(error);
+            return false;
+        }
+    };
+
     const isAuthenticatedWithPolicy = async (policy: string) => {
         try {
             const me = await directus.request(readMe({
@@ -140,6 +175,7 @@ export default defineNuxtPlugin(() => {
             readMe,
             isAuthenticated,
             isAuthenticatedWithPolicy,
+            isAuthenticatedRegistration,
             login,
             logout,
             generateTwoFactorSecret,

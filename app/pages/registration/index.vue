@@ -16,7 +16,7 @@ const { data: rawFlows } = await useAsyncData<FormFlow[]>('registration_flow', (
     },
     fields: [
       'id', 'key', 'is_active', 'show_steps', 'title',
-      'submit_label', 'success_message', 'success_redirect',
+      'submit_label', 'success_message', 'success_redirect', 'show_summary', 'on_success',
       {
         steps: [
           'id', 'title', 'description', 'sort',

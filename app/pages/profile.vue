@@ -8,6 +8,7 @@ import * as z from 'zod'
 import type { FormError, FormSubmitEvent } from '@nuxt/ui'
 import { ConfirmationModal } from "~/components/ui/modal";
 import { useToast } from '@nuxt/ui/runtime/composables/useToast.js';
+import { useClipboard } from '@vueuse/core';
 
 
 
@@ -23,6 +24,7 @@ const config = useRuntimeConfig();
 const overlay = useOverlay()
 const confirmationModal = overlay.create(ConfirmationModal);
 const ready = ref(false);
+const { copy, copied } = useClipboard();
 
 const auth = await useAuthStore();
 
@@ -41,6 +43,17 @@ const personFields = [
     'country',
     'membership_number',
     'title',
+    {
+        'voucher_codes': [
+            'code',
+            {
+                'voucher': [
+                    'name',
+                    'description'
+                ]
+            }
+        ]
+    },
     {
         person : [
             'id',
@@ -241,6 +254,16 @@ const countryFlag = computed(() => {
     return [...countryCode.value].map(c => String.fromCodePoint(c.charCodeAt(0) + 127397)).join('');
 });
 
+const voucherCodes = computed(() => (profile.value as any)?.voucher_codes ?? []);
+
+function voucherName(v: any) {
+    return typeof v.voucher === 'object' && v.voucher ? (v.voucher.name ?? '') : '';
+}
+
+function voucherDescription(v: any) {
+    return typeof v.voucher === 'object' && v.voucher ? (v.voucher.description ?? '') : '';
+}
+
 watch(
   ready,
   async (ready) => {
@@ -250,6 +273,19 @@ watch(
             {   
                 fields: personFields,
                 deep: {
+                        voucher_codes: {
+                            _filter: {
+                                status: { '_eq' : 'active'},
+                                voucher: {
+                                    congress: {
+                                        site: {
+                                            '_eq' : config.public.siteId
+                                        }
+                                    }
+                                }
+                            }
+                            
+                        },
                         person: {
                             _limit: 1,
                             committee_positions: {
@@ -537,6 +573,7 @@ onMounted(async () => {
 
 </script>
 <template>
+    
     <UError
       v-if="!isLoggedIn"
       redirect="/login"
@@ -635,6 +672,25 @@ onMounted(async () => {
                                         icon="i-lucide-circle-x"
                                         label="No Subscription"
                                     />
+                                </div>
+
+                                <div v-if="voucherCodes.length" class="pt-2 space-y-3">
+                                    <h4>Vouchers</h4>
+                                    <div v-for="v in voucherCodes" :key="v.code" class="flex flex-col gap-1">
+                                        <span v-if="voucherName(v)" class="text-muted text-xs truncate">{{ voucherName(v) }}</span>
+                                        <div class="flex items-center gap-2 w-fit rounded-md border border-accent/40 bg-accent/10 pl-3 pr-1 py-1.5">
+                                            <UIcon name="i-lucide-ticket" class="text-accent shrink-0" />
+                                            <span class="font-mono font-semibold text-lg tracking-wide">{{ v.code }}</span>
+                                            <UButton
+                                                :icon="copied ? 'i-lucide-copy-check' : 'i-lucide-copy'"
+                                                size="xs"
+                                                color="neutral"
+                                                variant="ghost"
+                                                @click="copy(v.code)"
+                                            />
+                                        </div>
+                                        <p v-if="voucherDescription(v)" class="text-xs text-muted">{{ voucherDescription(v) }}</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>

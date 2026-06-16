@@ -5,6 +5,8 @@ export const buildZodSchema = (fields: FormField[]) => {
 	const schema: Record<string, z.ZodTypeAny> = {};
 
 	fields.forEach((field) => {
+		if (field.type === 'relation' || field.type === 'voucher') return
+
 		let fieldSchema: z.ZodTypeAny;
 
 		switch (field.type) {
