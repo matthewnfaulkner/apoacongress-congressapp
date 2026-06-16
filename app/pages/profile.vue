@@ -703,6 +703,15 @@ onMounted(async () => {
                 <Headline headline="What would you like to do?" class="text-center mb-6" />
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <UPageCard
+                        to="/program/planner"
+                        title="View Program"
+                        description="Browse the congress schedule and plan which sessions to attend."
+                        icon="i-lucide-calendar-days"
+                        highlight-color="accent"
+                        class="hover:ring-accent/50 transition-all"
+                        :ui="{ leadingIcon: 'text-accent' }"
+                    />
+                    <UPageCard
                         to="/abstracts/submission"
                         title="Submit / Manage an Abstract"
                         description="Share your research and contribute to the scientific programme."
