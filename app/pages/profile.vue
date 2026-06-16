@@ -674,30 +674,31 @@ onMounted(async () => {
                                     />
                                 </div>
 
-                                <div v-if="voucherCodes.length" class="pt-2 space-y-3">
-                                    <h4>Vouchers</h4>
-                                    <div v-for="v in voucherCodes" :key="v.code" class="flex flex-col gap-1">
-                                        <span v-if="voucherName(v)" class="text-muted text-xs truncate">{{ voucherName(v) }}</span>
-                                        <div class="flex items-center gap-2 w-fit rounded-md border border-accent/40 bg-accent/10 pl-3 pr-1 py-1.5">
-                                            <UIcon name="i-lucide-ticket" class="text-accent shrink-0" />
-                                            <span class="font-mono font-semibold text-lg tracking-wide">{{ v.code }}</span>
-                                            <UButton
-                                                :icon="copied ? 'i-lucide-copy-check' : 'i-lucide-copy'"
-                                                size="xs"
-                                                color="neutral"
-                                                variant="ghost"
-                                                @click="copy(v.code)"
-                                            />
-                                        </div>
-                                        <p v-if="voucherDescription(v)" class="text-xs text-muted">{{ voucherDescription(v) }}</p>
-                                    </div>
-                                </div>
+                                
                             </div>
+                        </div>
+                    </div>
+                    <div v-if="voucherCodes.length" class="pt-2 space-y-3">
+                        <h4>Vouchers</h4>
+                        <div v-for="v in voucherCodes" :key="v.code" class="flex flex-col gap-1">
+                            <span v-if="voucherName(v)" class=" text-md truncate">{{ voucherName(v) }}</span>
+                            <div class="flex items-center gap-2 w-fit rounded-md border border-accent/40 bg-accent/10 pl-3 pr-1 py-1.5">
+                                <UIcon name="i-lucide-ticket" class="text-accent shrink-0" />
+                                <span class="font-mono font-semibold text-lg tracking-wide">{{ v.code }}</span>
+                                <UButton
+                                    :icon="copied ? 'i-lucide-copy-check' : 'i-lucide-copy'"
+                                    size="xs"
+                                    color="neutral"
+                                    variant="ghost"
+                                    @click="copy(v.code)"
+                                />
+                            </div>
+                            <p v-if="voucherDescription(v)" class="text-xs text-muted">{{ voucherDescription(v) }}</p>
                         </div>
                     </div>
                 </UCard>
             </div>
-
+            
             <!-- What's Next suggestions -->
             <div class="max-w-4xl mx-auto my-8">
                 <Headline headline="What would you like to do?" class="text-center mb-6" />

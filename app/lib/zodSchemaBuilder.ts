@@ -5,7 +5,7 @@ export const buildZodSchema = (fields: FormField[]) => {
 	const schema: Record<string, z.ZodTypeAny> = {};
 
 	fields.forEach((field) => {
-		if (field.type === 'relation' || field.type === 'voucher') return
+		if ( field.type === 'voucher') return
 
 		let fieldSchema: z.ZodTypeAny;
 
@@ -15,6 +15,7 @@ export const buildZodSchema = (fields: FormField[]) => {
 				break;
 
 			case 'checkbox_group':
+			case 'checkbox_group_alt':
 				fieldSchema = z.array(z.string()).default([]);
 				break;
 

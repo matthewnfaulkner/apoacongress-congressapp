@@ -20,6 +20,8 @@ const toggleValue = (value: string, checked: boolean) => {
 		: props.modelValue.filter((v) => v !== value);
 	emits('update:modelValue', updatedValues);
 };
+
+
 </script>
 
 <template>

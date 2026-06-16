@@ -6,6 +6,7 @@ import Input from '~/components/ui/input/Input.vue';
 import { Textarea } from '~/components/ui/textarea';
 import CheckboxField from './fields/CheckboxField.vue';
 import CheckboxGroupField from './fields/CheckboxGroupField.vue';
+import CheckboxGroupAltField from './fields/CheckboxGroupAltField.vue';
 import RadioGroupField from './fields/RadioGroupField.vue';
 import SelectField from './fields/SelectField.vue';
 import FileUploadField from './fields/FileUploadField.vue';
@@ -18,6 +19,7 @@ const componentMap: Record<string, Component> = {
 	textarea: Textarea,
 	checkbox: CheckboxField,
 	checkbox_group: CheckboxGroupField,
+	checkbox_group_alt: CheckboxGroupAltField,
 	radio: RadioGroupField,
 	select: SelectField,
 	file: FileUploadField,
@@ -35,7 +37,7 @@ const getComponentProps = (field: FormField) => {
 		'onUpdate:modelValue': (val: any) => (value.value = val),
 	};
 
-	if (['checkbox_group', 'radio', 'select'].includes(field.type ?? '')) {
+	if (['checkbox_group', 'checkbox_group_alt', 'radio', 'select'].includes(field.type ?? '')) {
 		return { ...baseProps, options: field.choices ?? [] };
 	}
 

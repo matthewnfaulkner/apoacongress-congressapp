@@ -946,7 +946,7 @@ export interface FormField {
 	/** @description Unique field identifier, not shown to users (lowercase, hyphenated) */
 	name?: string | null;
 	/** @description Input type for the field */
-	type?: 'text' | 'textarea' | 'checkbox' | 'checkbox_group' | 'radio' | 'file' | 'select' | 'hidden' | 'voucher' | null;
+	type?: 'text' | 'textarea' | 'checkbox' | 'checkbox_group' | 'checkbox_group_alt' | 'radio' | 'file' | 'select' | 'hidden' | 'voucher' | null;
 	/** @description Text label shown to form users. */
 	label?: string | null;
 	/** @description Default text shown in empty input. */
