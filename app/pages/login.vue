@@ -20,7 +20,6 @@ const cookieToken = useState('login_cookie_token', () => refreshCookie.value ?? 
 const checkLoginStatus = async () => {
   try {
     const response = await $isAuthenticated();
-    console.log(response)
     if (response) {
       isLoggedIn.value = true;
       if (redirect) navigateTo(redirect);

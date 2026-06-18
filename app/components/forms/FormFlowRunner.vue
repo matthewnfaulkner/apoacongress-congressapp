@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { FormFlow, FormFlowStep as FlowStep, FormFlowField, FormFlowCondition, FormFlowRule } from '~~/shared/types/schema'
 
-const props = defineProps<{ flow: FormFlow }>()
+const props = defineProps<{ flow: FormFlow; startStep?: number | string }>()
 
 const steps = computed<FlowStep[]>(() => {
   if (!props.flow.steps) return []
@@ -18,8 +18,20 @@ const stepFields = computed(() =>
   )
 )
 
-const currentStepIndex = ref(0)
-const stepHistory = ref<number[]>([])
+function resolveStartIndex(): number {
+  const s = props.startStep
+  if (s === undefined || s === null) return 0
+  if (typeof s === 'number') return Math.max(0, Math.min(s, steps.value.length - 1))
+  const byId = steps.value.findIndex(step => step.id === s)
+  if (byId !== -1) return byId
+  const asNum = parseInt(String(s), 10)
+  if (!isNaN(asNum)) return Math.max(0, Math.min(asNum, steps.value.length - 1))
+  return 0
+}
+
+const startIndex = resolveStartIndex()
+const currentStepIndex = ref(startIndex)
+const stepHistory = ref<number[]>(Array.from({ length: startIndex }, (_, i) => i))
 const stepValues = reactive<Record<number, Record<string, any>>>({})
 const isSubmitting = ref(false)
 const submitError = ref<string | null>(null)
@@ -235,6 +247,7 @@ async function submit() {
         :is-first="currentStepIndex === 0 && !returnToSummary"
         :is-last="isLastStep"
         :back-label="returnToSummary ? 'Back to Summary' : 'Back'"
+        :advance-label="currentStep?.advance_message ?? undefined"
         :submit-label="isLastStep && !summaryEnabled ? (flow.submit_label ?? 'Submit') : undefined"
         :is-final-submit="isLastStep && !summaryEnabled"
         :loading="isSubmitting"

@@ -19,7 +19,7 @@ const { data: rawFlows } = await useAsyncData<FormFlow[]>('registration_flow', (
       'submit_label', 'success_message', 'success_redirect', 'show_summary', 'on_success',
       {
         steps: [
-          'id', 'title', 'description', 'sort',
+          'id', 'title', 'description', 'sort', 'advance_message',
           {
             fields: [
               'id', 'name', 'type', 'copy', 'label', 'placeholder',
@@ -56,6 +56,9 @@ useSeoMeta({
 	ogUrl: registrationUrl.toString(),
 });
 
+const route = useRoute()
+const startStep = computed(() => route.query.step as string | undefined)
+
 const ready = ref(false)
 onMounted(() => { ready.value = true })
 </script>
@@ -82,7 +85,7 @@ onMounted(() => { ready.value = true })
 
     <template v-else>
       <Headline :headline="flow.title ?? flow.key" class="mb-4" />
-      <FormFlowRunner :flow="flow" />
+      <FormFlowRunner :flow="flow" :start-step="startStep" />
     </template>
   </div>
 </template>

@@ -12,6 +12,7 @@ const props = defineProps<{
   description?:  string | null
   storedValues?: Record<string, any>
   backLabel?:    string
+  advanceLabel?: string
   submitLabel?:  string
   isFinalSubmit?: boolean
   loading?:      boolean
@@ -112,7 +113,7 @@ function widthClass(width: FormFlowField['width']): string {
 
       <UButton
         type="submit"
-        :label="isLast ? (submitLabel ?? (isFinalSubmit ? 'Submit' : 'Review')) : 'Next'"
+        :label="isLast ? (submitLabel ?? (isFinalSubmit ? 'Submit' : 'Review')) : (advanceLabel ?? 'Next')"
         color="accent"
         variant="solid"
         size="xl"

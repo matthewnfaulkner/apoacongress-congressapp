@@ -15,6 +15,7 @@ const voucherCodes = ref<VoucherCode[]>([])
 const loading = ref(true)
 
 const props = defineProps<{
+  name: string;
   modelValue?: string | number
 }>()
 
@@ -30,7 +31,7 @@ onMounted(async () => {
             },
             voucher: {
               id: {
-                _eq: "apoamember2027"
+                _eq: props.name
               },
               congress: {
                 site: { _eq: config.public.siteId }
