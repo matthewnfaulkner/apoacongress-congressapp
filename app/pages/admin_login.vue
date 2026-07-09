@@ -230,7 +230,7 @@ function goToApoaOnline() {
               color="neutral"
               variant="subtle"
               class="w-full justify-center"
-              @click="step = 'email'"
+              @click="() =>  {step = 'email'}"
             />
           </div>    
           </template>

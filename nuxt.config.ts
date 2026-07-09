@@ -117,7 +117,7 @@ export default defineNuxtConfig({
 				id: 'pa', // use a short cookie id to save bandwidth and prefixes to separate
 				isPreselected: false, // `true` is not GDPR compliant! This flag does not enable any cookies, it only preselects the cookie's modal toggle. The default is `false`.
 				name: {
-					en: 'Preferaences' // you always have to specify a cookie name (in English)
+					en: 'Preferences' // you always have to specify a cookie name (in English)
 				},
 				links: {
 					'https://example.com/privacy': 'Privacy Policy',
@@ -160,6 +160,7 @@ export default defineNuxtConfig({
 		voyageApiKey: process.env.VOYAGE_API_KEY,
 		rebuildIndexSecret: process.env.REBUILD_INDEX_SECRET,
 		duffelApiKey: process.env.DUFFEL_API_KEY,
+		dataRequestFlowId: process.env.DIRECTUS_DATA_REQUEST_FLOW_ID,
 		sessionTokenName: process.env.DIRECTUS_SESSION_TOKEN_NAME as string || 'directus_session_token',
 		refreshTokenName: process.env.DIRECTUS_REFRESH_TOKEN_NAME as string || 'directus_refresh_token',
 		scripts: {

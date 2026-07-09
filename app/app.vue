@@ -26,17 +26,14 @@ onMounted(() => {
 			<NuxtPage />
 		</NuxtLayout>
 		<ClientOnly>
+			
 			<CookieControl
 				v-if="pageLoaded"
 				locale="en"
 				:ui="{
 					bar: 'bg-secondary',
-					
-					
 				}"
-			>
-
-		</CookieControl>
+			/>
 			<PolicyConsentModal />
 		</ClientOnly>
 	</UApp>

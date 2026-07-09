@@ -12,7 +12,8 @@ const CONSENT_REQUIRED_COUNTRIES = new Set([
 	// Other strong privacy laws
 	'CH', // Switzerland nFADP
 	'BR', // Brazil LGPD
-	'CA' // Canada PIPEDA / Quebec Law 25
+	'CA', // Canada PIPEDA / Quebec Law 25,
+	'XX'
 ])
 
 export default defineEventHandler((event) => {

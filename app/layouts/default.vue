@@ -38,14 +38,6 @@ const { isVisualEditingEnabled, apply } = useVisualEditing();
 const navigation = useTemplateRef('navigationRef');
 const footer = useTemplateRef('footerRef');
 
-const canPreview = ref();
-/*if(siteData.value?.site.preview) {
-	const { $isAuthenticatedWithPolicy } = useNuxtApp();
-	canPreview.value = await $isAuthenticatedWithPolicy('Administrator');
-}*/
-
-
-
 useHead({
 	style: [
 		{

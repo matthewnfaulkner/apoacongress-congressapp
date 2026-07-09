@@ -2,7 +2,7 @@
 import type { Person, DirectusUser } from '#shared/types/schema';
 import { removeSeconds } from '@/utils/time-utils';
 import BaseEventType from '~/components/eventTypes/BaseEventType.vue';
-import type { TableColumn, TableRow } from '@nuxt/ui'
+import type { TableColumn, TableRow, DropdownMenuItem } from '@nuxt/ui'
 import { readMe, updateMe, uploadFiles } from '@directus/sdk';
 import * as z from 'zod'
 import type { FormError, FormSubmitEvent } from '@nuxt/ui'
@@ -23,6 +23,19 @@ const config = useRuntimeConfig();
 
 const overlay = useOverlay()
 const confirmationModal = overlay.create(ConfirmationModal);
+
+const profileMenuItems = ref<DropdownMenuItem[]>([
+    {
+        label: 'Policy Agreements',
+        icon: 'i-lucide-shield-check',
+        to: '/policies',
+    },
+    {
+        label: 'Request My Data',
+        icon: 'i-lucide-download',
+        to: '/mydatarequests',
+    },
+])
 const ready = ref(false);
 const { copy, copied } = useClipboard();
 
@@ -596,7 +609,20 @@ onMounted(async () => {
 
             <!-- User Account Card -->
             <div v-if="profile" class="max-w-2xl mx-auto mb-10">
-                <UCard class="ring-1 ring-accent/20">
+                <UCard class="ring-1 ring-accent/20 relative">
+                    <UDropdownMenu
+                        :items="profileMenuItems"
+                        :content="{ align: 'end' }"
+                        :ui="{ content: 'w-56' }"
+                        class="absolute top-4 right-4"
+                    >
+                        <UButton
+                            icon="i-lucide-ellipsis-vertical"
+                            color="neutral"
+                            variant="ghost"
+                            aria-label="Profile actions"
+                        />
+                    </UDropdownMenu>
                     <div class="flex items-center gap-6">
                         <!-- Avatar -->
                         <div
@@ -649,7 +675,7 @@ onMounted(async () => {
                                     <UAlert icon="i-lucide-triangle-alert" title="No Active APOA Membership" color="accent" class="w-fit my-2 ring text-accent-100" />
                                     <div class="flex items-center gap-2 space-y-1.5 ">
                                         <span>Not a member yet?</span>
-                                        <UButton to="https://apoaonline.com" color="secondary"  variant="outline" label="Join the APOA" />
+                                        <UButton to="https://apoaonline.com/auth/apoa/signup.php" color="secondary"  variant="outline" label="Join the APOA" />
                                     </div>
                                     <div class="flex items-center gap-2 py-1">
                                         <span>Membership Missing?</span>
