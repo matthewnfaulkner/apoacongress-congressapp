@@ -2,6 +2,7 @@
 import { useSiteDataStore } from "~/stores/site-data";
 import { getDirectusAssetURL } from '@@/server/utils/directus-utils';
 import Assistant from "~/components/ui/chat/Assistant.vue";
+import { useToast } from '@nuxt/ui/runtime/composables/useToast.js';
 
 const { isLoading } = useLoadingIndicator()
 const pageReady = ref(false)
@@ -19,7 +20,14 @@ const {
 });
 
 if (siteError.value) {
-	 createError({
+	const toast = useToast();
+	toast.add({
+		title: 'Unable to reach the server',
+		description: 'The server could not be reached. It may be temporarily down — please try again shortly.',
+		icon: 'i-lucide-server-crash',
+		color: 'error',
+	});
+	throw createError({
 		statusCode: 500,
 		statusMessage: 'Failed to load site data. Please try again later.',
 		fatal: true,

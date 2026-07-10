@@ -46,18 +46,32 @@ export default defineEventHandler(async (event) => {
 			}
 
 			// Sandbox access confirmed — check preview bypass
-			const site = await directusServer.request(
-				readItem('sites', config.public.siteId, { fields: ['preview'] })
-			)
+			let site: { preview?: boolean } | null = null
+			try {
+				site = await directusServer.request(
+					readItem('sites', config.public.siteId, { fields: ['preview'] })
+				)
+			} catch {
+				// Directus unreachable — skip preview-redirect logic and let the page load,
+				// where the layout's own site-data fetch will surface the outage properly.
+				return
+			}
 			if (!site?.preview || event.path === '/preview') return
 			if (userPolicies.includes('Admin - Bypass Preview')) return
 			return sendRedirect(event, '/preview', 302)
 		}
 
 		// Non-sandbox: existing preview redirect logic
-		const site = await directusServer.request(
-			readItem('sites', config.public.siteId, { fields: ['preview'] })
-		)
+		let site: { preview?: boolean } | null = null
+		try {
+			site = await directusServer.request(
+				readItem('sites', config.public.siteId, { fields: ['preview'] })
+			)
+		} catch {
+			// Directus unreachable — skip preview-redirect logic and let the page load,
+			// where the layout's own site-data fetch will surface the outage properly.
+			return
+		}
 
 		if (!site?.preview || event.path === '/preview') return
 
