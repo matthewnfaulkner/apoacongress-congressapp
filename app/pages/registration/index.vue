@@ -10,7 +10,7 @@ const isAuthenticated = await $isAuthenticatedRegistration()
 const { data: rawFlows } = await useAsyncData<FormFlow[]>('registration_flow', () =>
   $directus.request<FormFlow[]>(readItems('form_flows', {
     filter: {
-      key:       { _eq: 'registration' },
+      key:       { _eq: 'registration_' + config.public.siteId },
       site:      { _eq: config.public.siteId },
       is_active: { _eq: true },
     },
