@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { FormFlow, FormFlowStep as FlowStep, FormFlowField, FormFlowCondition, FormFlowRule } from '~~/shared/types/schema'
 
-const props = defineProps<{ flow: FormFlow; startStep?: number | string }>()
+const props = defineProps<{ flow: FormFlow; startStep?: number | string; continueFlow?: boolean | string }>()
 
 const steps = computed<FlowStep[]>(() => {
   if (!props.flow.steps) return []
@@ -41,26 +41,57 @@ const transitionName = computed(() => direction.value === 'forward' ? 'step-forw
 const showSummary = ref(false)
 const returnToSummary = ref(false)
 
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+watch([currentStepIndex, showSummary], scrollToTop)
+
+const stepRef = ref<{ triggerContinue: () => void } | null>(null)
+const shouldAutoContinue = computed(() =>
+  props.continueFlow === true || props.continueFlow === 'true' || props.continueFlow === '1'
+)
+const autoContinueTriggered = ref(false)
+
+watch(stepRef, (step) => {
+  if (!step || !shouldAutoContinue.value || autoContinueTriggered.value) return
+  autoContinueTriggered.value = true
+  step.triggerContinue()
+}, { immediate: true })
+
 const currentStep = computed(() => steps.value[currentStepIndex.value])
 const isLastStep = computed(() => currentStepIndex.value >= steps.value.length - 1)
 const summaryEnabled = computed(() => props.flow.show_summary !== false)
 
-function formatSummaryValue(val: any, type?: string | null): string {
+type Choice = { text: string; value: string }
+
+function resolveChoiceLabel(val: any, choices?: Choice[] | null): string {
+  const match = choices?.find(c => c.value === val)
+  return match ? match.text : String(val)
+}
+
+function formatSummaryValue(val: any, type?: string | null, choices?: Choice[] | null): string {
   if (val === undefined || val === null || val === '') return '—'
   if (type === 'checkbox') return (val === true || val === 'true') ? 'Yes' : 'No'
   if (val instanceof File) return val.name
-  if (Array.isArray(val)) return val.length ? val.join(', ') : '—'
+  if (Array.isArray(val)) {
+    if (!val.length) return '—'
+    if (type === 'checkbox_group' || type === 'checkbox_group_alt') {
+      return val.map(v => resolveChoiceLabel(v, choices)).join(', ')
+    }
+    return val.join(', ')
+  }
+  if (type === 'select' || type === 'radio') return resolveChoiceLabel(val, choices)
   return String(val)
 }
 
 const summaryItems = computed(() => {
   const visited = [...new Set([...stepHistory.value, currentStepIndex.value])]
   return visited.flatMap(idx => {
-    const fields = (stepFields.value[idx] ?? []).filter(f => f.name && f.type !== 'hidden')
+    const fields = (stepFields.value[idx] ?? []).filter(f => f.name && f.type !== 'hidden' && (f.type as string) !== 'voucher')
     const values = stepValues[idx] ?? {}
     return fields.map(f => ({
       label: f.label ?? f.name ?? '',
-      value: formatSummaryValue(values[f.name!], f.type),
+      value: formatSummaryValue(values[f.name!], f.type, f.choices),
       stepIndex: idx,
     }))
   })
@@ -109,7 +140,6 @@ function resolveNextStep(stepIndex: number, values: Record<string, any>): number
 }
 
 async function onNext(values: Record<string, any>) {
-  console.log(values);
   stepValues[currentStepIndex.value] = values
   direction.value = 'forward'
   if (returnToSummary.value) {
@@ -241,6 +271,7 @@ async function submit() {
 
       <FormFlowStep
         v-else
+        ref="stepRef"
         :key="currentStepIndex"
         :fields="stepFields[currentStepIndex] ?? []"
         :description="currentStep?.description ?? null"

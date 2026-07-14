@@ -2170,6 +2170,9 @@ export interface Schema {
 	forms: Form[];
 	form_submissions: FormSubmission[];
 	form_submission_values: FormSubmissionValue[];
+	form_flows: FormFlow[];
+	form_flow_submissions: FormFlowSubmission[];
+	form_flow_submission_values: FormFlowSubmissionValue[];
 	globals: Globals;
 	hotels: Hotel[];
 	sites: Site[];
@@ -2265,6 +2268,9 @@ export enum CollectionNames {
 	forms = 'forms',
 	form_submissions = 'form_submissions',
 	form_submission_values = 'form_submission_values',
+	form_flows = 'form_flows',
+	form_flow_submissions = 'form_flow_submissions',
+	form_flow_submission_values = 'form_flow_submission_values',
 	globals = 'globals',
 	hotels = 'hotels',
 	sites = 'sites',

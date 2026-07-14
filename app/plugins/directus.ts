@@ -73,7 +73,8 @@ export default defineNuxtPlugin(() => {
                     'has_subscription', 
                     'user_policy_agreements', 
                     'membership_number', 
-                    'voucher_codes.code'
+                    'voucher_codes.code',
+                    'title',
                 ],
                 deep: {
                     'voucher_codes' : {
@@ -154,7 +155,16 @@ export default defineNuxtPlugin(() => {
             // token may be missing or already expired — still clear local state
         }
         tokenStorage.set(null);
-``
+
+        try {
+            // Revokes the SSO refresh token server-side and clears the HttpOnly
+            // cookie it was delivered in — directus.logout() above can't reach
+            // it (no credentials sent in json/production mode).
+            await $fetch('/api/auth/logout', { method: 'POST' });
+        } catch {
+            // best-effort — proceed with client-side cleanup regardless
+        }
+
         const auth = useAuthStore();
         auth.reset();
 

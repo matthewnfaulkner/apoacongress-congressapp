@@ -1,8 +1,5 @@
 <script setup lang="ts">
 
-const toFlagEmoji = (code: string) =>
-	code.toUpperCase().split('').map(c => String.fromCodePoint(0x1F1E6 + c.charCodeAt(0) - 65)).join('')
-
 interface PersonProfileCardUi {
 	// UPageCard internal slots
 	wrapper?: string;
@@ -76,11 +73,17 @@ const props = defineProps<PersonProfileCardProps>();
 					:class="[imageClass ?? 'h-40', ui?.image]"
 					:image="image"
 				/>
-				<span
+				<UIcon 
 					v-if="showFlag && country?.countryCodes?.[0]"
-					:class="['bg-transparent absolute bottom-0 right-0 inline-flex items-center justify-center w-8 h-8 rounded-full  text-lg leading-none', ui?.flag]"
+					:class="[
+							'bg-transparent absolute bottom-0 right-0 inline-flex items-center justify-center w-8 h-8 rounded-full leading-none',
+							'ring-2 ring-white dark:ring-neutral-900 shadow-lg shadow-black/40 drop-shadow-md',
+							ui?.flag,
+						]"
+					:name="`i-circle-flags-${country?.countryCodes?.[0].toLowerCase()}`"
 					style="font-size: 40px;"
-				>{{ toFlagEmoji(country.countryCodes[0]) }}</span>
+					class="text-[1.5rem]"
+            	/>
 			</div>
 		</template>
 

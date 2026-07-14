@@ -26,7 +26,9 @@ const checkLoginStatus = async () => {
       else navigateTo('/');
     }
     else {
-      navigateTo('/admin_login');
+      window.location.href = redirect
+        ? `${runtimeConfig.public.loginUrl}?redirect=${encodeURIComponent(redirect)}`
+        : runtimeConfig.public.loginUrl;
     }
   } catch (error) {
     isLoggedIn.value = false;

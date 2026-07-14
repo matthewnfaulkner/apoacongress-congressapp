@@ -77,7 +77,14 @@ export default defineEventHandler(async (event) => {
 
 		const token = userToken ?? TOKEN
 
-		await directusServer.request(withToken(token, createItem('form_flow_submissions' as any, payload)))
+		// Only request `id` back — the caller doesn't need the created item, and
+		// asking Directus to resolve/return the full item (including the
+		// user_created relation to directus_users) re-checks read permissions
+		// on that relation for the submitting role, which can 400 even though
+		// the insert itself already succeeded.
+		await directusServer.request(
+			withToken(token, createItem('form_flow_submissions' as any, payload, { fields: ['id'] }))
+		)
 
 		return { success: true }
 	} catch (err: any) {

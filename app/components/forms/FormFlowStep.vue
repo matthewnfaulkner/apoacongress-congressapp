@@ -50,10 +50,11 @@ const initialValues = computed(() => {
   return sortedFields.value.reduce((acc, field) => {
     if (!field.name) return acc
     const key = field.name.replace(/-/g, '_') as keyof typeof auth
-    console.log(auth[key])
-    switch (field.type) {
-      case 'checkbox':       acc[field.name] = false; break
-      case 'checkbox_group': acc[field.name] = [];    break
+
+    switch (field.type as string) {
+      case 'checkbox':           acc[field.name] = false; break
+      case 'checkbox_group':
+      case 'checkbox_group_alt': acc[field.name] = [];    break
       default: { const v = key in auth ? (auth[key] ?? '') : ''; acc[field.name] = Array.isArray(v) ? (v[0] ?? '') : v; break }
     }
     return acc
@@ -66,6 +67,11 @@ const { handleSubmit, values } = useForm({
 })
 
 const onSubmit = handleSubmit((formValues) => emit('next', formValues))
+
+defineExpose({
+  /** Runs the same validated submit path as clicking the step's Continue/Submit button. */
+  triggerContinue: onSubmit,
+})
 
 function widthClass(width: FormFlowField['width']): string {
   switch (width) {
@@ -87,7 +93,7 @@ function widthClass(width: FormFlowField['width']): string {
       :value="initialValues[field.name] || values[field.name]"
     />
 
-    <div v-if="description" v-html="description" class="prose dark:prose-invert max-w-none mb-4 text-lg text-muted" />
+    <div v-if="description" v-html="description" class="prose dark:prose-invert max-w-none mb-4 text-lg" />
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
       <BaseFormField

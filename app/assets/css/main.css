@@ -108,6 +108,30 @@
 }
 
 
+@layer components {
+  /* Base layout/behavior shared by all buttons. Pair with a color
+     modifier, e.g. class="btn btn-primary". */
+  .btn {
+    @apply rounded-md font-medium inline-flex items-center disabled:cursor-not-allowed aria-disabled:cursor-not-allowed disabled:opacity-75 aria-disabled:opacity-75 transition-colors px-3 py-2 text-base gap-2;
+  }
+
+  .btn-primary {
+    @apply text-inverted bg-primary hover:bg-primary/75 active:bg-primary/75 disabled:bg-primary aria-disabled:bg-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
+  }
+
+  .btn-secondary {
+    @apply text-inverted bg-secondary hover:bg-secondary/75 active:bg-secondary/75 disabled:bg-secondary aria-disabled:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary;
+  }
+
+  .btn-tertiary {
+    @apply text-inverted bg-tertiary hover:bg-tertiary/75 active:bg-tertiary/75 disabled:bg-tertiary aria-disabled:bg-tertiary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tertiary;
+  }
+
+  .btn-accent {
+    @apply text-inverted bg-accent hover:bg-accent/75 active:bg-accent/75 disabled:bg-accent aria-disabled:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent;
+  }
+}
+
 .countdown-badge {
   background: url('/images/splash.png') center / cover !important;
 }
@@ -241,3 +265,4 @@ body {
   }
 }
   
+
