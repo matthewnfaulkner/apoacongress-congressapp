@@ -42,6 +42,7 @@ export interface AbstractReview {
 	submission: AbstractSubmission | string | null;
 	reviewer?: DirectusUser | string | null;
 	score?: number;
+	scores?: AbstractReviewScore[] | string[] | null;
 }
 
 
@@ -60,6 +61,8 @@ export interface AbstractSubmission {
 	submission_values?: AbstractSubmissionValue[] | string[]
 	reviews?: AbstractReview[] | string | null;
 	submitter: DirectusUser | string | null;
+	figures?: AbstractSubmissionFile[] | string[] | null;
+	keywords?: string[] | null;
 }
 
 export interface AbstractSubmissionValue {
@@ -76,6 +79,65 @@ export interface AbstractSubmissionValue {
 	user_updated?: DirectusUser | string | null;
 	field? : string | null;
 }
+
+export interface AbstractSubmissionFile {
+	id: string;
+	submission: AbstractSubmission | string | null;
+	file?: DirectusFile | string | null;  
+	label: string | null;
+}
+
+export interface AbstractGradingSystem {
+	/** @primaryKey */
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	criteria?: AbstractCriteria[] | string[] | null;
+	scoring?: AbstractScoring[] | string[] | null;
+	aggregation_method?: 'average' | 'sum' | 'max' | 'min' | null;
+}
+
+export interface AbstractCriteria {
+	/** @primaryKey */
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	sort?: number | null;
+	crietria?: string | null;
+	description?: string | null;
+	weight?: number | null;
+}
+
+export interface AbstractReviewScore {
+	/** @primaryKey */
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	review?: AbstractReview | string | null;
+	criteria?: AbstractCriteria | string | null;
+	score?: number | null;	
+}
+
+export interface AbstractScoring {
+	/** @primaryKey */
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	sorting?: number | null;
+	score?: number | null;
+	rating?: string | null;
+	description?: string | null;
+}
+
+
 
 export interface AiPrompt {
 	/** @primaryKey */

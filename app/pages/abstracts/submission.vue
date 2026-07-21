@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { withLeadingSlash, withoutTrailingSlash } from 'ufo';
 import * as z from 'zod'
-import type { FormSubmitEvent } from '@nuxt/ui'
-import { createItem, readItems, deleteItem, updateItem } from '@directus/sdk';
-import type { AbstractSubmission, AbstractSubmissionValue, CongressAbstracts } from '~~/shared/types/schema';
+import type { FormSubmitEvent, FormErrorEvent } from '@nuxt/ui'
+import { createItem, readItems, deleteItem, updateItem, uploadFiles } from '@directus/sdk';
+import type { AbstractSubmission, AbstractSubmissionValue, AbstractSubmissionFile, CongressAbstracts } from '~~/shared/types/schema';
+import { getDirectusAssetURL } from '@@/server/utils/directus-utils';
 import type { AccordionItem } from '@nuxt/ui'
 import { UBadge, UDropdownMenu, UButton } from '#components';
 import type { TableColumn, TableRow } from '@nuxt/ui';
@@ -68,47 +69,56 @@ guideLines.value = [
 const submissionsClosed = false;
 
 
+async function fetchSubmissions() {
+  const data = await $directus.request<AbstractSubmission[]>(readItems(
+    'abstract_submissions',
+    {
+      limit: -1,
+      fields: [
+                'id',
+                'status',
+                'date_created',
+                'user_created',
+                'keywords',
+                {
+                    submission_values: [
+                        'id',
+                        'field',
+                        'value'
+                    ]
+                },
+                {
+                    figures: [
+                        'id',
+                        'label',
+                        {
+                            file: ['id', 'filename_download']
+                        }
+                    ]
+                },
+      ],
+      filter: {
+        congress_abstract: {
+            _eq: congressAbstract?.value?.id
+        },
+        submitter: {
+          _eq: "$CURRENT_USER"
+        }
+      },
+    }
+  ))
+
+  submissions.value = (data as AbstractSubmission[]) ?? [];
+}
+
 // Watch for storeReady
 watch(
   storeReady,
   async (ready) => {
     if (!ready) return
 
-    
     // Fetch submissions once the store is ready
-    const { data } = await useAsyncData('submissions', async () => {
-      return await $directus.request<AbstractSubmission[]>(readItems(
-        'abstract_submissions',
-        {
-          limit: -1,
-          fields: [
-                    'id',
-                    'status',
-                    'date_created',
-                    'user_created',
-                    {
-                        submission_values: [
-                            'id',
-                            'field',
-                            'value'
-                        ]
-                    },
-          ],
-          filter: {
-            congress_abstract: {
-                _eq: congressAbstract?.value?.id
-            },
-            submitter: {
-              _eq: "$CURRENT_USER"
-            }
-          },
-        }
-      ))
-    })
-
-    if(data.value && data.value.length > 0) {
-        submissions.value = data.value as AbstractSubmission[];
-    }
+    await fetchSubmissions();
     loading.value = false
   }// run immediately if storeReady is already true
 )
@@ -122,6 +132,8 @@ type Submission = {
   abstract: string,
   category: string,
   authors: string[] | { name: string; title: string; institution: string }[],
+  keywords?: string[],
+  figures?: { id: string; label: string; file: string | { id: string; filename_download?: string } | null }[],
 }
 
 const submissionsTable = computed<Submission[]>(() => {
@@ -135,8 +147,10 @@ const submissionsTable = computed<Submission[]>(() => {
       id: submission.id,
       status: submission.status,
       submitted: submission.date_created,
+      keywords: submission.keywords ?? [],
+      figures: (submission.figures as AbstractSubmissionFile[]) ?? [],
       ...valuesObj
-    } as Submission;
+    } as unknown as Submission;
   });
 });
 
@@ -214,6 +228,16 @@ function getRowItems(row: TableRow<Submission>) {
         state.authors = row.original.authors ? JSON.parse(row.original.authors) : {};
         state.category = row.original.category;
         state.title = row.original.title;
+        state.keywords = row.original.keywords ? [...row.original.keywords] : [];
+        state.figures = row.original.figures?.length
+          ? row.original.figures.map(figure => ({
+              id: figure.id,
+              label: figure.label ?? '',
+              file: typeof figure.file === 'string' ? figure.file : (figure.file?.id ?? null),
+              existingFilename: typeof figure.file === 'string' ? undefined : figure.file?.filename_download,
+            }))
+          : [];
+        state.consent = true;
       }
     },
     {
@@ -238,9 +262,23 @@ const schema = z.object({
         name: z.string().nonempty("Author name is required"),
         institution: z.string().nonempty("Institution is required")
     })
-  ).min(1, "At least one author is required").refine(authors => 
+  ).min(1, "At least one author is required").refine(authors =>
     authors.every(a => a.title.trim() !== "" && a.name.trim() !== "" && a.institution.trim() !== ""),
     { message: "All authors must have a title, name, and institution" }
+  ),
+  keywords: z.array(z.string().trim().nonempty("Keyword cannot be empty"))
+    .min(3, "At least 3 keywords are required")
+    .max(5, "Maximum of 5 keywords allowed"),
+  figures: z.array(
+    z.object({
+      id: z.union([z.string(), z.number()]).optional(),
+      file: z.any().nullable(),
+      label: z.string().nonempty("Figure label is required"),
+      existingFilename: z.string().optional(),
+    })
+  ).max(3, "Maximum of 3 figures allowed").refine(figures =>
+    figures.every(f => !!f.file),
+    { message: "Each figure must have an image uploaded" }
   ),
   consent: z.boolean().refine(val => val === true, {
     message: "You must give your consent",
@@ -259,6 +297,8 @@ const state = reactive<Partial<Schema>>({
     institution: ''
   }],
   category: undefined,
+  keywords: [],
+  figures: [],
   consent: false
 })
 
@@ -268,11 +308,56 @@ function resetState() {
   state.abstract = undefined;
   state.authors = [{title: '', name: '', institution: '' }];
   state.category = undefined;
+  state.keywords = [];
+  state.figures = [];
   state.consent = false;
+  error.value = null;
 }
 
 
+type FigureState = { id?: string | number; file?: File | string | null; label: string; existingFilename?: string };
+
+const formRef = ref();
+const figureInputRefs = ref<(HTMLInputElement | null)[]>([]);
+
+function setFigureInputRef(el: any, index: number) {
+    figureInputRefs.value[index] = el as HTMLInputElement | null;
+}
+
+async function revalidateFigures() {
+    await formRef.value?.validate({ name: 'figures', silent: true });
+}
+
+function onFigureFileChange(e: Event, index: number) {
+    const input = e.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+        error.value = 'Figures must be image files.';
+        return;
+    }
+    (state.figures as FigureState[])[index].file = file;
+    revalidateFigures();
+}
+
+function figureFileName(figure: FigureState) {
+    if (figure.file instanceof File) return figure.file.name;
+    return figure.existingFilename ?? '';
+}
+
+function figureFilePreview(figure: FigureState) {
+    if (figure.file instanceof File) return URL.createObjectURL(figure.file);
+    if (typeof figure.file === 'string') return getDirectusAssetURL(figure.file);
+    return '';
+}
+
 const error = ref<string | null>(null);
+
+function onFormError(event: FormErrorEvent) {
+    const messages = event.errors?.map(e => e.message).filter(Boolean) ?? [];
+    error.value = messages.length ? messages.join(' ') : 'Please check the highlighted fields and try again.';
+}
 
 const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
 	error.value = null;
@@ -311,9 +396,30 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
             value,
         });
 
+        // Upload any newly selected figure images before saving the submission.
+        const figures = await Promise.all((formData.figures ?? []).map(async (figure) => {
+            let fileId = typeof figure.file === 'string' ? figure.file : null;
+            if (figure.file instanceof File) {
+                const fd = new FormData();
+                fd.append('storage', 's3');
+                fd.append('folder', config.public.abstractFiguresFolder as string);
+                fd.append('file', figure.file, figure.file.name);
+                const uploaded = await $directus.request(uploadFiles(fd)) as { id?: string };
+                if (!uploaded?.id) throw new Error('Figure upload failed');
+                fileId = uploaded.id;
+            }
+            return {
+                ...(figure.id ? { id: figure.id } : {}),
+                file: fileId,
+                label: figure.label,
+            };
+        }));
+
         const payload = {
             congress_abstract: congressAbstract.value?.id || null,
             submitter: isAuthenticated.id,
+            keywords: formData.keywords,
+            figures,
             submission_values: [
                 sv('category', formData.category),
                 sv('title', formData.title),
@@ -323,42 +429,15 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
         }
 
         if(!state.id) {
-            const response = await $directus.request<AbstractSubmission>(createItem(
+            await $directus.request<AbstractSubmission>(createItem(
                 'abstract_submissions', payload
             ))
-
-            if (!submissions.value) submissions.value = [];
-            submissions.value.push({
-                id: response.id,
-                status: response.status,
-                date_created: response.date_created,
-                submitter: (isAuthenticated as any).id,
-                submission_values: [
-                    { id: '', field: 'category', value: formData.category },
-                    { id: '', field: 'title', value: formData.title },
-                    { id: '', field: 'abstract', value: formData.abstract },
-                    { id: '', field: 'authors', value: JSON.stringify(formData.authors) },
-                ]
-            });
         } else{
-            const response = await $directus.request<AbstractSubmission>(updateItem(
+            await $directus.request<AbstractSubmission>(updateItem(
                 'abstract_submissions', state.id, payload
             ))
-
-            const sub = submissions.value?.find(s => s.id === state.id);
-            if (sub) {
-                sub.status = response.status;
-                const updates: Record<string, string> = {
-                    category: formData.category,
-                    title: formData.title,
-                    abstract: formData.abstract,
-                    authors: JSON.stringify(formData.authors),
-                };
-                sub.submission_values = (sub.submission_values as AbstractSubmissionValue[])?.map(sv =>
-                    sv.field && updates[sv.field] !== undefined ? { ...sv, value: updates[sv.field] } : sv
-                );
-            }
         }
+        await fetchSubmissions();
         resetState();
         openSubmissionForm.value = false;
 	} catch (e) {
@@ -454,8 +533,10 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                                 </div>
                             </template>
                         </UAccordion>
-                        <UForm 
+                        <UForm
+                            ref="formRef"
                             @submit="handleSubmit"
+                            @error="onFormError"
                             :schema="schema"
                             :state="state">
                             <UInput type="hidden" v-model="state.id"/>
@@ -464,6 +545,26 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                             </UFormField>
                             <UFormField required label="Title" name="title"  size="xl"  class="pb-5">
                                 <UInput v-model="state.title" class="w-75 md:w-100 lg:w-200" color="secondary" variant="subtle"  />
+                            </UFormField>
+                            <UFormField
+                                required
+                                
+                                label="Keywords"
+                                name="keywords"
+                                size="xl"
+                                class="pb-5"
+                                :ui="{
+                                  hint: 'text-sm wrap max-w-150'
+                                }"
+                                hint="Add between 3 and 5 keywords describing your abstract.">
+                                <UInputTags
+                                    v-model="state.keywords"
+                                    
+                                    :max="5"
+                                    placeholder="Type a keyword and press enter..."
+                                     class="w-75 md:w-100 lg:w-200"
+                                    color="secondary"
+                                    variant="subtle" />
                             </UFormField>
                             <UFormField required label="Abstract" name="abstracr"  size="xl"  class="pb-5">
                                 <UTextarea v-model="state.abstract" class="w-full lg:w-200" :rows=15 color="secondary" variant="subtle"/>
@@ -525,6 +626,61 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                                     size="xl"
                                     class="m-auto"
                                     @click="state.authors!.push({title: '', name: '', institution: '' })"/>
+                            </UFormField>
+                            
+                            <UFormField
+                                label="Figures"
+                                name="figures"
+                                size="xl"
+                                class="pb-5"
+                                :ui="{
+                                  hint: 'text-sm wrap max-w-150'
+                                }"
+                                hint="Optionally upload up to 3 figures (image files), each with a label.">
+                                <div v-for="(figure, index) in state.figures" :key="index" class="mb-3 flex flex-col md:flex-row gap-2 md:items-center p-2 rounded-lg border border-default">
+                                    <div class="flex items-center gap-3">
+                                        <img
+                                            v-if="figureFilePreview(figure)"
+                                            :src="figureFilePreview(figure)"
+                                            alt="Figure preview"
+                                            class="w-16 h-16 object-cover rounded" />
+                                        <div class="flex flex-col gap-1">
+                                            <input
+                                                :ref="(el) => setFigureInputRef(el, index)"
+                                                type="file"
+                                                accept="image/*"
+                                                class="hidden"
+                                                @change="(e) => onFigureFileChange(e, index)" />
+                                            <UButton
+                                                type="button"
+                                                variant="outline"
+                                                color="secondary"
+                                                icon="i-lucide-upload"
+                                                :label="figureFileName(figure) ? 'Change Image' : 'Choose Image'"
+                                                @click="figureInputRefs[index]?.click()" />
+                                            <span v-if="figureFileName(figure)" class="text-xs text-muted">{{ figureFileName(figure) }}</span>
+                                        </div>
+                                    </div>
+                                    <UInput v-model="figure.label" placeholder="Figure number as referenced in your asbtract." class="flex-1 font-serif" color="secondary" variant="subtle" />
+                                    <UButton
+                                        icon="i-lucide-trash"
+                                        variant="outline"
+                                        color="secondary"
+                                        type="button"
+                                        size="xl"
+                                        @click="() => { state.figures!.splice(index, 1); revalidateFigures(); }">
+                                    </UButton>
+                                </div>
+                                <UButton
+                                    v-if="state.figures!.length < 3"
+                                    type="button"
+                                    variant="solid"
+                                    color="accent"
+                                    label="Add Figure"
+                                    icon="i-lucide-plus"
+                                    size="xl"
+                                    class="m-auto"
+                                    @click="() => { state.figures!.push({ file: null, label: '' }); revalidateFigures(); }"/>
                             </UFormField>
                             <UFormField  class="pb-5" name="consent">
                                 <UCheckbox v-model="state.consent" size="lg" variant="card" label="I hereby agree to the terms and conditions of abstract submission." color="accent"/>

@@ -149,6 +149,7 @@ export default defineNuxtConfig({
 			enableChatAgent: process.env.NUXT_PUBLIC_ENABLE_CHAT != 'false',
 			refreshTokenName: process.env.DIRECTUS_REFRESH_TOKEN_NAME as string || 'directus_refresh_token',
 			userAvatarFolder: process.env.NUXT_PUBLIC_USER_AVATAR_FOLDER as string,
+			abstractFiguresFolder: process.env.NUXT_PUBLIC_ABSTRACT_FIGURES_FOLDER as string,
 			requestAccessForm: process.env.NUXT_PUBLIC_REQUEST_ACCESS_FORM as string || '',
 			samlProviderName: process.env.NUXT_PUBLIC_SAML_PROVIDER_NAME as string
 			
