@@ -559,10 +559,10 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                                 hint="Add between 3 and 5 keywords describing your abstract.">
                                 <UInputTags
                                     v-model="state.keywords"
-                                    
                                     :max="5"
+                                    enterkeyhint="done"
                                     placeholder="Type a keyword and press enter..."
-                                     class="w-75 md:w-100 lg:w-200"
+                                    class="w-75 md:w-100 lg:w-200"
                                     color="secondary"
                                     variant="subtle" />
                             </UFormField>
