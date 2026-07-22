@@ -66,7 +66,9 @@ guideLines.value = [
     }
 ]
 
-const submissionsClosed = false;
+const submissionsClosed = congressAbstract.value?.submission_deadline
+    ? new Date(congressAbstract.value.submission_deadline) < new Date()
+    : false;
 
 
 async function fetchSubmissions() {
@@ -127,7 +129,7 @@ watch(
 type Submission = {
   id: string
   submitted: string
-  status: 'submitted' | 'invited' | 'accepted' | 'reviewed' | 'waitingList' | 'rejected'
+  status: 'submitted' | 'pending_review' | 'invited' | 'accepted' | 'reviewed' | 'waiting_list' | 'rejected'
   title: string,
   abstract: string,
   category: string,
@@ -172,17 +174,25 @@ const columns: TableColumn<Submission>[] = [
     cell: ({ row }) => {
       const color = {
         submitted: 'neutral' as const,
-        rejected: 'error' as const,
-        waitingList: 'warning' as const,
+        pending_review: 'info' as const,
+        reviewed: 'secondary' as const,
         invited: 'info' as const,
         accepted: 'success' as const,
-        reviewed: 'secondary' as const,
-
+        waiting_list: 'warning' as const,
+        rejected: 'error' as const,
       }[row.getValue('status') as string]
 
-      return h(UBadge, { class: 'capitalize', variant: 'subtle', color }, () =>
-        row.getValue('status')
-      )
+      const label = {
+        submitted: 'Submitted',
+        pending_review: 'Pending Review',
+        reviewed: 'Reviewed',
+        invited: 'Invited',
+        accepted: 'Accepted',
+        waiting_list: 'Waiting List',
+        rejected: 'Rejected',
+      }[row.getValue('status') as string] ?? row.getValue('status')
+
+      return h(UBadge, { variant: 'subtle', color }, () => label)
     }
   },
   {
@@ -193,13 +203,16 @@ const columns: TableColumn<Submission>[] = [
       }
     },
     cell: ({ row }) => {
+      const items = getRowItems(row);
+      if (!items.length) return null;
+
       return h(
         UDropdownMenu,
         {
           content: {
             align: 'end'
           },
-          items: getRowItems(row),
+          items,
           'aria-label': 'Actions dropdown'
         },
         () =>
@@ -217,8 +230,9 @@ const columns: TableColumn<Submission>[] = [
 
 function getRowItems(row: TableRow<Submission>) {
   if (submissionsClosed) return [];
-  return [
-    {
+  const items: { label: string; icon: string; onSelect: () => void }[] = [];
+  if (row.original.status === 'submitted') {
+    items.push({
       label: 'Edit',
       icon: 'i-lucide-settings',
       onSelect() {
@@ -239,16 +253,17 @@ function getRowItems(row: TableRow<Submission>) {
           : [];
         state.consent = true;
       }
-    },
-    {
-      label: 'Delete',
-      icon: 'i-lucide-trash',
-      onSelect() {
-        openConfirmation.value = true
-        toBeDeleted.value = row.original
-      }
-    },
-  ]
+    });
+  }
+  items.push({
+    label: 'Delete',
+    icon: 'i-lucide-trash',
+    onSelect() {
+      openConfirmation.value = true
+      toBeDeleted.value = row.original
+    }
+  });
+  return items;
 }
 
 const schema = z.object({
@@ -328,6 +343,8 @@ async function revalidateFigures() {
     await formRef.value?.validate({ name: 'figures', silent: true });
 }
 
+const FIGURE_MAX_BYTES = 2 * 1024 * 1024; // 2 MB
+
 function onFigureFileChange(e: Event, index: number) {
     const input = e.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -335,6 +352,10 @@ function onFigureFileChange(e: Event, index: number) {
     if (!file) return;
     if (!file.type.startsWith('image/')) {
         error.value = 'Figures must be image files.';
+        return;
+    }
+    if (file.size > FIGURE_MAX_BYTES) {
+        error.value = 'Figures must be under 2 MB.';
         return;
     }
     (state.figures as FigureState[])[index].file = file;
@@ -372,6 +393,10 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
   }
   if(submissionsClosed) {
     error.value = 'The deadline for abstract submission has passed.';
+		return;
+  }
+  if(state.id && submissions.value?.find(s => s.id === state.id)?.status !== 'submitted') {
+    error.value = 'This submission can no longer be edited.';
 		return;
   }
 	try {
@@ -556,12 +581,14 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                                 :ui="{
                                   hint: 'text-sm wrap max-w-150'
                                 }"
-                                hint="Add between 3 and 5 keywords describing your abstract.">
+                                hint="Add between 3 and 5 keywords describing your abstract."
+                                description="Type each keyword followed by a comma.">
+                                
                                 <UInputTags
                                     v-model="state.keywords"
                                     :max="5"
                                     enterkeyhint="done"
-                                    placeholder="Type a keyword and press enter..."
+                                    
                                     class="w-75 md:w-100 lg:w-200"
                                     color="secondary"
                                     variant="subtle" />
@@ -636,7 +663,7 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                                 :ui="{
                                   hint: 'text-sm wrap max-w-150'
                                 }"
-                                hint="Optionally upload up to 3 figures (image files), each with a label.">
+                                hint="Optionally upload up to 3 figures (image files, max 2 MB each), each with a label.">
                                 <div v-for="(figure, index) in state.figures" :key="index" class="mb-3 flex flex-col md:flex-row gap-2 md:items-center p-2 rounded-lg border border-default">
                                     <div class="flex items-center gap-3">
                                         <img
@@ -661,12 +688,17 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                                             <span v-if="figureFileName(figure)" class="text-xs text-muted">{{ figureFileName(figure) }}</span>
                                         </div>
                                     </div>
-                                    <UInput v-model="figure.label" placeholder="Figure number as referenced in your asbtract." class="flex-1 font-serif" color="secondary" variant="subtle" />
+                                    <UInput v-model="figure.label" placeholder="" :ui="{ base: 'peer' }"  class="flex-2 font-serif" color="secondary" variant="subtle">
+                                    <label class="pointer-events-none absolute left-0 -top-2.5 text-highlighted text-xs font-medium px-1.5 transition-all peer-focus:-top-2.5 peer-focus:text-highlighted peer-focus:text-xs peer-focus:font-medium peer-placeholder-shown:text-sm peer-placeholder-shown:text-dimmed peer-placeholder-shown:top-1.5 peer-placeholder-shown:font-normal">
+                                      <span class="inline-flex bg-default px-1">Figure reference (1, 2a ...etc)</span>
+                                    </label>
+                                    </UInput>
                                     <UButton
                                         icon="i-lucide-trash"
-                                        variant="outline"
-                                        color="secondary"
+                                        variant="solid"
+                                        color="neutral"
                                         type="button"
+                                        class="w-fit"
                                         size="xl"
                                         @click="() => { state.figures!.splice(index, 1); revalidateFigures(); }">
                                     </UButton>
@@ -709,7 +741,7 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
         <div class="flex flex-col items-center justify-center gap-4 p-4">
             <Headline headline="Abstract Submissions"/> 
                     <p v-if="submissionsClosed" class="text-muted">
-                        Abstract submissions are closed.
+                        The deadline for abstract submissions has passed.
                     </p>
                     <template v-else>
                         <UButton
