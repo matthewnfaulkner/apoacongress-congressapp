@@ -11,7 +11,8 @@ export default defineEventHandler(async (event) => {
 			event.path.startsWith('/admin_login') ||
 			event.path.startsWith('/login') ||
 			event.path.startsWith('/no-access') ||
-            event.path.startsWith('/logout')
+            event.path.startsWith('/logout') ||
+			event.path.startsWith('/preview')
 		) {
 			return
 		}

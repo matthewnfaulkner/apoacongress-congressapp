@@ -34,7 +34,8 @@ export default defineNuxtConfig({
 
 		// User-specific pages — nothing to gain from caching
 		'/support/**': { isr: false },
-
+		'/people/**': { isr: false },
+		
 		// Cache all page routes
 		'/**': { isr: 60 },
 	},
@@ -214,7 +215,7 @@ export default defineNuxtConfig({
 		strategy: 'prefix_except_default',
 		locales: [
 		{ name:'en', code: 'en', language: 'en-US', file: 'en.json'},
-		{ name:'tw', code: 'zh_tw', language: 'zh_tW', file: 'tw.json'}
+		//{ name:'tw', code: 'zh_tw', language: 'zh_tW', file: 'tw.json'}
 		],
 		defaultLocale: 'en',
 	},
@@ -247,7 +248,7 @@ export default defineNuxtConfig({
 			// 1. Fetch Pages and Posts in parallel via standard fetch
 			// (This avoids issues with SDK initialization inside the config file)
 			const [pagesRes, postsRes] = await Promise.all([
-			fetch(`${directusUrl}/items/pages?fields=permalink&limit=-1`, {
+			fetch(`${directusUrl}/items/pages?filter[status][_eq]=published&fields=permalink&limit=-1`, {
 				headers: token ? { Authorization: `Bearer ${token}` } : {}
 			}),
 			fetch(`${directusUrl}/items/posts?filter[status][_eq]=published&fields=slug&limit=-1`, {
