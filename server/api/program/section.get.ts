@@ -9,31 +9,10 @@ const sectionFields = [
     { day: ['*'] },
     {
         events: [
-            'id', 'relative_start', 'duration', 'title',
-            {
-                type: ['id', 'collection', {
-                    item: {
-                        plenaries: ['id', 'topic'],
-                        symposiums: ['*'],
-                        workshops: ['id'],
-                        talks: ['id', 'topic'],
-                    },
-                }],
-            },
+            'id', 'relative_start', 'duration', 'title', 'type', 'topic', 'price',
             {
                 children: [
-                    'id', 'relative_start', 'duration', 'title',
-                    {
-                        type: ['id', 'collection', {
-                            item: {
-                                plenaries: ['id', 'topic'],
-                                discussions: ['id', 'topic'],
-                                symposiums: ['*'],
-                                workshops: ['id'],
-                                talks: ['id', 'topic'],
-                            },
-                        }],
-                    },
+                    'id', 'relative_start', 'duration', 'title', 'type', 'topic', 'price',
                     { assignments: ['*', { person: ['id', 'first_name', 'last_name', 'country'] }, { role: ['*'] }] },
                 ],
             },

@@ -84,7 +84,7 @@ const sessions: SessionEntry[] =
 		children: session?.events?.map<EventEntry>(myevent => ({
 			id: myevent.id,
 			time: addMinutesToTime(session?.starttime || '', (myevent?.relative_start || 0)),
-			topic: myevent.type ? myevent.type[0] : {},
+			topic: myevent,
 			color: tagColor,
 			roles: myevent.assignments.flatMap(assignment => {
 				return assignment;
@@ -92,7 +92,7 @@ const sessions: SessionEntry[] =
 			children: myevent.children.map<EventEntry>(child => ({
 				id: child.id,
 				time: addMinutesToTime(session?.starttime || '', (myevent?.relative_start + child?.relative_start)),
-				topic: child.type ? child.type[0] : {},
+				topic: child,
 				color: tagColor,
 				roles: child.assignments.flatMap(assignment => {
 					return assignment
@@ -147,7 +147,7 @@ type SessionEntry = {
 type EventEntry = {
   id: string
   time: string | number | null
-  topic: string | null | undefined
+  topic: CongressEvent | null | undefined
   roles: string[]	 | null | undefined | Assignment[]
   color: string | null | undefined;
   children?: EventEntry[]
@@ -201,13 +201,13 @@ const columns: TableColumn<SessionEntry>[] = [
 					].filter(Boolean)
 				)
 			}else{
-				 return h(BaseEventType, 
+				 return h(BaseEventType,
 					{
 						style: {
 							paddingLeft: `${row.depth}rem`,
 							fontWeight,
 							},
-					type: row.getValue('topic') as {id: string, collection: string, item: []}
+					event: row.getValue('topic') as CongressEvent
 					}
 				)
 			}

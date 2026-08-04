@@ -11,10 +11,20 @@ async function handler(event: H3Event) {
 			directusServer.request(
 				sessionToken
 					? withToken(sessionToken, readSingleton('globals', {
-						fields: ['title', 'description', 'logo', 'logo_dark_mode', 'social_links', 'accent_color', 'favicon'],
+						fields: [
+							'title', 'description', 'social_links', 'accent_color',
+							{ logo: ['id', 'filename_download', 'type'] },
+							{ logo_dark_mode: ['id', 'filename_download', 'type'] },
+							{ favicon: ['id', 'filename_download', 'type'] },
+						],
 					}))
 					: readSingleton('globals', {
-						fields: ['title', 'description', 'logo', 'logo_dark_mode', 'social_links', 'accent_color', 'favicon'],
+						fields: [
+							'title', 'description', 'social_links', 'accent_color',
+							{ logo: ['id', 'filename_download', 'type'] },
+							{ logo_dark_mode: ['id', 'filename_download', 'type'] },
+							{ favicon: ['id', 'filename_download', 'type'] },
+						],
 					}),
 			),
 			directusServer.request(
@@ -32,28 +42,64 @@ async function handler(event: H3Event) {
 				sessionToken
 					? withToken(sessionToken, readItem('sites', config.public.siteId, {
 						fields: [
-							'title', 'description', 'logo', 'logo_dark_mode', 'social_links', 'preview', 'favicon',
+							'title', 'description', 'social_links', 'preview',
+							{ logo: ['id', 'filename_download', 'type'] },
+							{ logo_dark_mode: ['id', 'filename_download', 'type'] },
+							{ favicon: ['id', 'filename_download', 'type'] },
 							{
 								'congress': [
 									'*',
 									{ days: ['key', 'title'] },
 									{ 'venue': ['id', 'title'] },
-									{ organisations: ['*', { organisation: ['id', 'type', 'name', 'short_name', 'abbr', 'logo'] }] },
-									{ 'organiser': ['id', 'name', 'email', 'logo', 'address', 'phone'] },
+									{
+										organisations: [
+											'*',
+											{
+												organisation: [
+													'id', 'type', 'name', 'short_name', 'abbr',
+													{ logo: ['id', 'filename_download', 'type'] },
+												],
+											},
+										],
+									},
+									{
+										'organiser': [
+											'id', 'name', 'email', 'address', 'phone',
+											{ logo: ['id', 'filename_download', 'type'] },
+										],
+									},
 								],
 							},
 						],
 					}))
 					: readItem('sites', config.public.siteId, {
 						fields: [
-							'title', 'description', 'logo', 'logo_dark_mode', 'social_links', 'preview', 'favicon',
+							'title', 'description', 'social_links', 'preview',
+							{ logo: ['id', 'filename_download', 'type'] },
+							{ logo_dark_mode: ['id', 'filename_download', 'type'] },
+							{ favicon: ['id', 'filename_download', 'type'] },
 							{
 								'congress': [
 									'*',
 									{ days: ['key', 'title'] },
 									{ 'venue': ['id', 'title'] },
-									{ organisations: ['*', { organisation: ['id', 'type', 'name', 'short_name', 'abbr', 'logo'] }] },
-									{ 'organiser': ['id', 'name', 'email', 'logo', 'address', 'phone'] },
+									{
+										organisations: [
+											'*',
+											{
+												organisation: [
+													'id', 'type', 'name', 'short_name', 'abbr',
+													{ logo: ['id', 'filename_download', 'type'] },
+												],
+											},
+										],
+									},
+									{
+										'organiser': [
+											'id', 'name', 'email', 'address', 'phone',
+											{ logo: ['id', 'filename_download', 'type'] },
+										],
+									},
 								],
 							},
 						],

@@ -25,7 +25,8 @@ async function handler(event: H3Event) {
 			{
 				organisation: [
 					'id', 'name', 'short_name', 'abbr', 'address', 'phone',
-					'email', 'logo', 'website', 'type', 'description',
+					'email', 'website', 'type', 'description',
+					{ logo: ['id', 'filename_download', 'type'] },
 					{
 						apoa_section_details: [
 							'id',
@@ -44,7 +45,8 @@ async function handler(event: H3Event) {
 															{
 																persons_id: [
 																	'id', 'first_name', 'last_name', 'title',
-																	'qualifications', 'image', 'country', 'bio',
+																	'qualifications', 'country', 'bio',
+																	{ image: ['id', 'filename_download', 'type'] },
 																],
 															},
 														],

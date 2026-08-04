@@ -26,13 +26,13 @@ async function handler(event: H3Event) {
 					? withToken(sessionToken, readItems('posts', {
 						limit, page,
 						sort: ['-published_at'],
-						fields: ['id', 'title', 'description', 'slug', 'image'],
+						fields: ['id', 'title', 'description', 'slug', { image: ['id', 'filename_download', 'type'] }],
 						filter: { status: { _eq: 'published' } },
 					}))
 					: readItems('posts', {
 						limit, page,
 						sort: ['-published_at'],
-						fields: ['id', 'title', 'description', 'slug', 'image'],
+						fields: ['id', 'title', 'description', 'slug', { image: ['id', 'filename_download', 'type'] }],
 						filter: { status: { _eq: 'published' } },
 					}),
 			),

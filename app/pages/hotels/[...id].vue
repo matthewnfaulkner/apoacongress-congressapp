@@ -34,10 +34,6 @@ const mapsUrl = computed(() => {
 	return `https://www.google.com/maps/search/?api=1&query=${hotel.value.name},${lat},${lng}`;
 });
 
-const {
-	public: { directusUrl },
-} = useRuntimeConfig();
-
 const hotelUrl = useRequestURL();
 useSeoMeta({
 	title: hotel.value.name ?? '',
@@ -88,9 +84,10 @@ useSeoMeta({
 					</div>
 				</template>
 
-				<NuxtImg
+				<DirectusImage
 					v-if="hotel.image"
-					:src="typeof hotel.image === 'string' ? `${directusUrl}/assets/${hotel.image}` : `${directusUrl}/assets/${(hotel.image as any).id}`"
+					:uuid="hotel.image"
+					:alt="hotel.name ?? ''"
 					class="rounded-lg object-cover h-64 w-full"
 					loading="lazy"
 				/>

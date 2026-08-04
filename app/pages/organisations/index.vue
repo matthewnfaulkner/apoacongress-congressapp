@@ -80,7 +80,7 @@ useSeoMeta({
 							
 							<DirectusImage
 								v-if="org.logo"
-								:uuid="typeof org.logo === 'string' ? org.logo : (org.logo as any).id"
+								:uuid="org.logo"
 								:alt="org.name ?? ''"
 								class="h-16 object-contain mx-auto"
 								loading="lazy"

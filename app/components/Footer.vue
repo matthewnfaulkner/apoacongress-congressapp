@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { getDirectusAssetURL } from '@@/server/utils/directus-utils';
+
 export interface SocialLink {
 	service: string;
 	url: string;
@@ -18,14 +20,14 @@ export interface FooterProps {
 		items: NavigationItem[];
 	};
 	site: {
-		logo?: string | null;
-		logo_dark_mode?: string | null;
+		logo?: DirectusFile | string | null;
+		logo_dark_mode?: DirectusFile | string | null;
 		description?: string | null;
 		social_links?: SocialLink[];
 	},
 	organiser : {
 		id: string;
-		logo?: string | null;
+		logo?: DirectusFile | string | null;
 		name?: string | null;
 		email?: string | null;
 		address?: string | null;
@@ -35,23 +37,16 @@ export interface FooterProps {
 }
 
 const props = defineProps<FooterProps>();
-const runtimeConfig = useRuntimeConfig();
 
 // Using template ref to expose the footer to the layout for visual editing
 const footerRef = useTemplateRef('footerRef');
 defineExpose({ footerRef });
 
-const lightLogoUrl = computed(() =>
-	props.site.logo ? `${runtimeConfig.public.directusUrl}/assets/${props.site.logo}` : '/images/logo.svg',
-);
+const lightLogoUrl = computed(() => getDirectusAssetURL(props.site.logo) || '/images/logo.svg');
 
-const OrgLogoUrl = computed(() =>
-	props.organiser.logo ? `${runtimeConfig.public.directusUrl}/assets/${props.organiser.logo}` : '/images/logo.svg',
-);
+const OrgLogoUrl = computed(() => getDirectusAssetURL(props.organiser.logo) || '/images/logo.svg');
 
-const darkLogoUrl = computed(() =>
-	props.site.logo_dark_mode ? `${runtimeConfig.public.directusUrl}/assets/${props.site.logo_dark_mode}` : '',
-);
+const darkLogoUrl = computed(() => getDirectusAssetURL(props.site.logo_dark_mode));
 </script>
 
 <template>

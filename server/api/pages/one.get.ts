@@ -49,7 +49,19 @@ const pageFields = [
 							]
 						}
 					],
-					block_gallery: ['id', 'tagline', 'headline', { items: ['id', 'directus_file', 'sort', 'caption'] }],
+					block_gallery: [
+						'id',
+						'tagline',
+						'headline',
+						{
+							items: [
+								'id',
+								'sort',
+								'caption',
+								{ directus_file: ['id', 'filename_download', 'type'] },
+							],
+						},
+					],
 					block_pricing: [
 						'id',
 						'tagline',
@@ -68,7 +80,8 @@ const pageFields = [
 														'*',
 														{
 															hotel: [
-																'*'
+																'*',
+																{ image: ['id', 'filename_download', 'type'] },
 															]
 														}
 													]
@@ -90,6 +103,7 @@ const pageFields = [
 					],
 					block_hero: [
 						'*',
+						{ image: ['id', 'filename_download', 'type'] },
 						{
 							button_group: [
 								'id',
@@ -101,6 +115,8 @@ const pageFields = [
 					],
 					block_mainhero: [
 						'*',
+						{ image: ['id', 'filename_download', 'type'] },
+						{ logo: ['id', 'filename_download', 'type'] },
 						{
 							announcements: ['headline', 'content']
 						},
@@ -108,9 +124,9 @@ const pageFields = [
 							partners: [
 								'*',
 								{
-									'organisation' : ['*']
+									'organisation' : ['*', { logo: ['id', 'filename_download', 'type'] }]
 								}
-								
+
 							]
 						},
 						{
@@ -186,14 +202,8 @@ const pageFields = [
 														members: [
 															{
 															persons_id:[
-																'id',
-																'title',
-																'first_name',
-																'last_name',
-																'qualifications',
-																'country',
-																'image',
-																'bio'
+																'*',
+																{ image: ['id', 'filename_download', 'type'] },
 															]
 															}
 														]
@@ -210,7 +220,8 @@ const pageFields = [
 													'*',
 													{
 														person: [
-															'*'
+															'*',
+															{ image: ['id', 'filename_download', 'type'] },
 														]
 													}
 												]
@@ -223,7 +234,8 @@ const pageFields = [
 															'id',
 															{
 																person : [
-																	'*'
+																	'*',
+																	{ image: ['id', 'filename_download', 'type'] },
 																]
 															},
 															{
@@ -246,7 +258,8 @@ const pageFields = [
 																	'id',
 																	{
 																		person: [
-																			'*'
+																			'*',
+																			{ image: ['id', 'filename_download', 'type'] },
 																		]
 																	}
 																]
@@ -283,7 +296,7 @@ const pageFields = [
 												'id',
 												'first_name',
 												'last_name',
-												'image'
+												{ image: ['id', 'filename_download', 'type'] },
 											]
 										}
 									]
@@ -312,7 +325,8 @@ const pageFields = [
 										'*',
 										{
 											sponsor:[
-												'*'
+												'*',
+												{ logo: ['id', 'filename_download', 'type'] },
 											]
 										},
 										{
@@ -469,7 +483,14 @@ async function handler(event: H3Event) {
 					// Always fetch published posts only (no preview mode for dynamic content)
 					const posts: Post[] = await directusServer.request(
 						readItems('posts', {
-							fields: ['id', 'title', 'description', 'slug', 'image', 'published_at'],
+							fields: [
+								'id',
+								'title',
+								'description',
+								'slug',
+								'published_at',
+								{ image: ['id', 'filename_download', 'type'] },
+							],
 							filter: { status: { _eq: 'published' } },
 							sort: ['-published_at'],
 							limit,

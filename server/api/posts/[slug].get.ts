@@ -3,8 +3,9 @@ import type { H3Event } from 'h3';
 
 const postFields = [
 	'id', 'title', 'content', 'status', 'published_at',
-	'image', 'description', 'slug', 'seo',
-	{ author: ['id', 'first_name', 'last_name', 'avatar'] },
+	'description', 'slug', 'seo',
+	{ image: ['id', 'filename_download', 'type'] },
+	{ author: ['id', 'first_name', 'last_name', { avatar: ['id', 'filename_download', 'type'] }] },
 ];
 
 const config = useRuntimeConfig();
@@ -79,12 +80,12 @@ async function handler(event: H3Event) {
 			sessionToken
 				? withToken(sessionToken, readItems('posts', {
 					filter: { slug: { _neq: slug }, status: { _eq: 'published' } },
-					fields: ['id', 'title', 'image', 'slug'],
+					fields: ['id', 'title', 'slug', { image: ['id', 'filename_download', 'type'] }],
 					limit: 2,
 				}))
 				: readItems('posts', {
 					filter: { slug: { _neq: slug }, status: { _eq: 'published' } },
-					fields: ['id', 'title', 'image', 'slug'],
+					fields: ['id', 'title', 'slug', { image: ['id', 'filename_download', 'type'] }],
 					limit: 2,
 				}),
 		);

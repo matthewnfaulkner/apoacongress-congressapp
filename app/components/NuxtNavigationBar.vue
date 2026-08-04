@@ -173,7 +173,7 @@ const availableLocales = computed(() => {
 // Props already defined
 const props = defineProps<{
   navigation: { items: NavigationItem[] };
-  site: { logo?: string; logo_dark_mode?: string, title?: string };
+  site: { logo?: DirectusFile | string | null; logo_dark_mode?: DirectusFile | string | null, title?: string };
 }>();
 
 
@@ -181,9 +181,7 @@ const runtimeConfig = useRuntimeConfig();
 
 const loginUrl = computed(() => runtimeConfig.public.loginUrl + `?redirect=${path.value}` || '');
 // Logo URLs
-const lightLogoUrl = computed(() =>
-  props.site?.logo ? `${runtimeConfig.public.directusUrl}/assets/${props.site.logo}` : '/images/logo.svg'
-);
+const lightLogoUrl = computed(() => getDirectusAssetURL(props.site?.logo) || '/images/logo.svg');
 
 const siteTitle = computed(() => {
 	return props.site.title;

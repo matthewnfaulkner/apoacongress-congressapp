@@ -1,7 +1,7 @@
 <script setup lang="ts" >
 
 interface ProfileImageProps {
-	image: string,
+	image: DirectusFile | string | null | undefined,
 }
 
 const props = defineProps<ProfileImageProps>();

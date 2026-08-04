@@ -8,5 +8,15 @@ export function getDirectusAssetURL(fileOrString: string | DirectusFile | null |
 		return `${directusUrl}/assets/${fileOrString}`;
 	}
 
+	if (fileOrString.filename_download) {
+
+		const extension = fileOrString.filename_download?.includes('.')
+			? fileOrString.filename_download.split('.').pop()
+			: fileOrString.type?.split('/').pop(); // fallback: derive from MIME type if no extension in filename
+
+		return `${directusUrl}/assets/${fileOrString.id}.${extension}`
+
+	}
+	
 	return `${directusUrl}/assets/${fileOrString.id}`;
 }

@@ -3,7 +3,7 @@ import { getDirectusAssetURL } from '@@/server/utils/directus-utils';
 import { watch, ref } from 'vue';
 
 interface DirectusImageProps {
-	uuid: string;
+	uuid: DirectusFile | string | null | undefined;
 	alt: string;
 	width?: number;
 	height?: number;

@@ -3,7 +3,8 @@ import type { H3Event } from 'h3';
 
 const personFields = [
 	'title', 'id', 'country', 'first_name', 'last_name',
-	'qualifications', 'image', 'bio', 'affiliations',
+	'qualifications', 'bio', 'affiliations',
+	{ image: ['id', 'filename_download', 'type'] },
 	{
 		committee_positions: [{
 			committee_positions_id: [
@@ -17,30 +18,10 @@ const personFields = [
 			'id',
 			{
 				event: [
-					'id', 'title', 'relative_start', 'duration',
-					{
-						type: ['id', 'collection', {
-							item: {
-								plenaries: ['id', 'topic'],
-								symposiums: ['*'],
-								workshops: ['id'],
-								talks: ['id', 'topic'],
-							},
-						}],
-					},
+					'id', 'title', 'relative_start', 'duration', 'type', 'topic', 'price',
 					{
 						parent: [
-							'id', 'title', 'relative_start', 'duration',
-							{
-								type: ['id', 'collection', {
-									item: {
-										plenaries: ['id', 'topic'],
-										symposiums: ['*'],
-										workshops: ['id'],
-										talks: ['id', 'topic'],
-									},
-								}],
-							},
+							'id', 'title', 'relative_start', 'duration', 'type', 'topic', 'price',
 							{ session: ['*', { schedule: ['*', { day: ['*'] }] }, { room: ['*'] }, { section: ['*'] }] },
 						],
 					},

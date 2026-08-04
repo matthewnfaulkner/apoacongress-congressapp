@@ -18,7 +18,12 @@ async function handler(event: H3Event) {
 		fields: [
 			'sort',
 			'partnership_type',
-			{ organisation: ['id', 'name', 'short_name', 'abbr', 'logo', 'website', 'type', 'description'] },
+			{
+				organisation: [
+					'id', 'name', 'short_name', 'abbr', 'website', 'type', 'description',
+					{ logo: ['id', 'filename_download', 'type'] },
+				],
+			},
 		] as any,
 		sort: ['sort'],
 		limit: -1,

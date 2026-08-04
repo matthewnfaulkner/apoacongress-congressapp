@@ -689,6 +689,19 @@ export interface Congress {
 	hotels?: CongressHotel[] | string[] | null;
 	organisations?: CongressOrganisation[] | string[] | null;
 	vouchers?: CongressVoucher[] | string[] | null;
+	key_dates?: CongressKeyDate[] | string [] | null;
+}
+
+export interface CongressKeyDate {
+	id: string;
+	sort?: string | null;
+	congress?: Congress | string | null;
+	title: string;
+	date: string;
+	time?: string;
+	description?: string | null;
+	public?: boolean | null;
+	icon?: string | null;
 }
 
 export interface RegistrationCharge {
@@ -748,7 +761,6 @@ export interface CongressDay {
 
 export interface CongressDaySlot {
 	id: string;
-	title?: string | null;
 	sort?: string | null;
 	date_created?: string | null;
 	user_created?: DirectusUser | string | null;
@@ -770,6 +782,7 @@ export interface CongressBreak {
 	starttime?: string | null;
 	endtime?: string | null;
 	schedule?: CongressSchedule;
+	details?: string | null;
 	rooms?: CongressBreakRoom[]
 }
 
@@ -877,7 +890,7 @@ export interface ApoaSectionCommittee {
 	id: number;
 	section: ApoaSection | string | null;
 	committee: Committee | string | null;
-
+ 
 }
 
 export interface CongressEvent {
@@ -889,7 +902,10 @@ export interface CongressEvent {
 	date_updated?: string | null;
 	user_updated?: DirectusUser | string | null;
 	session: CongressSession;
-	type: CongressEventType[];
+	type: 'plenary' | 'symposium' | 'free_papers' | 'panel' | 'workshop' | 'discussion' | 'talk';
+	topic?: string | null;
+	price?: number | null;
+	abstract_submission?: AbstractSubmission | string | null;
 	assignments: Assignment[];
 	parent: CongressEvent;
 	children: CongressEvent[];
@@ -901,14 +917,6 @@ export interface CongressSociety {
 	id: string;
 	congress_id: string;
 	item?: ApoaSection;
-	/** @description The collection (type of block). */
-	collection?: string | null;
-}
-
-export interface CongressEventType {
-	id: string;
-	congress_events_id: string;
-	item?: Plenary | Workshop | Symposium | Talk | Discussion | FreePapers | string | null;
 	/** @description The collection (type of block). */
 	collection?: string | null;
 }
@@ -1443,72 +1451,7 @@ export interface Page {
 	site?: Site;
 }
 
-export interface Plenary {
-	id: string;
-	/** @description Smaller copy shown above the headline to label a section or add extra context. */
-	topic?: string,
-	sort?: string | null;
-	date_created?: string | null;
-	user_created?: DirectusUser | string | null;
-	date_updated?: string | null;
-	user_updated?: DirectusUser | string | null;
-}
 
-export interface Discussion {
-	id: string;
-	/** @description Smaller copy shown above the headline to label a section or add extra context. */
-	topic?: string,
-	sort?: string | null;
-	date_created?: string | null;
-	user_created?: DirectusUser | string | null;
-	date_updated?: string | null;
-	user_updated?: DirectusUser | string | null;
-}
-
-export interface FreePaper {
-	id: string;
-	sort?: string | null;
-	date_created?: string | null;
-	user_created?: DirectusUser | string | null;
-	date_updated?: string | null;
-	user_updated?: DirectusUser | string | null;
-	title?: string;
-	abstract?: AbstractSubmission | string | null;
-}
-
-export interface Symposium {
-	id: string;
-	/** @description Smaller copy shown above the headline to label a section or add extra context. */
-	topic?: string,
-	sort?: string | null;
-	date_created?: string | null;
-	user_created?: DirectusUser | string | null;
-	date_updated?: string | null;
-	user_updated?: DirectusUser | string | null;
-}
-
-export interface Talk {
-	id: string;
-	/** @description Smaller copy shown above the headline to label a section or add extra context. */
-	topic: string,
-	sort?: string | null;
-	date_created?: string | null;
-	user_created?: DirectusUser | string | null;
-	date_updated?: string | null;
-	user_updated?: DirectusUser | string | null;
-}
-
-export interface Workshop {
-	id: string;
-	/** @description Smaller copy shown above the headline to label a section or add extra context. */
-	name: string,
-	sort?: string | null;
-	date_created?: string | null;
-	user_created?: DirectusUser | string | null;
-	date_updated?: string | null;
-	user_updated?: DirectusUser | string | null;
-	price?: number | null;
-}
 export interface Post {
 	/** @description Rich text content of your blog post. */
 	content?: string | null;
@@ -2224,10 +2167,10 @@ export interface Schema {
 	congress_day_slots: CongressDaySlot[];
 	congress_events: CongressEvent[];
 	congress_event_types: CongressEventType[];
+	congress_key_dates: CongressKeyDate[];
 	congress_sessions: CongressSession[];
 	congress_sponsors: CongressSponsor[];
 	congress_sponsors_tiers: CongressSponsorTier[];
-	discussions: Discussion[];
 	form_fields: FormField[];
 	forms: Form[];
 	form_submissions: FormSubmission[];
@@ -2246,20 +2189,16 @@ export interface Schema {
 	persons: Person[];
 	assignments: Assignment[];
 	roles: Role[];
-	plenaries: Plenary[];
 	posts: Post[];
 	policies: Policy[];
 	user_policy_agreements: UserPolicyAgreement[];
 	redirects: Redirect[];
 	scientific_tags: ScientificTag[];
 	Sponsors: Sponsor[];
-	symposiums: Symposium[];
-	talks: Talk[];
 	venues: Venue[];
 	venue_rooms: VenueRoom[];
 	venue_visa_info: VenueVisaInfo[];
 	country_travel_info: CountryTravelInfo[];
-	workshops: Workshop[];
 	directus_access: DirectusAccess[];
 	directus_activity: DirectusActivity[];
 	directus_collections: DirectusCollection[];
@@ -2322,10 +2261,10 @@ export enum CollectionNames {
 	congress_day_slots = 'congress_day_slots',
 	congress_events = 'congress_events',
 	congress_event_types = 'congress_event_types',
+	congress_key_dates = 'congress_key_dates',
 	congress_sessions = 'congress_sessions',
 	congress_sponsors = 'congress_sponsors',
 	congress_sponsor_tiers = 'congress_sponsor_tiers',
-	disucssions = 'discussions',
 	form_fields = 'form_fields',
 	forms = 'forms',
 	form_submissions = 'form_submissions',
@@ -2344,20 +2283,16 @@ export enum CollectionNames {
 	persons = 'persons',
 	assignments = 'assignments',
 	roles = 'roles',
-	plenaries = 'plenaries',
 	posts = 'posts',
 	policies = 'policies',
 	user_policy_agreements = 'user_policy_agreements',
 	redirects = 'redirects',
 	scientific_tags = 'scientific_tags',
 	sponsors = 'sponsors',
-	symposiums = 'symposiums',
-	talks = 'talks',
 	venues = 'venues',
 	venue_rooms = 'venue_rooms',
 	venue_visa_info = 'venue_visa_info',
 	country_travel_info = 'country_travel_info',
-	workshops = 'workshops',
 	directus_access = 'directus_access',
 	directus_activity = 'directus_activity',
 	directus_collections = 'directus_collections',

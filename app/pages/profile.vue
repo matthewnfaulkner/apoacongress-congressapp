@@ -51,7 +51,7 @@ const personFields = [
     'first_name',
     'last_name',
     'email',
-    'avatar',
+    { avatar: ['id', 'filename_download', 'type'] },
     'has_subscription',
     'country',
     'membership_number',
@@ -75,9 +75,9 @@ const personFields = [
             'last_name',
             'title',
             'qualifications',
-            'image',
             'bio',
             'affiliations',
+            { image: ['id', 'filename_download', 'type'] },
             {
                 committee_positions:[
                     {
@@ -373,7 +373,7 @@ const person_events = computed(() => person.value ?
         const room = event?.parent ? session.room : session.room;
         return {
             parent: isSubEvent ? event.parent : null,
-            topic: event?.type ? event?.type[0] : {},
+            topic: event,
             title: isSubEvent ? `${event.title} - ${event.parent.title}` : `${event.title}`, 
             day: session?.schedule?.day?.title,
             startTime: isSubEvent ? 
@@ -414,7 +414,7 @@ type EventEntry = {
   id: string
   startTime: string | number | null
   endTime: string | null
-  topic: string | null | undefined
+  topic: CongressEvent | null | undefined
   role: string[]	 | null | undefined | Assignment[]
   color: string | null | undefined
   room: string
@@ -452,9 +452,9 @@ const columns: TableColumn<EventEntry>[] = [
 		accessorKey: 'topic',
 		header: 'Details',
         cell: ({ row }) => {
-                return h(BaseEventType, 
+                return h(BaseEventType,
                 {
-                type: row.getValue('topic') as {id: string, collection: string, item: []}
+                event: row.getValue('topic') as CongressEvent
                 }
             )
 		}
@@ -631,7 +631,7 @@ onMounted(async () => {
                         >
                             <DirectusImage
                                 v-if="profile.avatar"
-                                :uuid="typeof profile.avatar === 'string' ? profile.avatar : (profile.avatar as any).id"
+                                :uuid="profile.avatar"
                                 alt="Profile avatar"
                                 class="w-24 h-24 rounded-full object-cover ring-2 ring-accent/30"
                             />

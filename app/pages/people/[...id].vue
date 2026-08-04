@@ -71,7 +71,7 @@ const person_events = computed(() =>
         const room = event?.parent ? session.room : session.room;
         return {
             parent: isSubEvent ? event.parent : null,
-            topic: event?.type ? event?.type[0] : {},
+            topic: event,
             title: isSubEvent ? `${event.title} - ${event.parent.title}` : `${event.title}`, 
             day: session?.schedule?.day?.title,
             startTime: isSubEvent ? 
@@ -119,7 +119,7 @@ type EventEntry = {
   id: string
   startTime: string | number | null
   endTime: string | null
-  topic: string | null | undefined
+  topic: CongressEvent | null | undefined
   role: string[]	 | null | undefined | Assignment[]
   color: string | null | undefined
   room: string
@@ -157,9 +157,9 @@ const columns: TableColumn<EventEntry>[] = [
 		accessorKey: 'topic',
 		header: 'Details',
         cell: ({ row }) => {
-                return h(BaseEventType, 
+                return h(BaseEventType,
                 {
-                type: row.getValue('topic') as {id: string, collection: string, item: []}
+                event: row.getValue('topic') as CongressEvent
                 }
             )
 		}

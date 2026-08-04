@@ -65,7 +65,7 @@ useSeoMeta({
 					"
 				>
 					<DirectusImage
-						:uuid="post.image as string"
+						:uuid="post.image"
 						:alt="post.title || 'post header image'"
 						class="object-cover w-full h-full"
 						sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 1200px"
@@ -138,7 +138,7 @@ useSeoMeta({
 							>
 								<div v-if="relatedPost.image" class="relative shrink-0 w-[150px] h-[100px] overflow-hidden rounded-lg">
 									<DirectusImage
-										:uuid="relatedPost.image as string"
+										:uuid="relatedPost.image"
 										:alt="relatedPost.title || 'related post image'"
 										class="object-cover transition-transform duration-300 group-hover:scale-110"
 										fill

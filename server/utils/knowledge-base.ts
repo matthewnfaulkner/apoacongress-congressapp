@@ -67,7 +67,7 @@ export async function getEmbeddings(texts: string[], apiKey: string): Promise<nu
 export async function fetchKnowledgeChunks(siteId: string): Promise<KnowledgeChunk[]> {
 	const chunks: KnowledgeChunk[] = [];
 
-	// --- Congress general info, venue & charges ---
+	// --- Congress general info, venue, charges & key dates ---
 	const congressData = await directusServer.request(
 		readItems('congress', {
 			filter: { site: { _eq: siteId } } as any,
@@ -79,8 +79,12 @@ export async function fetchKnowledgeChunks(siteId: string): Promise<KnowledgeChu
 				'enddate',
 				{ venue: ['id', 'title', 'airport_codes', { rooms: ['id', 'title'] }] },
 				{ charges: ['id', 'delegate', 'category', 'sub_category', 'price'] },
-				{ abstracts: ['id', 'submission_deadline', 'submission_limit', 'description', 'categories']}
+				{ abstracts: ['id', 'submission_deadline', 'submission_limit', 'description', 'categories']},
+				{ key_dates: ['id', 'title', 'date', 'time', 'description', 'icon'] },
 			] as any,
+			deep: {
+				key_dates: { _filter: { public: { _eq: true } } },
+			} as any,
 		}),
 	);
 
@@ -121,6 +125,20 @@ export async function fetchKnowledgeChunks(siteId: string): Promise<KnowledgeChu
 				].filter(Boolean)
 				.join('\n'),
 				metadata: { type: 'abstracts', title: congress.title + ' Abstracts / Free Papers' },
+			});
+		}
+
+		if (Array.isArray(congress.key_dates) && congress.key_dates.length > 0) {
+			const keyDateLines = congress.key_dates
+				.map((k: any) => {
+					const when = [k.date, k.time].filter(Boolean).join(' ');
+					return `${k.title}${when ? ` — ${when}` : ''}${k.description ? `: ${k.description}` : ''}`;
+				})
+				.join('\n');
+			chunks.push({
+				id: 'congress-key-dates',
+				content: `Key Dates:\n${keyDateLines}`,
+				metadata: { type: 'key_dates', title: congress.title + ' Key Dates' },
 			});
 		}
 

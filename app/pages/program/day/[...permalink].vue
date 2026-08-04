@@ -113,7 +113,7 @@ const tabs: TabsItem[] = rooms.map(room => {
       children: session?.events?.map<EventEntry>(myevent => ({
         id: myevent.id,
         time: addMinutesToTime(session?.starttime || '', myevent?.relative_start || 0),
-        topic: myevent?.type ? myevent?.type[0] : {},
+        topic: myevent,
         color: tagColor,
         active: eventId === myevent.id,
         roles: myevent.assignments.flatMap(assignment => assignment),
@@ -121,7 +121,7 @@ const tabs: TabsItem[] = rooms.map(room => {
           id: child.id,
           active: eventId === child.id,
           time: addMinutesToTime(session?.starttime || '', (myevent?.relative_start || 0) + (child?.relative_start || 0)),
-          topic: child?.type ? child?.type[0] : {},
+          topic: child,
           color: tagColor,
           roles: child.assignments.flatMap(assignment => assignment)
         })) ?? []
@@ -158,7 +158,7 @@ type SessionEntry = {
 type EventEntry = {
   id: string
   time: string | number | null
-  topic: string | null | undefined
+  topic: CongressEvent | null | undefined
   roles: string[]	 | null | undefined | Assignment[]
   color: string | null | undefined;
   children?: EventEntry[]
@@ -210,14 +210,14 @@ const columns: TableColumn<SessionEntry>[] = [
 					].filter(Boolean)
 				)
 			}else{
-				 return h(BaseEventType, 
+				 return h(BaseEventType,
 					{
 						class: 'wrap-break-word text-wrap',
 						style: {
 							paddingLeft: `${row.depth}rem`,
 							fontWeight,
 							},
-					type: row.getValue('topic') as {id: string, collection: string, item: []}
+					event: row.getValue('topic') as CongressEvent
 					}
 				)
 			}

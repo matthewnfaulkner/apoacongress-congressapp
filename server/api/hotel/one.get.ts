@@ -19,7 +19,8 @@ async function handler(event: H3Event) {
 		} as any,
 		fields: [
 			'id', 'name', 'star_rating', 'website', 'phone',
-			'address', 'image', 'rooms', 'location', 'ammenities',
+			'address', 'rooms', 'location', 'ammenities',
+			{ image: ['id', 'filename_download', 'type'] },
 			{ congresses: ['directions'] },
 		] as any,
 	};

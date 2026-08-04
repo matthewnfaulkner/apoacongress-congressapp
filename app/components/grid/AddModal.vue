@@ -64,28 +64,9 @@ const { data } = await useAsyncData <CongressEvent[]>('congress_events', async()
 										'title',
 										'relative_start',
 										'duration',
-										{
-                      type: [
-                        'id',
-                        'collection',
-                        {
-                          item: {
-                            plenaries: [
-                              '*'
-                            ],
-                            symposiums: [
-                              '*'
-                            ],
-                            workshops: [
-                              '*'
-                            ],
-                            talks: [
-                              '*'
-                            ],
-                          }
-                        },
-                      ]
-                    },
+										'type',
+										'topic',
+										'price',
 										{
 											assignments: [
                           'id',
@@ -106,28 +87,9 @@ const { data } = await useAsyncData <CongressEvent[]>('congress_events', async()
 										}
 									]
 								},
-									{
-										type: [
-											'id',
-											'collection',
-											{
-												item: {
-                          plenaries: [
-                            '*'
-                          ],
-                          symposiums: [
-                            '*'
-                          ],
-                          workshops: [
-                            '*'
-                          ],
-                          talks: [
-                            '*'
-                          ],
-                        }
-											},
-										]
-									},
+									'type',
+									'topic',
+									'price',
 									{
 										assignments: [
                       'id',
@@ -192,7 +154,7 @@ const eventItems = computed(() => {
     defaultExpanded: true,
     id: event.id,
     title: event?.title,
-    topic: event?.type[0],
+    topic: event,
     event: event,
     roles: event.assignments.flatMap(assignment => {
 					return assignment
@@ -206,7 +168,7 @@ const eventItems = computed(() => {
       defaultExpanded: true,
       id: childevent.id,
       title: childevent?.title,
-      topic: childevent?.type[0],
+      topic: childevent,
       roles: childevent.assignments.flatMap(assignment => {
 					return assignment
 				})
@@ -217,7 +179,7 @@ const eventItems = computed(() => {
 interface EventEntry {
     id: string;
     title: string;
-    topic: string;
+    topic: CongressEvent;
     startTime: string;
     endTime: string;
     children: EventEntry[];
@@ -298,9 +260,9 @@ const columns: TableColumn<EventEntry>[] = [
 		accessorKey: 'topic',
 		header: 'Topic',
     cell: ({row}) => {
-      return h(BaseEventType, 
+      return h(BaseEventType,
         {
-          type: row.getValue('topic') as {id: string, collection: string, item: []}
+          event: row.getValue('topic') as CongressEvent
         }
       )
     }
