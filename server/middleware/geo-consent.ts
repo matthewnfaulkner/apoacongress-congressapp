@@ -38,11 +38,13 @@ export default defineEventHandler((event) => {
 	if (existingConsent !== undefined) return
 
 	// Pre-accept all cookies for regions that don't require a banner.
-	// ncc_c = all cookie IDs concatenated (how nuxt-cookie-control tracks "all accepted")
-	// ncc_e = enabled cookie IDs joined by "~"
-	const config = useRuntimeConfig();
-	const allIds = config.sessionTokenName + 'pa';
-	const enabledIds = config.sessionTokenName + '~pa';
+	// Values must match what nuxt-cookie-control itself computes (see its plugin.js:
+	// isConsentGiven is a strict equality check against getAllCookieIdsString), so derive
+	// them from the same cookieControl config instead of hand-reconstructing the IDs.
+	const moduleOptions = useRuntimeConfig().public.cookieControl as any
+	const cookieIds = [...moduleOptions.cookies.necessary, ...moduleOptions.cookies.optional].map((c: any) => c.id)
+	const allIds = cookieIds.join('')
+	const enabledIds = cookieIds.join('~')
 
 	const cookieOptions = {
 		path: '/',

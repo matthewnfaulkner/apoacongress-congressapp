@@ -81,7 +81,8 @@ onMounted(() => {
 </script>
 
 <template>
-	<UError  v-if="siteError" :error="{
+	<UError  
+		v-if="siteError" :error="{
 			statusCode: 404,
 			statusMessage: 'Error',
 			message: 'We are unable to complete your request, please try again later.'
@@ -106,6 +107,7 @@ onMounted(() => {
 			<NuxtPage class="min-h-lvh text-left justify-start" />
 			<ClientOnly>
 				<Assistant v-if="auth.isAuthenticated"/>
+				<PolicyConsentModal v-if="showContent" />
 			</ClientOnly>
 		</div>
 		<Footer

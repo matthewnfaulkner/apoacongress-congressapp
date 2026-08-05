@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import type { Page, PageBlock } from '#shared/types/schema';
 import { withLeadingSlash, withoutTrailingSlash } from 'ufo';
-import { useToast } from '@nuxt/ui/runtime/composables/useToast.js';
-import { useAuthStore } from '~/stores/auth';
 
 definePageMeta({
   layout: 'login',

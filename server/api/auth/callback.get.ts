@@ -6,10 +6,11 @@ export default defineEventHandler(async (event) => {
 	if (!config.authExchangeSecret) {
 		throw createError({ statusCode: 500, statusMessage: 'AUTH_EXCHANGE_SECRET not configured' });
 	}
-
+	
 	// Directus is on a different domain so its cookie won't cross to this domain.
 	// Read the refresh token from the query string instead (passed by Directus in the redirect URL).
 	const query = getQuery(event);
+
 	const refreshToken = query.token as string | undefined
 		?? query.refresh_token as string | undefined
 		?? parseCookies(event)[config.refreshTokenName];
