@@ -415,16 +415,18 @@ async function handler(event: H3Event) {
 				page = (await directusServer.request(
 					withToken(
 						token ?? sessionToken as string,
-						readItem('pages', pageId, {
-							version: String(version),
-							fields: pageFields as any,
-							// Deep query options for complex nested data:
-							// - Sort blocks by their sort order
-							// - Filter out hidden blocks
-							deep: {
-								blocks: { _sort: ['sort'], _filter: { hide_block: { _neq: true } } },
-							},
-						}),
+						withSearch(
+							readItem('pages', pageId, {
+								version: String(version),
+								fields: pageFields as any,
+								// Deep query options for complex nested data:
+								// - Sort blocks by their sort order
+								// - Filter out hidden blocks
+								deep: {
+									blocks: { _sort: ['sort'], _filter: { hide_block: { _neq: true } } },
+								},
+							}),
+						),
 					),
 				)) as unknown as Page;
 			} catch (versionError) {
@@ -439,19 +441,21 @@ async function handler(event: H3Event) {
 			const pageData = await directusServer.request(
 				withToken(
 					(token ?? sessionToken) as string,
-					readItems('pages', {
-						filter: token 
-							? { permalink: { _eq: permalink }, site : {id: {_eq: config.public.siteId} }}
-							: { permalink: { _eq: permalink }, status: { _eq: 'published' }, site : {id: {_eq: config.public.siteId} } },
-						limit: 1,
-						fields: pageFields as any,
-						// Deep query options for complex nested data:
-						// - Sort blocks by their sort order
-						// - Filter out hidden blocks
-						deep: {
-							blocks: { _sort: ['sort'], _filter: { hide_block: { _neq: true } } },
-						},
-					}),
+					withSearch(
+						readItems('pages', {
+							filter: token
+								? { permalink: { _eq: permalink }, site : {id: {_eq: config.public.siteId} }}
+								: { permalink: { _eq: permalink }, status: { _eq: 'published' }, site : {id: {_eq: config.public.siteId} } },
+							limit: 1,
+							fields: pageFields as any,
+							// Deep query options for complex nested data:
+							// - Sort blocks by their sort order
+							// - Filter out hidden blocks
+							deep: {
+								blocks: { _sort: ['sort'], _filter: { hide_block: { _neq: true } } },
+							},
+						}),
+					),
 				),
 			);
 

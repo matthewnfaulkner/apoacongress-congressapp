@@ -14,6 +14,7 @@ import {
 	uploadFiles,
 	readMe,
 	withToken,
+	withSearch,
 	type QueryFilter,
 	readUser,
 } from '@directus/sdk';
@@ -40,6 +41,7 @@ export {
 	createItem,
 	updateItem,
 	withToken,
+	withSearch,
 	aggregate,
 	uploadFiles,
 	readUser,
