@@ -217,7 +217,7 @@ const rowSelection = ref<Record<string, boolean>>({})
 
 				</UPageCard>
                 <UPageList v-if="person.committee_positions.length > 0"  class="p-5">
-                                <Tagline :tagline="$t('committees')" ></Tagline>
+                                <Tagline tagline="Committees" ></Tagline>
                                 <UPageCard
                                     v-for="(committee_position, index) in person.committee_positions"
                                     :key="index"
@@ -234,7 +234,7 @@ const rowSelection = ref<Record<string, boolean>>({})
                                     </UPageCard>
                         </UPageList>
                         <div v-if="person_events?.length > 0">
-                        <Tagline :tagline="$t('Events')"></Tagline>
+                        <Tagline tagline="Events"></Tagline>
                         <UTable
                             :data="person_events"
 					        :columns="columns"
