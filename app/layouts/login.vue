@@ -43,7 +43,7 @@ useSeoMeta({
 </script>
 
 <template>
-	<div class="">
+	<div >
 		<NuxtPage/>
 	</div>
 </template>

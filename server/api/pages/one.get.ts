@@ -1,5 +1,6 @@
 import { withoutTrailingSlash, withLeadingSlash } from 'ufo';
 import type { Page, PageBlock, BlockPost, Post } from '#shared/types/schema';
+import type { H3Event } from 'h3';
 
 /**
  * Page fields configuration for Directus queries
@@ -27,6 +28,12 @@ const pageFields = [
 			{
 				// Different block types with their specific fields:
 				item: {	
+					block_accordion: [
+						'*',
+						{
+							items: ['*']
+						}
+					],
 					block_richtext: [
 						'id', 
 						'tagline', 
@@ -42,7 +49,19 @@ const pageFields = [
 							]
 						}
 					],
-					block_gallery: ['id', 'tagline', 'headline', { items: ['id', 'directus_file', 'sort'] }],
+					block_gallery: [
+						'id',
+						'tagline',
+						'headline',
+						{
+							items: [
+								'id',
+								'sort',
+								'caption',
+								{ directus_file: ['id', 'filename_download', 'type'] },
+							],
+						},
+					],
 					block_pricing: [
 						'id',
 						'tagline',
@@ -53,29 +72,38 @@ const pageFields = [
 								'label',
 								{
 									pricing_cards: [
-										'id',
-										'sort',
-										'title',
-										'description',
-										'price',
-										'badge',
-										'features',
-										'is_highlighted',
+										'*',
 										{
-											button: ['id', 'label', 'variant', 'url', 'type', { page: ['permalink'] }, { post: ['slug'] }],
+											congress_charges: [
+												{
+													charge: [
+														'*',
+														{
+															hotel: [
+																'*',
+																{ image: ['id', 'filename_download', 'type'] },
+															]
+														}
+													]
+												}
+											]
 										},
-									],
+										{
+											button_group: [
+												'id',
+												{
+													buttons: ['id', 'label', 'variant', 'url', 'type', { page: ['permalink'] }, { post: ['slug'] }],
+												},
+											],
+										},
+									]
 								},
 							]
 						}
 					],
 					block_hero: [
-						'id',
-						'tagline',
-						'headline',
-						'description',
-						'layout',
-						'image',
+						'*',
+						{ image: ['id', 'filename_download', 'type'] },
 						{
 							button_group: [
 								'id',
@@ -86,13 +114,21 @@ const pageFields = [
 						},
 					],
 					block_mainhero: [
-						'id',
-						'tagline',
-						'headline',
-						'description',
-						'countdown',
-						'image',
-						'bgcolor',
+						'*',
+						{ image: ['id', 'filename_download', 'type'] },
+						{ logo: ['id', 'filename_download', 'type'] },
+						{
+							announcements: ['headline', 'content']
+						},
+						{
+							partners: [
+								'*',
+								{
+									'organisation' : ['*', { logo: ['id', 'filename_download', 'type'] }]
+								}
+
+							]
+						},
 						{
 							button_group: [
 								'id',
@@ -103,32 +139,17 @@ const pageFields = [
 						},
 					],
 					block_posts: ['id', 'tagline', 'headline', 'collection', 'limit'],
+					block_form_flow: ['*'],
 					block_form: [
 						'id',
 						'tagline',
 						'headline',
 						{
 							form: [
-								'id',
-								'title',
-								'submit_label',
-								'success_message',
-								'on_success',
-								'success_redirect_url',
-								'is_active',
+								'*',
 								{
 									fields: [
-										'id',
-										'name',
-										'type',
-										'label',
-										'placeholder',
-										'help',
-										'validation',
-										'width',
-										'choices',
-										'required',
-										'sort',
+										'*',
 									],
 								},
 							],
@@ -138,45 +159,33 @@ const pageFields = [
 						'id',
 						'headline',
 						'tagline',
-						'category',
 						{
 							tabs: [
 								'id',
+								'title',
 								'label',
-								'type',
+								'row_labels',
 								{
-									cards: [
-										'id',
-										'sort',
-										'title',
-										'description',
-										'category',
-										'is_highlighted',
+									columns: [
+										'*',
 										{
-											button: ['id', 'label', 'variant', 'url', 'type', { page: ['permalink'] }, { post: ['slug'] }],
-										},
-										{
-											badge: ['id', 'label', 'variant', 'url', 'type', { page: ['permalink'] }, { post: ['slug'] }],
-										},
-										{
-											congress_charges: [
+											charges: [
+												'id',
+												'detail',
 												{
-													congress_charge: [
+													charge: [
 														'*'
 													]
 												}
 											]
 										}
-									],
-								},
+									]
+								}
 							]
 						}
 					],	
 					block_people: [
-						'id',
-						'tagline',
-						'headline',
-						'display',
+						'*',
 						{
 							people: [
 								'collection',
@@ -193,14 +202,8 @@ const pageFields = [
 														members: [
 															{
 															persons_id:[
-																'id',
-																'title',
-																'first_name',
-																'last_name',
-																'qualifications',
-																'country',
-																'image',
-																'bio'
+																'*',
+																{ image: ['id', 'filename_download', 'type'] },
 															]
 															}
 														]
@@ -217,7 +220,8 @@ const pageFields = [
 													'*',
 													{
 														person: [
-															'*'
+															'*',
+															{ image: ['id', 'filename_download', 'type'] },
 														]
 													}
 												]
@@ -230,7 +234,8 @@ const pageFields = [
 															'id',
 															{
 																person : [
-																	'*'
+																	'*',
+																	{ image: ['id', 'filename_download', 'type'] },
 																]
 															},
 															{
@@ -253,7 +258,8 @@ const pageFields = [
 																	'id',
 																	{
 																		person: [
-																			'*'
+																			'*',
+																			{ image: ['id', 'filename_download', 'type'] },
 																		]
 																	}
 																]
@@ -290,7 +296,7 @@ const pageFields = [
 												'id',
 												'first_name',
 												'last_name',
-												'image'
+												{ image: ['id', 'filename_download', 'type'] },
 											]
 										}
 									]
@@ -316,10 +322,11 @@ const pageFields = [
 							sponsors: [
 								{
 									sponsor: [
-										
+										'*',
 										{
-											sponsors_id:[
-												'*'
+											sponsor:[
+												'*',
+												{ logo: ['id', 'filename_download', 'type'] },
 											]
 										},
 										{
@@ -355,22 +362,20 @@ const pageFields = [
  * - Dynamic content blocks with real-time data fetching
  * - SEO metadata support
  */
-export default defineEventHandler(async (event) => {
+const config = useRuntimeConfig();
+
+async function handler(event: H3Event) {
+
 	const query = getQuery(event);
 
 	const { preview, token: rawToken, permalink: rawPermalink, id, version, languageCode } = query;
 
-	
-	// Normalize permalink: ensure it starts with / and doesn't end with /
-	// This handles various URL formats consistently
 	const permalink = withoutTrailingSlash(withLeadingSlash(String(rawPermalink)));
-
-	// Security: Only accept tokens when preview mode is explicitly enabled
-	// This prevents unauthorized access to draft content
 	const token = preview === 'true' && rawToken ? String(rawToken) : null;
 
-	const config = useRuntimeConfig();
-
+	const cookies = parseCookies(event);
+	const sessionToken = cookies[config.sessionTokenName];
+	
 	try {
 		let page: Page;
 		let pageId = id as string;
@@ -409,17 +414,19 @@ export default defineEventHandler(async (event) => {
 			try {
 				page = (await directusServer.request(
 					withToken(
-						token as string,
-						readItem('pages', pageId, {
-							version: String(version),
-							fields: pageFields as any,
-							// Deep query options for complex nested data:
-							// - Sort blocks by their sort order
-							// - Filter out hidden blocks
-							deep: {
-								blocks: { _sort: ['sort'], _filter: { hide_block: { _neq: true } } },
-							},
-						}),
+						token ?? sessionToken as string,
+						withSearch(
+							readItem('pages', pageId, {
+								version: String(version),
+								fields: pageFields as any,
+								// Deep query options for complex nested data:
+								// - Sort blocks by their sort order
+								// - Filter out hidden blocks
+								deep: {
+									blocks: { _sort: ['sort'], _filter: { hide_block: { _neq: true } } },
+								},
+							}),
+						),
 					),
 				)) as unknown as Page;
 			} catch (versionError) {
@@ -433,20 +440,22 @@ export default defineEventHandler(async (event) => {
 			// - If no token: only fetch published content (for public viewing)
 			const pageData = await directusServer.request(
 				withToken(
-					token as string,
-					readItems('pages', {
-						filter: token
-							? { permalink: { _eq: permalink }, site : {id: {_eq: config.public.siteId} }}
-							: { permalink: { _eq: permalink }, status: { _eq: 'published' }, site : {id: {_eq: config.public.siteId} } },
-						limit: 1,
-						fields: pageFields as any,
-						// Deep query options for complex nested data:
-						// - Sort blocks by their sort order
-						// - Filter out hidden blocks
-						deep: {
-							blocks: { _sort: ['sort'], _filter: { hide_block: { _neq: true } } },
-						},
-					}),
+					(token ?? sessionToken) as string,
+					withSearch(
+						readItems('pages', {
+							filter: token
+								? { permalink: { _eq: permalink }, site : {id: {_eq: config.public.siteId} }}
+								: { permalink: { _eq: permalink }, status: { _eq: 'published' }, site : {id: {_eq: config.public.siteId} } },
+							limit: 1,
+							fields: pageFields as any,
+							// Deep query options for complex nested data:
+							// - Sort blocks by their sort order
+							// - Filter out hidden blocks
+							deep: {
+								blocks: { _sort: ['sort'], _filter: { hide_block: { _neq: true } } },
+							},
+						}),
+					),
 				),
 			);
 
@@ -478,7 +487,14 @@ export default defineEventHandler(async (event) => {
 					// Always fetch published posts only (no preview mode for dynamic content)
 					const posts: Post[] = await directusServer.request(
 						readItems('posts', {
-							fields: ['id', 'title', 'description', 'slug', 'image', 'published_at'],
+							fields: [
+								'id',
+								'title',
+								'description',
+								'slug',
+								'published_at',
+								{ image: ['id', 'filename_download', 'type'] },
+							],
 							filter: { status: { _eq: 'published' } },
 							sort: ['-published_at'],
 							limit,
@@ -492,7 +508,19 @@ export default defineEventHandler(async (event) => {
 		}
 
 		return page;
-	} catch {
+	} catch (error) {
+		console.log(error)
 		throw createError({ statusCode: 500, statusMessage: 'Page not found' });
 	}
-});
+}
+
+export default config.public.isSandbox
+	? eventHandler(handler)
+	: cachedEventHandler(handler, {
+		maxAge: 3600,
+		getKey: (event) => {
+			const { permalink } = getQuery(event);
+			return `pages-${permalink}`;
+		},
+		shouldBypassCache: () => true,
+	});

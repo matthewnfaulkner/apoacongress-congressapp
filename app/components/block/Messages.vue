@@ -11,6 +11,7 @@ interface MessagesProps {
 		messages: [{
 			id: string,
 			people: [{
+				id: string
 				extra: string
 				person: {
 					id: string,
@@ -23,6 +24,7 @@ interface MessagesProps {
 			tagline: string,
 			content: string,
 			button_group?: {
+				id: string;
 				buttons: Array<{
 					id: string;
 					label: string | null;
@@ -41,12 +43,34 @@ interface MessagesProps {
 const { setAttr } = useVisualEditing();
 const props = defineProps<MessagesProps>();
 
+const sectionRef = useTemplateRef('sectionRef');
+const visible = ref(false);
+
+onMounted(() => {
+	const observer = new IntersectionObserver((entries) => {
+		if (entries[0]?.isIntersecting) {
+			visible.value = true;
+			observer.disconnect();
+		}
+	}, { threshold: 0.1 });
+	if (sectionRef.value) observer.observe(sectionRef.value);
+});
 
 </script>
 
 
 <template>
-	<Headline :headline="data.headline" />
+	<div ref="sectionRef">
+	<Headline
+		:headline="data.headline"
+		:data-directus="
+				setAttr({
+					collection: 'block_messages',
+					item: data.id,
+					fields: 'headline',
+					mode: 'popover',
+				})
+			" />
 	<div v-if="data.messages">
 		<UCarousel 
 			v-if="data.type == 'carousel'"
@@ -75,23 +99,67 @@ const props = defineProps<MessagesProps>();
 						}"
 					>
 					<template #header class="mx-auto">
-						<Tagline :tagline="item.tagline"/>
-					</template>	
+						<Tagline
+							class="transition-all duration-700 ease-out"
+							:class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'"
+							:tagline="item.tagline"
+							:data-directus="
+								setAttr({
+									collection: 'block_messages_message',
+									item: item.id,
+									fields: 'tagline',
+									mode: 'popover',
+								})
+							"/>
+					</template>
 					<template #body>
-						<div v-html="item.content" class="text-left lg:h-60">
+						<div v-html="item.content" class="text-left lg:h-60 transition-all duration-700 ease-out delay-150"
+							:class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'"
+						:data-directus="
+								setAttr({
+									collection: 'block_messages_message',
+									item: item.id,
+									fields: 'content',
+									mode: 'popover',
+								})
+							">
 
 						</div>
-						<div class="flex flex-row justify-around">
-							<div v-for="person in item.people" >
-								<ProfileImage class="h-40 mx-auto" :image="person.person.image":ui="{ item: 'basis-1/2' }" />
-								<p class="font-heading">
+						<div class="flex flex-row justify-around"
+							:data-directus="
+								setAttr({
+									collection: 'block_messages_message',
+									item: item.id,
+									fields: 'people',
+									mode: 'popover',
+								})
+							">
+							<div v-for="person in item.people"
+								>
+								<div class="relative overflow-hidden ink-reveal" :class="{ 'is-active': visible }" style="--ink-duration: 2s">
+									<ProfileImage class="h-40 mx-auto" :image="person.person.image" :ui="{ item: 'basis-1/2' }" />
+									<div class="ink-overlay" />
+								</div>
+								<p class="font-heading transition-all duration-700 ease-out delay-300"
+									:class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'">
 									{{ person.person.first_name }} {{ person.person.last_name }}
 								</p>
-								<p>{{ person.extra }}</p>
-								<CountryName v-if="person.country"
-								:country-codes="person.country.countryCodes"
-								:locale="person.country.locale"
-								/>
+								<p class="transition-all duration-700 ease-out delay-400"
+									:class="visible ? 'opacity-100' : 'opacity-0'"
+									:data-directus="
+										setAttr({
+											collection: 'block_messages_message_persons',
+											item: person.id,
+											fields: 'extra',
+											mode: 'popover',
+										})"
+								>
+									{{ person.extra }}
+								</p>
+									<CountryName v-if="person.country"
+										:country-codes="person.country.countryCodes"
+										:locale="person.country.locale"
+									/>
 							</div>
 						</div>
 					</template>
@@ -115,19 +183,54 @@ const props = defineProps<MessagesProps>();
 					</UPageCard>
 		</UCarousel>
 		<div v-else class="clearfix">
-			<div v-for="message in data.messages" class="">
-					<div v-for="person in message.people" class="text-center float-left mr-2 mb-4  w-1/2">
-							<ProfileImage class="mx-auto" :image="person.person.image":ui="{ item: 'basis-1/2' }" />
-							<h2 class="font-heading text-lg sm:text-2xl">
-								{{ person.person.first_name }} {{ person.person.last_name }}	
+			<div v-for="message in data.messages" class="flow-root"
+			:data-directus="
+							setAttr({
+								collection: 'block_messages_message',
+								item: message.id,
+								fields: ['content', 'people'],
+								mode: 'popover',
+							})">
+					<div v-for="person in message.people" class="text-center float-left mr-2 mb-4  w-1/2"
+						>
+							<div class="relative overflow-hidden ink-reveal" :class="{ 'is-active': visible }" style="--ink-duration: 3s">
+							<ProfileImage class="mx-auto" :image="person.person.image" :ui="{ item: 'basis-1/2' }"
+								:data-directus="
+									setAttr({
+										collection: 'block_messages_message',
+										item: message.id,
+										fields: 'people',
+										mode: 'popover',
+									})" />
+							<div class="ink-overlay" />
+						</div>
+							<h2 class="font-heading text-lg sm:text-2xl transition-all duration-700 ease-out delay-150"
+								:class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'">
+								{{ person.person.first_name }} {{ person.person.last_name }}
 							</h2>
-							<p class="font-heading text-sm sm:text-lg text-accent"> {{ person.extra }}</p>
+							<p
+								class="font-heading text-sm sm:text-lg text-accent transition-all duration-700 ease-out delay-250"
+								:class="visible ? 'opacity-100' : 'opacity-0'"
+								:data-directus="
+										setAttr({
+											collection: 'block_messages_message_persons',
+											item: person.id,
+											fields: 'extra',
+											mode: 'popover',
+										})">
+								{{ person.extra }}
+							</p>
 							
 					</div>
-				<div v-html="message.content" class="text-left pt-10">
+				<div
+					v-html="message.content"
+					class="text-left pt-10 transition-all duration-700 ease-out delay-400"
+					:class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'"
+					>
 				</div>
 			</div>
 		</div>
 	</div>
-	
+	</div>
+
 </template>

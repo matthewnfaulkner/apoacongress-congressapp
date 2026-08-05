@@ -7,6 +7,7 @@ const { enabled, state } = useLivePreview();
 const pageUrl = useRequestURL();
 const { isVisualEditingEnabled, apply, setAttr } = useVisualEditing();
 
+
 const permalink = computed(() => {
   	if(!route.params.permalink) return '';
   	if(typeof route.params.permalink ===  'string') return route.params.permalink;
@@ -22,7 +23,8 @@ const {
 	error,
 	refresh,
 } = await useFetch<Page>('/api/pages/one', {
-	key: `pages-${permalink.value}`,
+	key: computed(() => `pages-${permalink.value}`),
+	headers: useRequestHeaders(['cookie']),
 	query: {
 		permalink,
 		preview: enabled.value ? true : undefined,
@@ -30,11 +32,10 @@ const {
 		id: route.query.id as string,
 		version,
 	},
-});
+	watch: [permalink],
+	//getCachedData: (key, nuxtApp) => nuxtApp.payload.data[key] ?? nuxtApp.static.data[key],
 
-if (!page.value || error.value) {
-	throw createError({ statusCode: 404, statusMessage: 'Page not found', fatal: true });
-}
+});
 
 const pageBlocks = computed(() => (page.value?.blocks as PageBlock[]) || []);
 
@@ -70,13 +71,19 @@ function applyVisualEditingButton() {
 
 onMounted(() => {
 	if (!isVisualEditingEnabled.value) return;
-	applyVisualEditingButton();
-	applyVisualEditing();
+		applyVisualEditingButton();
+		applyVisualEditing();
 });
 </script>
 
 <template>
 	<div class="relative">
+		<UError v-if="error || !page"  :error="{
+			statusCode: 404,
+			statusMessage: 'Page not found',
+			message: 'The page you are looking for does not exist.'
+			}">
+		</UError>
 		<PageBuilder v-if="pageBlocks" :sections="pageBlocks" />
 		<div
 			v-if="isVisualEditingEnabled && page"

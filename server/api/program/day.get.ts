@@ -1,227 +1,70 @@
 import type { CongressDay } from '#shared/types/schema';
+import type { H3Event } from 'h3';
 
-/**
- * Page fields configuration for Directus queries
- *
- * This defines the complete field structure for pages including:
- * - Basic page metadata (title, id)
- * - SEO fields for search engine optimization
- * - Complex nested content blocks (hero, gallery, pricing, forms, etc.)
- * - All nested relationships and dynamic content fields
- */
 const dayFields = [
-    'title',
-    'id',
-    'starttime',
-    'endtime',    
-    {
-        congress: [
-            'id',
-            {
-                venue: [
-                    {
-                        rooms:[
-                            'id',
-                            'title'
-                        ]
-                    }
-                ]
-            }
-        ]
-    },
+    'title', 'id', 'key', 'starttime', 'endtime', 'time_subdivision',
+    { timeslots: ['id', 'starttime', 'endtime'] },
+    { congress: ['id', { venue: [{ rooms: ['id', 'title'] }] }] },
     {
         schedules: [
-            '*',
+            'id', 'name', 'status', 'parent', 'user_created',
+            { breaks: ['id', 'name', 'starttime', 'endtime', { rooms: ['id', 'room'] }] },
             {
                 sessions: [
                     '*',
-                    {
-                        section: [
-                            '*'
-                        ]
-                    },
+                    { section: ['id', { organisation: ['id', 'name', 'short_name', 'abbr'] }] },
+                    { organisers: ['id', { organisation: ['id', 'name', 'short_name', 'abbr', 'type'] }] },
+                    { rooms: [{ room: ['*'] }] },
                     {
                         events: [
-                            'id',
-                            'relative_start',
-                            'duration',
-                            'title',
-                            {
-                                type: [
-                                    'id',
-                                    'collection',
-                                    {
-                                    item: {
-                                        plenaries: [
-                                        'id',
-                                        'topic'
-                                        ],
-                                        discussion: [
-                                        'id',
-                                        'topic'
-                                        ],
-                                        symposiums: [
-                                        '*'
-                                        ],
-                                        workshops: [
-                                        'id',
-                                        
-                                        ],
-                                        talks: [
-                                        'id',
-                                        'topic'
-                                        ],
-                                    }
-                                    },
-                                ]
-                            },
+                            'id', 'relative_start', 'duration', 'title', 'type', 'topic', 'price',
                             {
                                 children: [
-                                    'id',
-                                    'relative_start',
-                                    'duration',
-                                    'title',
-                                    {
-                                        type: [
-                                            'id',
-                                            'collection',
-                                            {
-                                            item: {
-                                                plenaries: [
-                                                'id',
-                                                'topic'
-                                                ],
-                                                symposiums: [
-                                                'id',
-                                                'topic'
-                                                ],
-                                                workshops: [
-                                                'id',
-                                                ],
-                                                talks: [
-                                                'id',
-                                                'topic'
-                                                ],
-                                            }
-                                            },
-                                        ]
-                                    },
-                                    {
-                                        assignments: [
-                                            '*',
-                                            {
-                                                person: [
-                                                    'id',
-                                                    'first_name',
-                                                    'last_name',
-                                                    'country'
-                                                ]
-                                            },
-                                            {
-                                                role: [
-                                                    '*'
-                                                ]
-                                            }
-                                        ]
-                                    }
-                                ]
+                                    'id', 'relative_start', 'duration', 'title', 'type', 'topic', 'price',
+                                    { assignments: ['*', { person: ['id', 'first_name', 'last_name', 'country'] }, { role: ['*'] }] },
+                                ],
                             },
-                            {
-                                assignments: [
-                                    '*',
-                                    {
-                                        person: [
-                                            'id',
-                                            'first_name',
-                                            'last_name',
-                                            'country'
-                                        ]
-                                    },
-                                    {
-                                        role: [
-                                            '*'
-                                        ]
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
+                            { assignments: ['*', { person: ['id', 'first_name', 'last_name', 'country'] }, { role: ['*'] }] },
+                        ],
+                    },
+                ],
             },
-        ]
-    }
-
+        ],
+    },
 ];
 
-/**
- * Pages API Handler - Fetches individual pages by permalink
- *
- * Purpose: This handler is designed for website pages (homepage, about, contact, etc.) where you need to:
- * - Fetch pages by their permalink (URL path)
- * - Support complex page layouts with multiple content blocks
- * - Handle dynamic content blocks (hero, gallery, pricing, forms, etc.)
- * - Support preview mode for draft/unpublished content
- * - Handle version-specific content for content management workflows
- *
- * Key Features:
- * - Permalink-based routing (e.g., /about, /contact, /pricing)
- * - Preview mode with token authentication
- * - Version support for content management workflows
- * - Dynamic content blocks with real-time data fetching
- * - SEO metadata support
- */
-export default defineEventHandler(async (event) => {
+const config = useRuntimeConfig();
+
+async function handler(event: H3Event) {
     const query = getQuery(event);
-
-    const { preview, token: rawToken, id, key} = query;
-
-    const config = useRuntimeConfig();
-    // Security: Only accept tokens when preview mode is explicitly enabled
-    // This prevents unauthorized access to draft content
+    const { preview, token: rawToken, key, all } = query;
     const token = preview === 'true' && rawToken ? String(rawToken) : null;
 
+    const cookies = parseCookies(event);
+    const sessionToken = cookies[config.sessionTokenName];
+    const authToken = (token ?? sessionToken) as string;
+
     try {
-        let day: CongressDay;
-        let dayId = id as string;
-        
-        // Standard request: Use readItems with permalink filtering
-        // Filter logic:
-        // - If token exists: fetch any status (for preview mode)
-        // - If no token: only fetch published content (for public viewing)
         const dayData = await directusServer.request(
             withToken(
-                token as string,
+                authToken,
                 readItems('congress_days', {
                     limit: 1,
                     fields: dayFields as any,
                     filter: {
-                        key:{ 
-                            _eq: key as string
-                        },
-                        congress: {
-                            site: {
-                                _eq: config.public.siteId
-                            }
-                        },
-                        schedules: {
-                            status: {
-                                _eq: 'published'
-                            }
-                        }
+                        key: { _eq: key as string },
+                        congress: { site: { _eq: config.public.siteId } },
+                        ...(all !== 'true' && { schedules: { status: { _eq: 'published' } } }),
                     },
                     deep: {
+                        timeslots: { _sort: 'starttime' },
                         schedules: {
                             sessions: {
-                                events:{
-                                    children: {
-                                        _sort: 'relative_start'
-                                    },
-                                    _sort: 'relative_start'
-                                },
-                                _sort: 'starttime'
-                            }
-                        }
-                    }
+                                events: { children: { _sort: 'relative_start' }, _sort: 'relative_start' },
+                                _sort: 'starttime',
+                            },
+                        },
+                    },
                 }),
             ),
         );
@@ -230,11 +73,16 @@ export default defineEventHandler(async (event) => {
             throw createError({ statusCode: 404, statusMessage: 'Day not found' });
         }
 
-        day = dayData[0] as CongressDay;
-        
-
-        return day;
+        return dayData[0] as unknown as CongressDay;
     } catch {
         throw createError({ statusCode: 500, statusMessage: 'Day not found' });
     }
-});
+}
+
+export default config.public.isSandbox
+    ? eventHandler(handler)
+    : cachedEventHandler(handler, {
+        maxAge: 60,
+        getKey: (event) => `day-${getQuery(event).key}`,
+        shouldBypassCache: () => true,
+    });

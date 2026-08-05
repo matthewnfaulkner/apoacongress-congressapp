@@ -7,21 +7,20 @@ interface SubmissionValue {
 export default defineEventHandler(async (event) => {
 	const config = useRuntimeConfig();
 	const formData = await readMultipartFormData(event);
-
-	if (!formData) {
-		throw createError({
-			statusCode: 400,
-			statusMessage: 'Invalid form submission',
-		});
-	}
-
+	const cookies = parseCookies(event);
+	// Production: access token sent as Authorization: Bearer header (localStorage-based json auth)
+	// Sandbox: session token in cookie (cookie-based session auth)
+	const bearerToken = getHeader(event, 'authorization')?.replace(/^Bearer\s+/, '') || null;
+	const sessionToken = cookies[config.sessionTokenName as string] || null;
+	const userToken = bearerToken ?? sessionToken;
 	const TOKEN = config.directusServerToken as string;
 
+	if (!formData) {
+		throw createError({ statusCode: 400, statusMessage: 'Invalid form submission' });
+	}
+
 	if (!TOKEN) {
-		throw createError({
-			statusCode: 500,
-			statusMessage: 'DIRECTUS_SERVER_TOKEN is not defined. Check your .env file.',
-		});
+		throw createError({ statusCode: 500, statusMessage: 'DIRECTUS_SERVER_TOKEN is not defined.' });
 	}
 
 	try {
@@ -46,40 +45,33 @@ export default defineEventHandler(async (event) => {
 
 			if (field.filename) {
 				const blob = new Blob([field.data], { type: field.type });
-
 				const uploadFormData = new FormData();
 				uploadFormData.append('file', blob, field.filename);
 
-				const uploadedFile = (await directusServer.request(withToken(TOKEN, uploadFiles(uploadFormData)))) as {
-					id?: string;
-				};
+				const uploadedFile = (await directusServer.request(
+					withToken(TOKEN, uploadFiles(uploadFormData))
+				)) as { id?: string };
 
 				if (uploadedFile?.id) {
-					submissionValues.push({
-						field: matchingField.id,
-						file: uploadedFile.id,
-					});
+					submissionValues.push({ field: matchingField.id, file: uploadedFile.id });
 				}
 			} else {
-				submissionValues.push({
-					field: matchingField.id,
-					value: field.data.toString(),
-				});
+				submissionValues.push({ field: matchingField.id, value: field.data.toString() });
 			}
 		}
 
 		const payload = {
 			form: formId,
+			site: config.public.siteId,
 			values: submissionValues,
 		};
 
-		await directusServer.request(withToken(TOKEN, createItem('form_submissions', payload)));
+		const token = userToken ?? TOKEN;
+
+		await directusServer.request(withToken(token, createItem('form_submissions' as any, payload)));
 
 		return { success: true };
-	} catch {
-		throw createError({
-			statusCode: 500,
-			statusMessage: 'Internal Server Error',
-		});
+	} catch (e) {
+		throw createError({ statusCode: 500, statusMessage: 'Internal Server Error' });
 	}
 });

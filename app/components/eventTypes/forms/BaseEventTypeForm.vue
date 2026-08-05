@@ -1,43 +1,30 @@
 <script setup lang="ts">
-import SymposiumsForm from './SymposiumsForm.vue';
-import TalksForm from './TalksForm.vue';
-import PlenariesForm from './PlenariesForm.vue';
-import DiscussionsForm from './DiscussionsForm.vue';
+import type { CongressEvent } from '~~/shared/types/schema';
 
-interface BaseEventTypeProps {
-	defaultValue: object,
-	modelValue: [String, Number, Object],
-	type: {
-		collection: string;
-		item?: any;
-		id?: string;
-	};
+interface BaseEventTypeFormProps {
+	modelValue: Partial<CongressEvent>;
+	data: CongressEvent;
 }
 
-const props = defineProps<BaseEventTypeProps>();
+const props = defineProps<BaseEventTypeFormProps>();
 
-const formRef = ref<HTMLElement | null>(null);
-
-const emit = defineEmits(['update:modelValue'])
-
-const components: Record<string, any> = {
-	symposiums: SymposiumsForm,
-	talks: TalksForm,
-	plenaries: PlenariesForm,
-	discussions: DiscussionsForm
-};
-
-const Component = computed(() => components[props.type.collection] || null);
-const componentData = computed(() => props.type.item);
+const emit = defineEmits(['update:modelValue']);
 </script>
 
 <template>
-	<div ref="formRef" class="relative">
-		<component 
-			:modelValue="modelValue" 
-			:is="Component" v-if="Component" 
-			:id="`eventType-${type.id}`" 
-			:data="componentData" 
-			@update:modelValue="emit('update:modelValue', $event)"/>
+	<div class="relative flex flex-col gap-4">
+		<UFormField v-if="data.type !== 'free_papers'" label="Topic" name="topic" class="w-full lg:w-50">
+			<UInput
+				:model-value="data.topic ?? ''"
+				@update:model-value="emit('update:modelValue', { id: data.id, topic: $event })"
+			/>
+		</UFormField>
+		<UFormField v-if="data.type === 'workshop'" label="Price" name="price" class="w-full lg:w-50">
+			<UInput
+				type="number"
+				:model-value="data.price ?? undefined"
+				@update:model-value="emit('update:modelValue', { id: data.id, price: Number($event) })"
+			/>
+		</UFormField>
 	</div>
 </template>

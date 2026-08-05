@@ -29,6 +29,7 @@ export interface CongressAbstracts {
 	submissions?: AbstractSubmission[] | string[] | null;
 	limit?: number | null;
 	acceptance_limit?: number;
+	submission_limit?: number;
 	required_reviewers?: number;
 }
 
@@ -41,6 +42,7 @@ export interface AbstractReview {
 	submission: AbstractSubmission | string | null;
 	reviewer?: DirectusUser | string | null;
 	score?: number;
+	scores?: AbstractReviewScore[] | string[] | null;
 }
 
 
@@ -59,6 +61,8 @@ export interface AbstractSubmission {
 	submission_values?: AbstractSubmissionValue[] | string[]
 	reviews?: AbstractReview[] | string | null;
 	submitter: DirectusUser | string | null;
+	figures?: AbstractSubmissionFile[] | string[] | null;
+	keywords?: string[] | null;
 }
 
 export interface AbstractSubmissionValue {
@@ -75,6 +79,65 @@ export interface AbstractSubmissionValue {
 	user_updated?: DirectusUser | string | null;
 	field? : string | null;
 }
+
+export interface AbstractSubmissionFile {
+	id: string;
+	submission: AbstractSubmission | string | null;
+	file?: DirectusFile | string | null;  
+	label: string | null;
+}
+
+export interface AbstractGradingSystem {
+	/** @primaryKey */
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	criteria?: AbstractCriteria[] | string[] | null;
+	scoring?: AbstractScoring[] | string[] | null;
+	aggregation_method?: 'average' | 'sum' | 'max' | 'min' | null;
+}
+
+export interface AbstractCriteria {
+	/** @primaryKey */
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	sort?: number | null;
+	crietria?: string | null;
+	description?: string | null;
+	weight?: number | null;
+}
+
+export interface AbstractReviewScore {
+	/** @primaryKey */
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	review?: AbstractReview | string | null;
+	criteria?: AbstractCriteria | string | null;
+	score?: number | null;	
+}
+
+export interface AbstractScoring {
+	/** @primaryKey */
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	sorting?: number | null;
+	score?: number | null;
+	rating?: string | null;
+	description?: string | null;
+}
+
+
 
 export interface AiPrompt {
 	/** @primaryKey */
@@ -96,12 +159,40 @@ export interface AiPrompt {
 	user_updated?: DirectusUser | string | null;
 }
 
+export interface BlockAccordion {
+	/** @primaryKey */
+	id: string;
+	/** @description Larger main headline for this page section. */
+	headline?: string | null;
+	/** @description Smaller copy shown above the headline to label a section or add extra context. */
+	tagline?: string | null;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	items?: BlockAccordionItem[] | string[] | null;
+}
+
+export interface BlockAccordionItem {
+	/** @primaryKey */
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	sort?: number | null;
+	label?: string | null;
+	icon?: string | null;
+	content?: string | null;
+
+}
+
 export interface BlockButton {
 	/** @primaryKey */
 	id: string;
 	sort?: number | null;
 	/** @description What type of link is this? Page and Post allow you to link to internal content. URL is for external content. Group can contain other menu items. */
-	type?: 'page' | 'post' | 'url' | null;
+	type?: 'page' | 'post' | 'url' | 'modal' | null;
 	/** @description The internal page to link to. */
 	page?: Page | string | null;
 	/** @description The internal post to link to. */
@@ -147,6 +238,21 @@ export interface BlockForm {
 	user_updated?: DirectusUser | string | null;
 }
 
+export interface BlockFormFlow {
+	/** @primaryKey */
+	id: string;
+	/** @description Form to show within block */
+	flow?: FormFlow | string | null;
+	/** @description Larger main headline for this page section. */
+	headline?: string | null;
+	/** @description Smaller copy shown above the headline to label a section or add extra context. */
+	tagline?: string | null;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+}
+
 export interface BlockGallery {
 	/** @description Larger main headline for this page section. */
 	headline?: string | null;
@@ -174,53 +280,44 @@ export interface BlockChargeTable {
 	user_created?: DirectusUser | string | null;
 	date_updated?: string | null;
 	user_updated?: DirectusUser | string | null;
+	tabs?: BlockChargeTableTab[] | string[] | null;
 }
 
 export interface BlockChargeTableTab {
-	/** @description Larger main headline for this page section. */
-	label?: string | null;
-	type?: 'table' | 'card';
-	/** @description Smaller copy shown above the headline to label a section or add extra context. */
-	title?: string | null;
-	/** @primaryKey */
 	id: string;
 	/** @description Smaller copy shown above the headline to label a section or add extra context. */
-	charge_table: BlockChargeTable | string | null;
 	date_created?: string | null;
 	user_created?: DirectusUser | string | null;
 	date_updated?: string | null;
 	user_updated?: DirectusUser | string | null;
+	heading?: string | null;
+	row_labels?: string | null;
+	chargetable?: BlockChargeTable | string | null;
+	charges?: BlockChargeTableColumnCharge[] | string[] | null;
 }
 
-export interface BlockChargeTableCard {
-	/** @primaryKey */
+export interface BlockChargeTableColumn {
 	id: string;
-	/** @description Name of the pricing plan. Shown at the top of the card. */
-	title?: string | null;
-	/** @description Short, one sentence description of the pricing plan and who it is for. */
-	description?: string | null;
-	/** @description Price and term for the pricing plan. (ie `$199/mo`) */
-	button?: BlockButton | string | null;
-	/** @description Badge that displays at the top of the pricing plan card to add helpful context. */
-	badge?: BlockButton | string | null;
-	/** @description The id of the pricing block this card belongs to. */
-	tab?: BlockPricingTab | string | null;
-	/** @description Add highlighted border around the pricing plan to make it stand out. */
-	category?: 'registration' | 'accommodation';
-	is_highlighted?: boolean | null;
-	sort?: number | null;
+	/** @description Smaller copy shown above the headline to label a section or add extra context. */
 	date_created?: string | null;
 	user_created?: DirectusUser | string | null;
 	date_updated?: string | null;
 	user_updated?: DirectusUser | string | null;
-	congress_charges: BlockChargeTableCardCharge[] | string[] | null;
+	heading?: string | null;
+	tab?: BlockChargeTableTab | string | null;
+	charges?: BlockChargeTableColumnCharge[] | string[] | null;
 }
 
-export interface BlockChargeTableCardCharge {
+export interface BlockChargeTableColumnCharge {
 	/** @primaryKey */
-	id: number;
-	block_chargetable_card: BlockChargeTableCard | string | null;
-	congress_charge: CongressCharge | string | null;
+	id: string;
+	/** @description Smaller copy shown above the headline to label a section or add extra context. */
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	sort?: string | null;
+	detail?: string | null;
 }
 
 export interface CongressCharge {
@@ -237,6 +334,7 @@ export interface CongressCharge {
 	sub_category?: string | null;
 	price?: string | null;
 	details: RegistrationChargeDetail[] | AccommodationChargeDetail[] | null;
+	hotel?: Hotel | string | null;
 }
 
 export interface RegistrationChargeDetail {
@@ -293,6 +391,7 @@ export interface BlockMainHero {
 	id: string;
 	/** @description Featured image in the hero. */
 	image?: DirectusFile | string | null;
+	logo?: DirectusFile | string | null;
 	/** @description Action buttons that show below headline and description. */
 	button_group?: BlockButtonGroup | string | null;
 	/** @description Supporting copy that shows below the headline. */
@@ -305,7 +404,30 @@ export interface BlockMainHero {
 	date_updated?: string | null;
 	user_updated?: DirectusUser | string | null;
 	bgColor: string | null;
+	announcements?: BlockMainHeroAnnouncement[] | string[] | null;
+	partners?: BlockMainHeroPartner[] | string [] | null;
 }
+
+export interface BlockMainHeroPartner {
+	id: number;
+	block_mainhero: BlockMainHero | string | null;
+	organisation: Organisation | string | null;
+	sort: number;
+}
+
+export interface BlockMainHeroAnnouncement {
+	/** @description Larger main headline for this page section. */
+	headline?: string | null;
+	/** @primaryKey */
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	content?: string | null;
+	hero?: BlockMainHero | string | null;
+}
+
 
 export interface BlockMessages {
 	/** @description Larger main headline for this page section. */
@@ -405,20 +527,31 @@ export interface BlockPricingCard {
 	/** @description Price and term for the pricing plan. (ie `$199/mo`) */
 	price?: string | null;
 	/** @description Badge that displays at the top of the pricing plan card to add helpful context. */
-	badge?: string | null;
+	badge?: Array<{label: string, link: string}> | null;
 	/** @description Short list of features included in this plan. Press `Enter` to add another item to the list. */
 	features?: 'json' | null;
 	/** @description The action button / link shown at the bottom of the pricing card. */
-	button?: BlockButton | string | null;
+	button_group?: BlockButtonGroup | string | null;
 	/** @description The id of the pricing block this card belongs to. */
 	tab?: BlockPricingTab | string | null;
 	/** @description Add highlighted border around the pricing plan to make it stand out. */
 	is_highlighted?: boolean | null;
+	use_congress_charges?: boolean | null;
+	category?: 'registration' | 'accommodation';
+	congress_charges?: BlockPricingCardCongressCharge[] | string[] | null;
 	sort?: number | null;
 	date_created?: string | null;
 	user_created?: DirectusUser | string | null;
 	date_updated?: string | null;
 	user_updated?: DirectusUser | string | null;
+}
+
+export interface BlockPricingCardCongressCharge {
+	/** @primaryKey */
+	id: number;
+	card: BlockPricingCard | string | null;
+	charge: CongressCharge | string | null;
+	sort: number;
 }
 
 export interface BlockRichtext {
@@ -465,6 +598,10 @@ export interface BlockPeople {
 	type?: string| null;
 	people: BlockPeoplePeople;
 	display?: string | null;
+	show_country?: boolean | null;
+	show_title?: boolean | null;
+	show_flag?: boolean | null;
+
 }
 
 
@@ -546,7 +683,25 @@ export interface Congress {
 	sponsor_tiers?: CongressSponsorTier[] | string | null;
 	abstracts?: CongressAbstracts[] | string[] | null;
 	registration_charges?: RegistrationCharge[];
-	accommodation_charges?: AccommodationCharge[];
+	accommodation_charges?: AccommodationCharge[]
+	charges?: CongressCharge[] | string[] | null;
+	societies?: CongressSociety[] | string[] | null;
+	hotels?: CongressHotel[] | string[] | null;
+	organisations?: CongressOrganisation[] | string[] | null;
+	vouchers?: CongressVoucher[] | string[] | null;
+	key_dates?: CongressKeyDate[] | string [] | null;
+}
+
+export interface CongressKeyDate {
+	id: string;
+	sort?: string | null;
+	congress?: Congress | string | null;
+	title: string;
+	date: string;
+	time?: string;
+	description?: string | null;
+	public?: boolean | null;
+	icon?: string | null;
 }
 
 export interface RegistrationCharge {
@@ -585,7 +740,6 @@ export interface CongressSchedule {
 	breaks? : CongressBreak[];
 }
 
-
 export interface CongressDay {
 	id: string;
 	title?: string | null;
@@ -607,7 +761,6 @@ export interface CongressDay {
 
 export interface CongressDaySlot {
 	id: string;
-	title?: string | null;
 	sort?: string | null;
 	date_created?: string | null;
 	user_created?: DirectusUser | string | null;
@@ -629,6 +782,7 @@ export interface CongressBreak {
 	starttime?: string | null;
 	endtime?: string | null;
 	schedule?: CongressSchedule;
+	details?: string | null;
 	rooms?: CongressBreakRoom[]
 }
 
@@ -649,9 +803,76 @@ export interface CongressSession {
 	starttime?: string | null;
 	endtime?: string | null;
 	schedule?: CongressSchedule;
-	room?: VenueRoom | string | null;
 	events?: CongressEvent[];
 	section? : ApoaSection;
+	rooms?: CongressSessionRoom[] | string[] | null;
+	organisers?: CongressSessionOrganiser[];
+	tags?: ScientificTag[] | string[] | null;
+}
+
+export interface CongressOrganisation {
+	id: string;
+	sort?: string | null;
+	congress?: Congress | string | null;
+	organisation?: Organisation | string | null;
+	partnership_type?: string | null;
+	description?: string | null;
+}
+
+export interface ScientificTag {
+	id: string;
+	tag: string;
+	color?: string | null;
+}
+
+export interface CongressSessionOrganiser {
+	id: number;
+	session: CongressSession;
+	organisation: Organisation | string | null;
+	sort: string;
+}
+
+export interface CongressSessionRoom {
+	id: number;
+	session: CongressSession | string | null;
+	room: VenueRoom | string | null;
+}
+
+
+export interface CongressVoucher {
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	congress?: Congress | string | null;
+	voucher_codes?: CongressVoucherCode[] | string [] | null,
+	name?: string | null,
+	description? : string | null
+}
+
+export interface CongressVoucherCode {
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	voucher?: CongressVoucher | string | null;
+	status?: 'redeemed' | 'expired' | 'active';
+	user?: DirectusUser | string | null,
+	code?: string | null,
+	expires? : string | null
+	redemptions?: CongressVoucherCode[] | string[] | null;
+	type?: 'general' | 'personal';
+	redemption_limit?: number | null;
+}
+
+
+export interface CongressVoucherCodeRedemption {
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	voucher_code?: CongressVoucherCode | string | null;
 }
 
 export interface ApoaSection {
@@ -661,10 +882,15 @@ export interface ApoaSection {
 	user_created?: DirectusUser | string | null;
 	date_updated?: string | null;
 	user_updated?: DirectusUser | string | null;
-	name?: string | null;
-	color?: string | null;
-	slug?: string | null;
-	committee?: Committee;
+	committees?: ApoaSectionCommittee[] | string[] | null;
+	organisation?: Organisation | string | null;
+}
+
+export interface ApoaSectionCommittee {
+	id: number;
+	section: ApoaSection | string | null;
+	committee: Committee | string | null;
+ 
 }
 
 export interface CongressEvent {
@@ -676,7 +902,10 @@ export interface CongressEvent {
 	date_updated?: string | null;
 	user_updated?: DirectusUser | string | null;
 	session: CongressSession;
-	type: CongressEventType[];
+	type: 'plenary' | 'symposium' | 'free_papers' | 'panel' | 'workshop' | 'discussion' | 'talk';
+	topic?: string | null;
+	price?: number | null;
+	abstract_submission?: AbstractSubmission | string | null;
 	assignments: Assignment[];
 	parent: CongressEvent;
 	children: CongressEvent[];
@@ -684,10 +913,10 @@ export interface CongressEvent {
 	duration: number | null;
 }
 
-export interface CongressEventType {
+export interface CongressSociety {
 	id: string;
-	congress_events_id: string;
-	item?: Plenary | Workshop | Symposium | Talk | Discussion | string | null;
+	congress_id: string;
+	item?: ApoaSection;
 	/** @description The collection (type of block). */
 	collection?: string | null;
 }
@@ -787,7 +1016,7 @@ export interface FormField {
 	/** @description Unique field identifier, not shown to users (lowercase, hyphenated) */
 	name?: string | null;
 	/** @description Input type for the field */
-	type?: 'text' | 'textarea' | 'checkbox' | 'checkbox_group' | 'radio' | 'file' | 'select' | 'hidden' | null;
+	type?: 'text' | 'textarea' | 'checkbox' | 'checkbox_group' | 'checkbox_group_alt' | 'radio' | 'file' | 'select' | 'hidden' | 'voucher' | null;
 	/** @description Text label shown to form users. */
 	label?: string | null;
 	/** @description Default text shown in empty input. */
@@ -809,6 +1038,7 @@ export interface FormField {
 	user_created?: DirectusUser | string | null;
 	date_updated?: string | null;
 	user_updated?: DirectusUser | string | null;
+	use_user_data?: boolean | null;
 }
 
 export interface Form {
@@ -837,6 +1067,7 @@ export interface Form {
 	fields?: FormField[] | string[];
 	/** @description Received form responses. */
 	submissions?: FormSubmission[] | string[];
+	site?: Site | string | null;
 }
 
 export interface FormSubmission {
@@ -855,6 +1086,136 @@ export interface FormSubmissionValue {
 	id: string;
 	/** @description Parent form submission for this value. */
 	form_submission?: FormSubmission | string | null;
+	field?: FormField | string | null;
+	/** @description The data entered by the user for this specific field in the form submission. */
+	value?: string | null;
+	sort?: number | null;
+	file?: DirectusFile | string | null;
+	/** @description Form submission date and time. */
+	timestamp?: string | null;
+}
+
+export interface FormFlow { 
+	/** @primaryKey */
+	id: string;
+	key: string;
+	site: Site | string | null;
+	title?:  string | null;
+	steps?: FormFlowStep[] | string[] | null;
+	show_steps?: boolean;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	submit_label?: string | null;
+	on_success?: 'redirect' | 'message' | null;
+	/** @description Message shown after successful submission. */
+	success_message?: string | null;
+	/** @description Destination URL after successful submission. */
+	success_redirect?: string | null;
+	/** @description Show or hide this form from the site. */
+	is_active?: boolean | null;
+	show_summary?: boolean | null;
+	/** @description Setup email notifications when forms are submitted. */
+	emails?: Array<{ to: string[]; subject: string; message: string }> | null;
+
+}
+
+export interface FormFlowStep {
+	/** @primaryKey */
+	id: string;
+	title?: string;
+	sort?: string;
+	flow: FormFlow | string | null;
+	fields?: FormFlowField | string | null;
+	conditions?: FormFlowCondition[];
+	description?: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	advance_message?: string;
+	guest_only?: boolean | null;
+}
+
+export interface FormFlowCondition {
+	/** @primaryKey */
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	logical_operator: 'AND' | 'OR';
+	step: FormFlowStep | string | null;
+	rules: FormFlowRule[] | string[] | null;
+	next_step: FormFlowStep | string | null;
+}
+
+export interface FormFlowRule {
+	/** @primaryKey */
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	operator: '_eq' | '_neq' | '_null' | '_nnull';
+	field: FormFlowField | string | null;
+	value?: string;
+	condition: FormFlowCondition | string | null;
+}
+
+export interface FormFlowField {
+	/** @primaryKey */
+	id: string;
+	/** @description Unique field identifier, not shown to users (lowercase, hyphenated) */
+	name?: string | null;
+	/** @description Input type for the field */
+	type?: 'text' | 'textarea' | 'checkbox' | 'checkbox_group' | 'radio' | 'file' | 'select' | 'hidden' | 'relation' | null;
+	/** @description Repeater config for relation fields — each entry maps a user field to a display input */
+	relation_repeater?: Array<{ field_name: string; value_index?: number | null; label?: string | null }> | null;
+	copy?: boolean | null;
+	readonly?: boolean | null;
+	/** @description Text label shown to form users. */
+	label?: string | null;
+	/** @description Default text shown in empty input. */
+	placeholder?: string | null;
+	/** @description Additional instructions shown below the input */
+	help?: string | null;
+	/** @description Available rules: `email`, `url`, `min:5`, `max:20`, `length:10`. Combine with pipes example: `email|max:255` */
+	validation?: string | null;
+	/** @description Field width on the form */
+	width?: '100' | '67' | '50' | '33' | null;
+	/** @description Options for radio or select inputs */
+	choices?: Array<{ text: string; value: string }> | null;
+	/** @description Parent form this field belongs to. */
+	step?: FormFlowStep | string | null;
+	sort?: number | null;
+	/** @description Make this field mandatory to complete. */
+	required?: boolean | null;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	use_user_data?: boolean | null;
+}
+
+export interface FormFlowSubmission {
+	/** @description Unique ID for this specific form submission @primaryKey */
+	id: string;
+	/** @description Form submission date and time. */
+	timestamp?: string | null;
+	/** @description Associated form for this submission. */
+	form?: Form | string | null;
+	/** @description Submitted field responses */
+	values?: FormSubmissionValue[] | string[];
+	user_created?: DirectusUser | string | null;
+}
+
+export interface FormFlowSubmissionValue {
+	/** @primaryKey */
+	id: string;
+	/** @description Parent form submission for this value. */
+	form_submission?: FormFlowSubmission | string | null;
 	field?: FormField | string | null;
 	/** @description The data entered by the user for this specific field in the form submission. */
 	value?: string | null;
@@ -895,6 +1256,37 @@ export interface Globals {
 	user_updated?: DirectusUser | string | null;
 }
 
+export interface GeoJSONPoint {
+	type: 'Point';
+	coordinates: [number, number]; // [longitude, latitude]
+}
+
+export interface Hotel {
+	/** @primaryKey */
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	name: string;
+	star_rating?: number | null;
+	website?: string | null;
+	phone?: string | null;
+	address?: string | null;
+	image?: DirectusFile | string | null;
+	rooms?: number | null;
+	location?: GeoJSONPoint | null;
+	ammenities?: string[] | null;
+	congresses?: CongressHotel[] | string[] | null;
+}
+
+export interface CongressHotel {
+	id: number;
+	hotel: Hotel | string | null;
+	congress: Congress | string | null;
+	directions?: string | null;
+}
+
 export interface Site {
 	/** @description Site summary for search results. */
 	description?: string | null;
@@ -927,6 +1319,8 @@ export interface Site {
 	navigations?: Navigation[]
 	organisations?: SiteOrganisations[] | string[] | null;
 	preview?: boolean;
+	support_form?: Form | string | null;
+	user_policies?: SitePolicy[] | number[] | null;
 }
 
 export interface Navigation {
@@ -987,13 +1381,25 @@ export interface Organisation {
 	id: string;
 	sort?: number | null;
 	name?: string | null;
+	short_name?: string | null;
+	abbr?: string | null;
 	address?: string | null;
 	phone?: string | null;
 	email?: string | null;
 	logo?: DirectusFile | string | null;
-	users?: DirectusUser[] | string[] | null;
+	users?: OrganisationUser[] | string[] | null;
 	sites?: SiteOrganisations[] | string[] | null;
 	website?: string | null;
+	type?: 'apoa_sections' | 'sponsors' | 'noa';
+	apoa_section_details?: ApoaSection[] | string[] | null;
+	sponsor_details?: Sponsor[] | string[] | null;
+	description?: string | null;
+}
+
+export interface OrganisationUser {
+	id: number;
+	user: DirectusUser | string | null;
+	organisation: Organisation | string | null;
 }
 
 export interface SiteOrganisations {
@@ -1010,7 +1416,7 @@ export interface PageBlock {
 	/** @description The id of the page that this block belongs to. */
 	page?: Page | string | null;
 	/** @description The data for the block. */
-	item?: BlockHero | BlockMainHero | BlockRichtext | BlockForm | BlockPost | BlockGallery | BlockPricing | BlockPeople | BlockMessages | BlockChargeTable | string | null;
+	item?: BlockAccordion | BlockHero | BlockMainHero | BlockRichtext | BlockForm | BlockFormFlow | BlockPost | BlockGallery | BlockPricing | BlockPeople | BlockMessages | BlockChargeTable | string | null;
 	/** @description The collection (type of block). */
 	collection?: string | null;
 	/** @description Temporarily hide this block on the website without having to remove it from your page. */
@@ -1045,61 +1451,7 @@ export interface Page {
 	site?: Site;
 }
 
-export interface Plenary {
-	id: string;
-	/** @description Smaller copy shown above the headline to label a section or add extra context. */
-	topic?: string,
-	sort?: string | null;
-	date_created?: string | null;
-	user_created?: DirectusUser | string | null;
-	date_updated?: string | null;
-	user_updated?: DirectusUser | string | null;
-}
 
-export interface Discussion {
-	id: string;
-	/** @description Smaller copy shown above the headline to label a section or add extra context. */
-	topic?: string,
-	sort?: string | null;
-	date_created?: string | null;
-	user_created?: DirectusUser | string | null;
-	date_updated?: string | null;
-	user_updated?: DirectusUser | string | null;
-}
-
-export interface Symposium {
-	id: number;
-	/** @description Smaller copy shown above the headline to label a section or add extra context. */
-	topic?: string,
-	sort?: string | null;
-	date_created?: string | null;
-	user_created?: DirectusUser | string | null;
-	date_updated?: string | null;
-	user_updated?: DirectusUser | string | null;
-}
-
-export interface Talk {
-	id: string;
-	/** @description Smaller copy shown above the headline to label a section or add extra context. */
-	topic: string,
-	sort?: string | null;
-	date_created?: string | null;
-	user_created?: DirectusUser | string | null;
-	date_updated?: string | null;
-	user_updated?: DirectusUser | string | null;
-}
-
-export interface Workshop {
-	id: string;
-	/** @description Smaller copy shown above the headline to label a section or add extra context. */
-	name: string,
-	sort?: string | null;
-	date_created?: string | null;
-	user_created?: DirectusUser | string | null;
-	date_updated?: string | null;
-	user_updated?: DirectusUser | string | null;
-	price?: number | null;
-}
 export interface Post {
 	/** @description Rich text content of your blog post. */
 	content?: string | null;
@@ -1127,6 +1479,43 @@ export interface Post {
 	user_updated?: DirectusUser | string | null;
 }
 
+export interface Policy {
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	name: string | null;
+	type: string | null;
+	notification: string | null;
+	content: string | null;
+	sites: SitePolicy[] | string[]| null;
+	required: boolean;
+	default: boolean;
+}
+
+export interface SitePolicy {
+	id: number;
+	site: Site | string | null;
+	policy: Policy | string | null;
+
+}
+
+
+export interface UserPolicyAgreement {
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	policy?: Policy | string | null;
+	version?: string | null;
+	user: DirectusUser | string | null;
+	consent: boolean;
+	active: boolean;
+}
+
+
 export interface Redirect {
 	/** @primaryKey */
 	id: string;
@@ -1146,11 +1535,6 @@ export interface Redirect {
 export interface Sponsor {
 	id: string;
 	/** @description Smaller copy shown above the headline to label a section or add extra context. */
-	name?: string | null;
-	congresses?: CongressSponsor[];
-	email? : string | null,
-	website? : string | null,
-	logo?: DirectusFile | string | null,
 	description? : string | null,
 	sort?: string | null;
 	date_created?: string | null;
@@ -1159,16 +1543,14 @@ export interface Sponsor {
 	user_updated?: DirectusUser | string | null;
 }
 
+
 export interface CongressSponsor {
 	id: string;
 	/** @description Smaller copy shown above the headline to label a section or add extra context. */
-	sponsors_id?: Sponsor | string | null;
-	congress_id?: Congress | string | null;
+	sponsor?: Organisation | string | null;
+	congress?: Congress | string | null;
 	tier?:  CongressSponsorTier | string | null;
 	sort?: string | null;
-	date_created?: string | null;
-	user_created?: DirectusUser | string | null;
-	date_updated?: string | null;
 }
 
 export interface CongressSponsorTier{
@@ -1183,6 +1565,61 @@ export interface CongressSponsorTier{
 	date_updated?: string | null;
 }
 
+export interface SupportCase { 
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	site?: Site | string | null;
+	agent?: DirectusUser | string | null;
+	status?: string;
+	category?: string;
+	messages: CaseMessage[] | string[];
+	customer: DirectusUser | string | null;
+	customer_email?: string;
+	customer_first_name?: string;
+	customer_last_name?: string;
+	form_submission: FormSubmission;
+	summary?: string | null;
+	folder?: DirectusFolder | string | null;
+}
+
+export interface CaseMessageFile {
+	id: string;
+	message: CaseMessage | string | null;
+	file: DirectusFile | string | null;  
+}
+
+export interface CaseMessage {
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	case: SupportCase;
+	sender: DirectusUser | string | null;
+	sender_role: 'customer' | 'agent';
+	sender_email: string;
+	message: string;
+	is_internal: boolean;	
+	files?: CaseMessageFile[] | string[];
+}
+
+
+export interface CongressSponsor {
+	id: string;
+	/** @description Smaller copy shown above the headline to label a section or add extra context. */
+	sponsors_id?: Sponsor | string | null;
+	congress_id?: Congress | string | null;
+	tier?:  CongressSponsorTier | string | null;
+	sort?: string | null;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	
+}
+
 export interface Venue {
 	id: string;
 	/** @description Smaller copy shown above the headline to label a section or add extra context. */
@@ -1194,6 +1631,12 @@ export interface Venue {
 	user_created?: DirectusUser | string | null;
 	date_updated?: string | null;
 	user_updated?: DirectusUser | string | null;
+	travel_general_info?: string | null;
+	travel_info_by_country?: CountryTravelInfo[] | string[] | null;
+	visa_general_info?: string | null;
+	visa_link?: string | null;
+	visa_info_by_country?: VenueVisaInfo[] | string[] | null;
+	airport_codes?: string[] | null
 }
 
 export interface VenueRoom { 
@@ -1208,6 +1651,44 @@ export interface VenueRoom {
 	user_updated?: DirectusUser | string | null;
 
 }
+
+export interface VenueVisaInfo {
+	/** @primaryKey */
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	venue: Venue | string | null;
+	details?: string | null;
+	link?: string | null;
+	countries?: VenueVisaInfoCountry[] | string[] | null;
+}
+
+export interface VenueVisaInfoCountry {
+	id: number;
+	venue_visa_info: VenueVisaInfo | string | null;
+	country:  string | null;
+}
+
+export interface CountryTravelInfo {
+	/** @primaryKey */
+	id: string;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	venue: Venue | string | null;
+	details?: string | null;
+	link?: string | null;
+	country?: Country | string | null;
+}
+
+export interface Country {
+	/** @primaryKey */
+	id: string;
+}
+
 
 export interface DirectusAccess {
 	/** @primaryKey */
@@ -1503,6 +1984,11 @@ export interface DirectusUser {
 	posts?: Post[] | string[];
 	policies?: DirectusAccess[] | string[];
 	person?: Person | string | null;
+	country?: Country | string | null;
+	membership_number?: string | null;
+	user_policy_agreements?: UserPolicyAgreement[] | string[] | null;
+	organisations: OrganisationUser[] | string[] | null;
+	voucher_codes: CongressVoucherCode[] | string[] | null;
 }
 
 export interface DirectusWebhook {
@@ -1681,15 +2167,19 @@ export interface Schema {
 	congress_day_slots: CongressDaySlot[];
 	congress_events: CongressEvent[];
 	congress_event_types: CongressEventType[];
+	congress_key_dates: CongressKeyDate[];
 	congress_sessions: CongressSession[];
 	congress_sponsors: CongressSponsor[];
 	congress_sponsors_tiers: CongressSponsorTier[];
-	discussions: Discussion[];
 	form_fields: FormField[];
 	forms: Form[];
 	form_submissions: FormSubmission[];
 	form_submission_values: FormSubmissionValue[];
+	form_flows: FormFlow[];
+	form_flow_submissions: FormFlowSubmission[];
+	form_flow_submission_values: FormFlowSubmissionValue[];
 	globals: Globals;
+	hotels: Hotel[];
 	sites: Site[];
 	navigation: Navigation[];
 	navigation_items: NavigationItem[];
@@ -1699,15 +2189,16 @@ export interface Schema {
 	persons: Person[];
 	assignments: Assignment[];
 	roles: Role[];
-	plenaries: Plenary[];
 	posts: Post[];
+	policies: Policy[];
+	user_policy_agreements: UserPolicyAgreement[];
 	redirects: Redirect[];
+	scientific_tags: ScientificTag[];
 	Sponsors: Sponsor[];
-	symposiums: Symposium[];
-	talks: Talk[];
 	venues: Venue[];
 	venue_rooms: VenueRoom[];
-	workshops: Workshop[];
+	venue_visa_info: VenueVisaInfo[];
+	country_travel_info: CountryTravelInfo[];
 	directus_access: DirectusAccess[];
 	directus_activity: DirectusActivity[];
 	directus_collections: DirectusCollection[];
@@ -1770,15 +2261,19 @@ export enum CollectionNames {
 	congress_day_slots = 'congress_day_slots',
 	congress_events = 'congress_events',
 	congress_event_types = 'congress_event_types',
+	congress_key_dates = 'congress_key_dates',
 	congress_sessions = 'congress_sessions',
 	congress_sponsors = 'congress_sponsors',
 	congress_sponsor_tiers = 'congress_sponsor_tiers',
-	disucssions = 'discussions',
 	form_fields = 'form_fields',
 	forms = 'forms',
 	form_submissions = 'form_submissions',
 	form_submission_values = 'form_submission_values',
+	form_flows = 'form_flows',
+	form_flow_submissions = 'form_flow_submissions',
+	form_flow_submission_values = 'form_flow_submission_values',
 	globals = 'globals',
+	hotels = 'hotels',
 	sites = 'sites',
 	navigation = 'navigation',
 	navigation_items = 'navigation_items',
@@ -1788,15 +2283,16 @@ export enum CollectionNames {
 	persons = 'persons',
 	assignments = 'assignments',
 	roles = 'roles',
-	plenaries = 'plenaries',
 	posts = 'posts',
+	policies = 'policies',
+	user_policy_agreements = 'user_policy_agreements',
 	redirects = 'redirects',
+	scientific_tags = 'scientific_tags',
 	sponsors = 'sponsors',
-	symposiums = 'symposiums',
-	talks = 'talks',
 	venues = 'venues',
 	venue_rooms = 'venue_rooms',
-	workshops = 'workshops',
+	venue_visa_info = 'venue_visa_info',
+	country_travel_info = 'country_travel_info',
 	directus_access = 'directus_access',
 	directus_activity = 'directus_activity',
 	directus_collections = 'directus_collections',

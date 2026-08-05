@@ -1,32 +1,23 @@
 <script setup lang="ts">
 import type { Page, PageBlock } from '#shared/types/schema';
 import { withLeadingSlash, withoutTrailingSlash } from 'ufo';
-import VueCountdown from '@chenfengyuan/vue-countdown';
 import { useToast } from '@nuxt/ui/runtime/composables/useToast.js';
 import { useAuthStore } from '~/stores/auth';
 
-
+definePageMeta({
+  layout: 'login',
+})
 
 const route = useRoute();
-const i18n = useI18n();
 const { enabled, state } = useLivePreview();
 const pageUrl = useRequestURL();
 const { isVisualEditingEnabled, apply, setAttr } = useVisualEditing();
 
-
-const { locale, locales, defaultLocale } = useI18n();
+const { locale, defaultLocale } = useI18n();
 
 const path = withoutTrailingSlash(withLeadingSlash(route.path));
 const permalink = locale.value === defaultLocale ?  path : '/';
 
-const toast = useToast()
-
-const auth = await useAuthStore();
-
-const isLoggedIn = computed(() =>
-  auth.isAuthenticated === true ||
-  typeof auth.isAuthenticated === 'object'
-)
 
 // Handle Live Preview adding version=main which is not required when fetching the main version.
 const version = route.query.version === 'main' ? undefined : (route.query.version as string);
@@ -39,6 +30,7 @@ const {
 	key: `pages-${permalink}`,
 	query: {
 		permalink,
+		headers: useRequestHeaders(['cookie']),
 		preview: enabled.value ? true : undefined,
 		token: enabled.value ? state.token : undefined,
 		id: route.query.id as string,

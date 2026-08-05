@@ -1,6 +1,16 @@
 <script setup lang="ts">
 import { useSiteDataStore } from "~/stores/site-data";
-import { useAuthStore } from "~/stores/auth";
+import { getDirectusAssetURL } from '@@/server/utils/directus-utils';
+import Assistant from "~/components/ui/chat/Assistant.vue";
+import { useToast } from '@nuxt/ui/runtime/composables/useToast.js';
+
+const { isLoading } = useLoadingIndicator()
+const pageReady = ref(false)
+onMounted(async() => {setTimeout(() => {pageReady.value = true}, 100)})
+
+// Total visibility logic
+const showContent = computed(() =>  pageReady.value && !isLoading.value)
+
 const {
 	data: siteData,
 	error: siteError,
@@ -10,7 +20,14 @@ const {
 });
 
 if (siteError.value) {
-	 createError({
+	const toast = useToast();
+	toast.add({
+		title: 'Unable to reach the server',
+		description: 'The server could not be reached. It may be temporarily down — please try again shortly.',
+		icon: 'i-lucide-server-crash',
+		color: 'error',
+	});
+	throw createError({
 		statusCode: 500,
 		statusMessage: 'Failed to load site data. Please try again later.',
 		fatal: true,
@@ -19,20 +36,15 @@ if (siteError.value) {
 
 const siteDataStore = useSiteDataStore();
 siteDataStore.setSiteData(unref(siteData)?.site as Site);
+siteDataStore.setScientificTags(unref(siteData)?.scientific_tags ?? []);
+
+
+const auth = await useAuthStore();
 
 const { isVisualEditingEnabled, apply } = useVisualEditing();
 
 const navigation = useTemplateRef('navigationRef');
 const footer = useTemplateRef('footerRef');
-
-const canPreview = ref();
-if(siteData.value?.site.preview) {
-	const { $isAuthenticatedWithPolicy } = useNuxtApp();
-	canPreview.value = await $isAuthenticatedWithPolicy('Administrator');
-}
-
-
-
 
 useHead({
 	style: [
@@ -44,15 +56,20 @@ useHead({
 	bodyAttrs: {
 		class: 'antialiased font-sans',
 	},
+	link: [{ rel: 'icon', href: siteData.value?.site.favicon ? getDirectusAssetURL(siteData.value?.site.favicon) : '/favicon.png' }],
 });
 
 useSeoMeta({
-	titleTemplate: `%s / ${unref(siteData)?.globals.title}`,
-	ogSiteName: unref(siteData)?.globals.title,
+	titleTemplate: `%s / ${unref(siteData)?.site.title}`,
+	ogSiteName: unref(siteData)?.site.title,
 });
 
+const open = ref(false)
+
 onMounted(() => {
+	open.value = true;
 	if (!isVisualEditingEnabled.value) return;
+	
 	apply({
 		elements: [navigation.value?.navigationRef as HTMLElement, footer.value?.footerRef as HTMLElement],
 		onSaved: () => {
@@ -61,22 +78,6 @@ onMounted(() => {
 	});
 });
 
-
-import { Chat } from '@ai-sdk/vue'
-import type { UIMessage } from 'ai'
-
-const messages: UIMessage[] = []
-const input = ref('')
-
-const chat = new Chat({
-  messages
-})
-
-function onSubmit() {
-  chat.sendMessage({ text: input.value })
-
-  input.value = ''
-}
 </script>
 
 <template>
@@ -87,7 +88,7 @@ function onSubmit() {
 			}">
 			<template #links><div></div></template>
 	</UError>
-	<div v-else-if="siteData?.site.preview && !canPreview">
+	<div v-else-if="siteData?.site.preview && false">
 		<NuxtPage/>
 	</div>
 	<div  v-else>
@@ -97,46 +98,16 @@ function onSubmit() {
 			:navigation="siteData.headerNavigation[0]"
 			:site="siteData.site"
 		/>
-		<NuxtPage class="min-h-lvh"/>
-		<UPopover :ui="{ content: 'sm:max-w-3xl sm:h-[28rem]' }" class="fixed bottom-10 right-10 z-100 h-4">
-			<UChip color="accent" size="xl">
-				<UButton  icon="i-lucide-message-circle"  color="accent" variant="solid" class="rounded-[100%] h-15 w-15 justify-center text-2xl"/>
-			</UChip>
-			<template #content>
-			<UChatPalette class="relative w-100">
-				<UChatMessages
-				:messages="chat.messages"
-				:status="chat.status"
-				:user="{ side: 'left', variant: 'naked', avatar: { src: 'https://github.com/benjamincanac.png' } }"
-				:assistant="{ icon: 'i-lucide-bot' }"
-				>
-				<template #content="{ message }">
-					<template v-for="(part, index) in message.parts" :key="`${message.id}-${part.type}-${index}`">
-					<MDC
-						v-if="part.type === 'text' && message.role === 'assistant'"
-						:value="part.text"
-						:cache-key="`${message.id}-${index}`"
-						class="[&_.my-5]:my-2.5 *:first:!mt-0 *:last:!mb-0 [&_.leading-7]:!leading-6"
-					/>
-					<p v-else-if="part.type === 'text' && message.role === 'user'" class="whitespace-pre-wrap">
-						{{ part.text }}
-					</p>
-					</template>
-				</template>
-				</UChatMessages>
-
-				<template #prompt>
-				<UChatPrompt
-					v-model="input"
-					icon="i-lucide-search"
-					variant="naked"
-					:error="chat.error"
-					@submit="onSubmit"
-				/>
-				</template>
-			</UChatPalette>
-			</template>
-		</UPopover>
+		<div v-if="!showContent" class="flex items-center justify-center h-screen">
+          <UProgress class="w-80" color="accent"/>
+        </div>
+		<div v-show="showContent">
+			<UAlert v-if="siteData?.site.preview " title="This site is in Preview Mode" color="accent" class="rounded-none"></UAlert>
+			<NuxtPage class="min-h-lvh text-left justify-start" />
+			<ClientOnly>
+				<Assistant v-if="auth.isAuthenticated"/>
+			</ClientOnly>
+		</div>
 		<Footer
 			v-if="siteData?.footerNavigation[0]"
 			ref="footerRef"

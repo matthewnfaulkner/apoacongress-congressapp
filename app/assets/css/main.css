@@ -2,12 +2,22 @@
 @import "./fonts.css";
 @import "tailwindcss";
 
+@layer base {
+  h1 { @apply text-4xl font-bold my-4; }
+  h2 { @apply text-3xl font-bold my-4; }
+  h3 { @apply text-2xl font-bold my-3; }
+  h4 { @apply text-xl font-semibold my-3; }
+  h5 { @apply text-lg font-semibold my-2; }
+  h6 { @apply text-base font-semibold my-2; }
+}
+
 @source inline('{sm:,md:,lg:,xl:,}col-span-{1,2,3,4,5,6,7,8,9,10,11,12}');
 @source inline('{sm:,md:,lg:,xl:,}grid-cols-{1,2,3,4,5,6,7,8,9,10,11,12}');
 
 
 @theme {
-   --font-heading: 'Cinzel', system-ui, sans-serif;
+  --font-heading: 'Marcellus', system-ui, sans-serif;
+  --font-sans: 'Cagliostro', system-ui, sans-serif;
 
   --color-primary:    oklch(0.972 0.003 247.8);
   --color-primary-50: oklch(0.972 0.003 247.8);
@@ -95,15 +105,139 @@
 
 }
 
-h1 { font-size: 2rem; font-weight: bold; }
-h3 { font-size: 1.5rem; font-weight: bold; margin-bottom: 15px; margin-top: 15px;}
+
+@layer components {
+  /* Base layout/behavior shared by all buttons. Pair with a color
+     modifier, e.g. class="btn btn-primary". */
+  .btn {
+    @apply rounded-md font-medium inline-flex items-center disabled:cursor-not-allowed aria-disabled:cursor-not-allowed disabled:opacity-75 aria-disabled:opacity-75 transition-colors px-3 py-2 text-base gap-2;
+  }
+
+  .btn-primary {
+    @apply text-inverted bg-primary hover:bg-primary/75 active:bg-primary/75 disabled:bg-primary aria-disabled:bg-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
+  }
+
+  .btn-secondary {
+    @apply text-inverted bg-secondary hover:bg-secondary/75 active:bg-secondary/75 disabled:bg-secondary aria-disabled:bg-secondary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-secondary;
+  }
+
+  .btn-tertiary {
+    @apply text-inverted bg-tertiary hover:bg-tertiary/75 active:bg-tertiary/75 disabled:bg-tertiary aria-disabled:bg-tertiary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tertiary;
+  }
+
+  .btn-accent {
+    @apply text-inverted bg-accent hover:bg-accent/75 active:bg-accent/75 disabled:bg-accent aria-disabled:bg-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent;
+  }
+}
+
+.countdown-badge {
+  background: url('/images/splash.png') center / cover !important;
+}
+
+/* Ink reveal transition — add .ink-reveal to a relative/overflow-hidden container,
+   place .ink-overlay as a sibling after the image, then toggle .is-active on the container. */
+.ink-framed::before {
+  background-image: url('/images/ink-photo-frame.png');
+  background-size: 100% 100%;
+  background-position: 50% 50%;
+  content: '';
+  height: 100%;
+  position: absolute;
+  width: 100%;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.ink-overlay {
+  background-image: url('/images/ink-transition-sprite-white.png');
+  background-size: 100% 100%;
+  height: 100%;
+  left: 50%;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  transform: translateX(-1.25%);
+  width: 4000%;
+  z-index: 10;
+}
+
+.ink-reveal.is-active .ink-overlay {
+  animation: ink-transition var(--ink-duration, 2s) steps(39) 0s forwards;
+}
+
+@keyframes ink-transition {
+  0%   { transform: translateX(-1.25%); }
+  100% { transform: translateX(-98.75%); }
+}
+
+/* Ink blot modal transition */
+.ink-modal-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.ink-modal-layer.visible {
+  opacity: 1;
+  visibility: visible;
+}
+.ink-modal-layer .ink-modal-bg {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translateY(-50%) translateX(-2%);
+  background: url('/images/ink-modal-sprite.png') no-repeat 0 0;
+  background-size: 100% 100%;
+}
+.ink-modal-layer.opening .ink-modal-bg {
+  animation: ink-modal-open 0.8s steps(24) forwards;
+}
+.ink-modal-layer.closing .ink-modal-bg {
+  animation: ink-modal-close 0.8s steps(24) forwards;
+}
+
+@keyframes ink-modal-open {
+  0%   { transform: translateY(-50%) translateX(-2%); }
+  100% { transform: translateY(-50%) translateX(-98%); }
+}
+@keyframes ink-modal-close {
+  0%   { transform: translateY(-50%) translateX(-98%); }
+  100% { transform: translateY(-50%) translateX(-2%); }
+}
+
+.ink-modal-content {
+  position: fixed;
+  inset: 0;
+  z-index: 101;
+  opacity: 0;
+  visibility: hidden;
+}
+.ink-modal-content.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+
+body {
+  /*background-image: url('/images/bg.jpg');*/
+  background-size: cover;        /* stretches to fill */
+  background-repeat: no-repeat;
+  background-position: center;
+  background-attachment: fixed;  /* parallax-like effect */
+}
 
 :root{
-    --ui-bg: var(--color-primary);
+    --ui-bg: #F9F9F9;
     --ui-bg-muted: var(--ui-color-neutral-50);
     --ui-bg-elevated: var(--ui-color-neutral-100);
     --ui-bg-accented: var(--ui-color-neutral-200);
     --ui-bg-inverted: var(--ui-color-neutral-900);
+
+
+    
 
 }
 
@@ -113,4 +247,20 @@ h3 { font-size: 1.5rem; font-weight: bold; margin-bottom: 15px; margin-top: 15px
 
     --color-background:oklch(0.613 0.141 279.55);
 }
+
+@media (max-width: 768px) {
+  .cookieControl__BarButtons{
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 1em
+  }
+
+  .cookieControl__BarButtons button {
+    height: 50px;
+    padding: 10px 5px !important;
+    margin: 0px !important;
+    font-size: 14px !important;
+  }
+}
+  
 

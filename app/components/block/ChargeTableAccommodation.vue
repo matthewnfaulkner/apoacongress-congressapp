@@ -16,21 +16,33 @@ const activeTab = ref('0');
 
 
 interface ChargeTableAccommodationProps {
-	data: 'table' | 'cards'
+	data: 'table'
 }
 
-
 const props = defineProps<ChargeTableAccommodationProps>();
-const type = props.data;
 const tabs = ref();
+
 const { data } = await useAsyncData <Congress>('accommodationcharges', async() => {
       return await $directus.request<Congress>(readItem(
         'congress',
 		congressId as string,
         {   
             fields: [
-				'accommodation_charges'
-			],          
+				{
+					'charges': [
+						'*'
+					]
+				}
+			],      
+			deep: {
+				charges: {
+					_filter: {
+					category: {
+						_eq: 'accommodation'
+						}
+					}
+				}
+				}
         }
     ))}).finally(() => {
 		loading.value = false
@@ -40,34 +52,35 @@ if(!data.value) {
     console.log("No Events")  
 }
 
-const charges = data.value?.accommodation_charges || [];
+const charges = data.value?.charges as CongressCharge[] || [];
 
 const grouped: GroupedData = charges.reduce<GroupedData>((acc, item, index) => {
-const delegate = item.delegate;
-const category = item.category;
-acc[delegate] ??= {
-};
-
-item.details.forEach((detail) => {
-
-	const header = detail.category;
-	acc[delegate][category] ??= {
-		category: category
+	const delegate = item.delegate || 'International';
+	const category = item.sub_category;
+	
+	acc[delegate] ??= {
 	};
-	acc[delegate][category][header] = item.price
-});
+
+	item.details?.forEach((detail) => {
+
+		const acccommodationChargeDetail = detail as AccommodationChargeDetail;
+		const header = acccommodationChargeDetail.stay_length
+		acc[delegate][category] ??= {
+			category: category
+		};
+		acc[delegate][category][header] = item.price
+	});
 
 
 
-return acc;
+	return acc;
 }, {})
 
 
 tabs.value = Object.entries(grouped).map(([label, subObj]) => ({
-label,
-items: Object.values(subObj),
+	label,
+	items: Object.values(subObj),
 }));
-
 
 
 
@@ -95,7 +108,6 @@ type GroupedData = {
 
 
 <template>
-	{{ props }}
 	<UProgress v-if="loading"></UProgress>
 	<UTabs
 		v-else

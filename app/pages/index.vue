@@ -35,6 +35,7 @@ const {
 	refresh,
 } = await useFetch<Page>('/api/pages/one', {
 	key: `pages-${permalink}`,
+	headers: useRequestHeaders(['cookie']),
 	query: {
 		permalink,
 		preview: enabled.value ? true : undefined,
@@ -42,6 +43,7 @@ const {
 		id: route.query.id as string,
 		version,
 	},
+	//getCachedData: (key, nuxtApp) => nuxtApp.payload.data[key] ?? nuxtApp.static.data[key],
 });
 
 

@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import Accordion from '~/components/block/Accordion.vue';
 import Hero from '~/components/block/Hero.vue';
 import RichText from '~/components/block/RichText.vue';
 import Gallery from '~/components/block/Gallery.vue';
 import Pricing from '~/components/block/Pricing.vue';
 import Posts from '~/components/block/Posts.vue';
 import Form from '~/components/block/FormBlock.vue';
+import FormFlow from '~/components/block/FormFlowBlock.vue'; 
 import People from '~/components/block/People.vue';
 import MainHero from '~/components/block/MainHero.vue';
 import Sponsors from '../block/Sponsors.vue';
@@ -23,6 +25,7 @@ const props = defineProps<BaseBlockProps>();
 const blockRef = ref<HTMLElement | null>(null);
 
 const components: Record<string, any> = {
+	block_accordion: Accordion,
 	block_hero: Hero,
 	block_mainhero: MainHero,
 	block_richtext: RichText,
@@ -31,6 +34,7 @@ const components: Record<string, any> = {
 	block_pricing: Pricing,
 	block_posts: Posts,
 	block_form: Form,
+	block_form_flow: FormFlow,
 	block_people: People,
 	block_sponsors: Sponsors,
 	block_chargetable: ChargeTable

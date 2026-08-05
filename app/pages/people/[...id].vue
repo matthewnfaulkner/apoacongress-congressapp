@@ -46,6 +46,7 @@ const { data, error, refresh } = await useFetch<Person>(() => `/api/persons/one`
 	key: `person-${id}`,
 	query: {
 		preview: enabled.value ? true : undefined,
+        headers: useRequestHeaders(['cookie']),
 		token: enabled.value ? state.token : undefined,
 		id: id[0] as string,
 		version,
@@ -70,7 +71,7 @@ const person_events = computed(() =>
         const room = event?.parent ? session.room : session.room;
         return {
             parent: isSubEvent ? event.parent : null,
-            topic: event?.type ? event?.type[0] : {},
+            topic: event,
             title: isSubEvent ? `${event.title} - ${event.parent.title}` : `${event.title}`, 
             day: session?.schedule?.day?.title,
             startTime: isSubEvent ? 
@@ -105,15 +106,20 @@ onMounted(() => {
 	});
 });
 
-useHead({
-  title: `${person.value?.first_name} ${person.value?.last_name}`
-})
+const stripHtml = (s: string) => s.replace(/<[^>]*>/g, '').trim();
+useSeoMeta({
+	title: `${person.value?.first_name} ${person.value?.last_name}`,
+	description: person.value?.bio ? stripHtml(person.value.bio) : '',
+	ogTitle: `${person.value?.first_name} ${person.value?.last_name}`,
+	ogDescription: person.value?.bio ? stripHtml(person.value.bio) : '',
+	ogUrl: personUrl.toString(),
+});
 
 type EventEntry = {
   id: string
   startTime: string | number | null
   endTime: string | null
-  topic: string | null | undefined
+  topic: CongressEvent | null | undefined
   role: string[]	 | null | undefined | Assignment[]
   color: string | null | undefined
   room: string
@@ -151,9 +157,9 @@ const columns: TableColumn<EventEntry>[] = [
 		accessorKey: 'topic',
 		header: 'Details',
         cell: ({ row }) => {
-                return h(BaseEventType, 
+                return h(BaseEventType,
                 {
-                type: row.getValue('topic') as {id: string, collection: string, item: []}
+                event: row.getValue('topic') as CongressEvent
                 }
             )
 		}
@@ -180,7 +186,7 @@ const rowSelection = ref<Record<string, boolean>>({})
 					:key="person.id"
 					highlight-color="accent"
 					orientation="horizontal"
-					class="text-center h-full justify-center ring-0"
+					class="text-center h-full justify-center ring-0 bg-transparent"
                     :title="`${person.first_name} ${person.last_name}` || ''" 
 					:ui="{
                         title: 'font-heading text-3xl',
@@ -211,13 +217,13 @@ const rowSelection = ref<Record<string, boolean>>({})
 
 				</UPageCard>
                 <UPageList v-if="person.committee_positions.length > 0"  class="p-5">
-                                <Tagline :tagline="$t('committees')" ></Tagline>
+                                <Tagline tagline="Committees" ></Tagline>
                                 <UPageCard
                                     v-for="(committee_position, index) in person.committee_positions"
                                     :key="index"
                                     variant="outline"
-                                    :to="`/committee/${committee_position.committee_positions_id?.committee.slug}`"
-                                    class=""
+                                    :to="`/committees/${committee_position.committee_positions_id?.committee.slug}`"
+                                    class="w-80"
                                     :title="committee_position.committee_positions_id?.title"
                                     :description="committee_position?.committee_positions_id?.committee.title"
                                     :ui="{
@@ -228,7 +234,7 @@ const rowSelection = ref<Record<string, boolean>>({})
                                     </UPageCard>
                         </UPageList>
                         <div v-if="person_events?.length > 0">
-                        <Tagline :tagline="$t('Events')"></Tagline>
+                        <Tagline tagline="Events"></Tagline>
                         <UTable
                             :data="person_events"
 					        :columns="columns"

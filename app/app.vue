@@ -3,17 +3,21 @@ import * as locales from '@nuxt/ui/locale'
 
 const { locale } = useI18n()
 
-const siteDataStore = useSiteDataStore();
-const siteData = siteDataStore.getSiteData() as Site;
-const route = useRoute()
-
 useHead({
 	meta: [{ charset: 'utf-8' }, { name: 'viewport', content: 'width=device-width, initial-scale=1' }],
-	link: [{ rel: 'icon', href: '/favicon.ico' }],
 	htmlAttrs: { lang: 'en' },
 });
 
+const pageLoaded = ref(false)
 
+onMounted(() => {
+	const show = () => setTimeout(() => { pageLoaded.value = true }, 1500)
+	if (document.readyState === 'complete') {
+		show()
+	} else {
+		window.addEventListener('load', show, { once: true })
+	}
+})
 </script>
 
 <template>
@@ -21,5 +25,16 @@ useHead({
 		<NuxtLayout>
 			<NuxtPage />
 		</NuxtLayout>
+		<ClientOnly>
+			
+			<CookieControl
+				v-if="pageLoaded"
+				locale="en"
+				:ui="{
+					bar: 'bg-secondary',
+				}"
+			/>
+			<PolicyConsentModal />
+		</ClientOnly>
 	</UApp>
 </template>

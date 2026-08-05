@@ -1,28 +1,127 @@
 <script setup lang="ts">
-import Button from '../base/BaseButton.vue';
-import { CheckCircle2 } from 'lucide-vue-next';
+import ButtonGroup from '../base/ButtonGroup.vue';
 
 interface PricingCardProps {
-	card: {
+	card: PricingCard
+}
+
+interface PricingCard {
 		id: string;
+		use_congress_charges?: boolean;
 		title: string;
 		description?: string;
 		price?: string;
-		badge?: string;
-		features?: string[];
-		button?: {
-			id: string;
-			label: string | null;
-			variant: string | null;
-			url: string | null;
+		badge?: Array<{label: string, link?: string}> | null;
+		features?: string[] | Feature[];
+		category?: 'registration' | 'accommodation';
+		congress_charges?: Array<{
+			charge: CongressCharge
+		}>
+		button_group?: {
+			id?: string;
+			buttons: Array<{
+				id: string;
+				label: string | null;
+				variant: string | null;
+				url: string | null;
+				type: 'url' | 'page' | 'post';
+				pagePermalink?: string | null;
+				postSlug?: string | null;
+			}>;
 		};
 		is_highlighted?: boolean;
-	};
+		hotel?: { id: string; name: string; star_rating?: number | null } | null;
+};
+
+interface Feature {
+	price: string,
+	details: RegistrationChargeDetail[] | AccommodationChargeDetail[] | string[];
 }
 
 const { setAttr } = useVisualEditing();
 
-defineProps<PricingCardProps>();
+const props = defineProps<PricingCardProps>();
+
+const card = ref<PricingCard>(props.card);
+
+watchEffect(() => {
+	if(!card.value.use_congress_charges) return;
+
+	const topCharge = ref<CongressCharge>();
+
+	// charges is now reactive
+	const charges = computed(() =>
+		props.card.congress_charges?.slice() ?? []
+	);
+
+	const now = new Date();
+
+	const localCharges = [...charges.value]; // mutable copy
+	if (props.card.category === 'accommodation') {
+
+		const top = localCharges.shift();
+
+		topCharge.value = top?.charge;
+
+		const details = top?.charge.details as AccommodationChargeDetail[];
+
+		const detail = details?.[0];
+
+		const rawHotel = top?.charge.hotel;
+		const hotel = rawHotel && typeof rawHotel === 'object' ? rawHotel as { id: string; name: string; star_rating?: number | null } : null;
+
+		card.value = {
+			id: props.card.id,
+			category: 'accommodation',
+			title: props.card.title ? props.card.title : '',
+			price: detail?.stay_length || '',
+			description:  `${dateStringToHumanStringBack(detail?.check_in)} - ${dateStringToHumanStringBack(detail?.check_out)}`,
+			badge: props.card.badge,
+			button_group: props.card.button_group,
+			use_congress_charges: true,
+			is_highlighted: props.card.is_highlighted,
+			hotel,
+			features: [top, ...localCharges].flatMap(c => {
+				return `<b class="text-accent text-lg">${c.charge.price}</b> - ${c.charge.sub_category}`;
+			})
+		};
+
+	} else if (props.card.category === 'registration') {
+
+		const filteredCharges = localCharges.filter(charge => {
+			if (!charge.charge.details || !charge.charge.details.length) return true;
+			const details = charge.charge.details[0] as RegistrationChargeDetail;
+			const cutoff = new Date(details.cutoff_date);
+			return now <= cutoff;
+		});
+		const top = filteredCharges.shift();
+		topCharge.value = top?.charge;
+
+		const details =
+		top?.charge.details as RegistrationChargeDetail[];
+
+		const detail = details?.[0] as RegistrationChargeDetail;
+
+		card.value = {
+			id: props.card.id,
+			category: 'registration',
+			title: props.card.title ? props.card.title : top?.charge.sub_category || '',
+			price: top?.charge.price || '',
+			description: detail ? `${detail.cutoff_description} ${dateStringToHumanStringBack(detail.cutoff_date)}` : undefined,
+			badge: props.card.badge,
+			button_group: props.card.button_group,
+			use_congress_charges: true,
+			is_highlighted: props.card.is_highlighted,
+			features: filteredCharges.flatMap(c => {
+				const d = (c.charge.details as RegistrationChargeDetail[])?.[0];
+				return d
+					? `<b class="text-accent text-lg">${c.charge.price}</b> - ${d.cutoff_description} ${dateStringToHumanStringBack(d.cutoff_date)}`
+					: c.charge.price || '';
+			}),
+		};
+	}
+});
+
 </script>
 
 <template>
@@ -34,20 +133,46 @@ defineProps<PricingCardProps>();
 	>
 		<div class="flex justify-between items-start gap-2 mb-4">
 			<h3
-				class="text-2xl font-heading text-foreground"
+				class="text-2xl font-sans text-foreground"
 				:data-directus="
+					card.use_congress_charges
+						? setAttr({
+							collection: 'block_pricing_cards',
+							item: card.id,
+							fields: ['congress_charges'],
+							mode: 'popover'
+						}) :
 					setAttr({ collection: 'block_pricing_cards', item: card.id, fields: ['title'], mode: 'popover' })
 				"
 			>
 				{{ card.title }}
 			</h3>
-			<div class="flex-shrink-0">
-				<UBadge
-					v-if="card.badge"
-					:variant="card.is_highlighted ? 'solid' : 'outline'"
+			<div class=""
+				v-if="card.badge"
+				v-for="badge in card.badge">
+				<UButton v-if="badge.link"
+				:variant="card.is_highlighted ? 'solid' : 'outline'"
 					color= "secondary"
 					class="text-xs font-medium uppercase"
-					to="/"
+					:to="badge.link"
+					:data-directus="
+						
+						setAttr({
+							collection: 'block_pricing_cards',
+							item: card.id,
+							fields: ['badge'],
+							mode: 'popover',
+						})
+					"
+				>
+					{{ badge.label}}
+					
+				</UButton>
+				<UBadge
+					v-else
+					:variant="card.is_highlighted ? 'solid' : 'outline'"
+					color= "secondary"
+					class="text-xs font-medium uppercase "
 					:data-directus="
 						setAttr({
 							collection: 'block_pricing_cards',
@@ -57,22 +182,35 @@ defineProps<PricingCardProps>();
 						})
 					"
 				>
-					{{ card.badge }}
+					{{ badge.label}}
 				</UBadge>
 			</div>
 		</div>
-
 		<p
 			v-if="card.price"
 			class="text-h2 text-4xl text-accent mt-2 font-semibold"
-			:data-directus="setAttr({ collection: 'block_pricing_cards', item: card.id, fields: ['price'], mode: 'popover' })"
+			:data-directus="
+				card.use_congress_charges
+					? setAttr({
+						collection: 'block_pricing_cards',
+						item: card.id,
+						fields: ['congress_charges'],
+						mode: 'popover'
+					})
+					: setAttr({
+						collection: 'block_pricing_cards',
+						item: card.id,
+						fields: ['price'],
+						mode: 'popover'
+					})
+				"
 		>
 			{{ card.price }}
 		</p>
 
 		<p
 			v-if="card.description"
-			class="text-description mt-2 line-clamp-2"
+			class="text-description mt-2 line-clamp-2 text-xl font-bold"
 			:data-directus="
 				setAttr({ collection: 'block_pricing_cards', item: card.id, fields: ['description'], mode: 'popover' })
 			"
@@ -85,33 +223,47 @@ defineProps<PricingCardProps>();
 		<div class="flex-grow">
 			<ul
 				v-if="card.features"
-				class="space-y-4"
+				class="space-y-4 list-disc"
 				:data-directus="
+					card.use_congress_charges
+					? setAttr({
+						collection: 'block_pricing_cards',
+						item: card.id,
+						fields: ['congress_charges'],
+						mode: 'popover'
+					}) :
 					setAttr({ collection: 'block_pricing_cards', item: card.id, fields: ['features'], mode: 'popover' })
 				"
 			>
 				<li v-for="(feature, index) in card.features" :key="index" class="flex items-center gap-3 text-regular">
-					
-					<p class="leading-relaxed">{{ feature }}</p>
+					<p class="leading-relaxed text-sm" v-html="feature"></p>
 				</li>
 			</ul>
 		</div>
-
-		<div class="mt-auto pt-4">
-			<Button
-				v-if="card.button"
-				class="w-full"
-				id="card.button.uuid"
+		<UButton
+			v-if="card.hotel"
+			:to="`/hotels/${card.hotel.id}`"
+			variant="ghost"
+			color="accent"
+			class="mt-4 w-full justify-center text-sm"
+			icon="i-lucide-building-2"
+			trailing
+		>
+			{{ card.hotel.name }}
+		</UButton>
+		<div
+			v-if="card.button_group?.buttons?.length"
+			class="mt-6 flex justify-center image_left my-3"
+		>
+			<ButtonGroup
+				:buttons="card.button_group?.buttons"
 				:data-directus="
-					setAttr({
-						collection: 'block_button',
-						item: card.button.id,
-						fields: ['type', 'label', 'variant', 'url', 'page', 'post'],
-						mode: 'popover',
-					})
+					setAttr({ 
+						collection: 'block_button_group', 
+						item: card.button_group?.id ?? null,
+						fields: 'buttons', 
+						mode: 'modal' })
 				"
-				:label="card.button.label"
-				:variant="card.button.variant"
 			/>
 		</div>
 	</div>

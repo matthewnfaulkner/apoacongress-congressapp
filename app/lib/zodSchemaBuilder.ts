@@ -5,6 +5,8 @@ export const buildZodSchema = (fields: FormField[]) => {
 	const schema: Record<string, z.ZodTypeAny> = {};
 
 	fields.forEach((field) => {
+		if (field.type === 'voucher') return
+
 		let fieldSchema: z.ZodTypeAny;
 
 		switch (field.type) {
@@ -13,6 +15,7 @@ export const buildZodSchema = (fields: FormField[]) => {
 				break;
 
 			case 'checkbox_group':
+			case 'checkbox_group_alt':
 				fieldSchema = z.array(z.string()).default([]);
 				break;
 
@@ -89,10 +92,17 @@ export const buildZodSchema = (fields: FormField[]) => {
 		if (field.required) {
 			if (fieldSchema instanceof z.ZodString) {
 				fieldSchema = fieldSchema.nonempty(`${field.label || field.name} is required`);
+			} else if (fieldSchema instanceof z.ZodBoolean || fieldSchema instanceof z.ZodDefault) {
+				// Required checkbox must be checked
+				fieldSchema = z.literal(true, {
+					errorMap: () => ({ message: `${field.label || field.name} must be checked` }),
+				});
 			}
 		} else {
 			// Allow empty strings or undefined for optional fields
-			fieldSchema = fieldSchema.or(z.literal('')).or(z.undefined());
+			if (!(fieldSchema instanceof z.ZodBoolean || fieldSchema instanceof z.ZodDefault)) {
+				fieldSchema = fieldSchema.or(z.literal('')).or(z.undefined());
+			}
 		}
 
 		if (field.name) {

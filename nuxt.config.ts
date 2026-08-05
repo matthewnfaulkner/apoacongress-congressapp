@@ -1,3 +1,7 @@
+import tailwindcss from "@tailwindcss/vite";
+
+const isSandbox = process.env.NUXT_PUBLIC_IS_SANDBOX !== 'false';
+
 export default defineNuxtConfig({
 	components: [
 		{ path: '~/components', pathPrefix: false },
@@ -16,10 +20,24 @@ export default defineNuxtConfig({
 	future: {
 		compatibilityVersion: 4,
 	},
-	$production: {
-		routeRules: {
-		'/**': { isr: true },
-		},
+	routeRules: isSandbox ? {
+		'/api/**': { isr: false },
+		'/**': { isr: false },
+	} : {
+		// Never cache API routes - query params must always hit the server fresh
+		'/api/**': { isr: false },
+
+		// Auth pages must always run fresh SSR to read cookies
+		'/login': { isr: false },
+		'/admin_login': { isr: false },
+		'/host/travel': { isr: false },
+
+		// User-specific pages — nothing to gain from caching
+		'/support/**': { isr: false },
+		'/people/**': { isr: false },
+		
+		// Cache all page routes
+		'/**': { isr: 60 },
 	},
 	ui: {
 		colorMode: false,
@@ -47,13 +65,77 @@ export default defineNuxtConfig({
 		'shadcn-nuxt',
 		'@nuxt/icon',
 		'@nuxtjs/color-mode',
-		'@nuxtjs/seo',
-		'@nuxtjs/tailwindcss',
 		'@nuxt/ui',
 		'@primevue/nuxt-module',
 		'@pinia/nuxt',
 		'@nuxtjs/i18n',
+		'@nuxtjs/mdc',
+		'@dargmuesli/nuxt-cookie-control',
+		'@nuxtjs/turnstile'
 	],
+	scripts: {
+		registry: {
+			googleMaps: { trigger: 'onNuxtReady' },
+		},
+	},
+	cookieControl: {
+		barPosition: 'bottom-left',
+		closeModalOnClickOutside: true,
+		colors: {
+			barBackground: 'var(--color-secondary)',
+			modalBackground: 'var(--color-primary)',
+			modalButtonBackground: 'var(--color-secondary)',
+  			modalButtonColor: 'var(--color-primary)',
+		},
+		isControlButtonEnabled: false,
+		isModalForced: false,
+		// The cookies that are to be controlled.
+		// See detailed explanation further down below!
+		cookies: {
+		necessary: [
+			{
+				description: {
+					en: 'This cookie enables authentication.'
+				},
+				id: process.env.DIRECTUS_SESSION_TOKEN_NAME as string, // use a short cookie id to save bandwidth and prefixes to separate
+				isPreselected: false, // `true` is not GDPR compliant! This flag does not enable any cookies, it only preselects the cookie's modal toggle. The default is `false`.
+				name: {
+					en: 'Directus Session Token' // you always have to specify a cookie name (in English)
+				},
+				links: {
+					'https://example.com/privacy': 'Privacy Policy',
+					'https://example.com/terms': 'Terms of Service',
+				},
+				src: 'https://example.com/preferences/js?id=<API-KEY>',
+				targetCookieIds: [process.env.DIRECTUS_SESSION_TOKEN_NAME as string],
+				}
+		],
+		optional: [
+			{
+				description: {
+					en: 'This cookie stores preferences.'
+				},
+				id: 'pa', // use a short cookie id to save bandwidth and prefixes to separate
+				isPreselected: false, // `true` is not GDPR compliant! This flag does not enable any cookies, it only preselects the cookie's modal toggle. The default is `false`.
+				name: {
+					en: 'Preferences' // you always have to specify a cookie name (in English)
+				},
+				links: {
+					'https://example.com/privacy': 'Privacy Policy',
+					'https://example.com/terms': 'Terms of Service',
+				},
+				src: 'https://example.com/preferences/js?id=<API-KEY>',
+				targetCookieIds: ['xmpl_a', 'xmpl_b'],
+				}
+		],
+		}
+
+	},
+	icon: {
+		customCollections: [
+			{ prefix: 'apoa', dir: './app/assets/images' }
+		]
+	},
 	css: ['~/assets/css/main.css'],
 	runtimeConfig: {
 		public: {
@@ -62,10 +144,32 @@ export default defineNuxtConfig({
 			enableVisualEditing: process.env.NUXT_PUBLIC_ENABLE_VISUAL_EDITING !== 'false',
 			siteId: process.env.SITE_ID as string,
 			loginUrl: process.env.LOGIN_URL as string,
-			logoutUrl: process.env.LOGOUT_URL as string 
+			logoutUrl: process.env.LOGOUT_URL as string,
+			isSandbox: process.env.NUXT_PUBLIC_IS_SANDBOX != 'false',
+			cacheTtl: isSandbox ? 0 : 60,
+			enableChatAgent: process.env.NUXT_PUBLIC_ENABLE_CHAT != 'false',
+			refreshTokenName: process.env.DIRECTUS_REFRESH_TOKEN_NAME as string || 'directus_refresh_token',
+			userAvatarFolder: process.env.NUXT_PUBLIC_USER_AVATAR_FOLDER as string,
+			abstractFiguresFolder: process.env.NUXT_PUBLIC_ABSTRACT_FIGURES_FOLDER as string,
+			requestAccessForm: process.env.NUXT_PUBLIC_REQUEST_ACCESS_FORM as string || '',
+			samlProviderName: process.env.NUXT_PUBLIC_SAML_PROVIDER_NAME as string
 			
 		},
 		directusServerToken: process.env.DIRECTUS_SERVER_TOKEN,
+		directusSupportUserToken: process.env.DIRECTUS_SUPPORT_USER_TOKEN,
+		authExchangeSecret: process.env.AUTH_EXCHANGE_SECRET,
+		anthropicApiKey: process.env.ANTHROPIC_API_KEY,
+		voyageApiKey: process.env.VOYAGE_API_KEY,
+		rebuildIndexSecret: process.env.REBUILD_INDEX_SECRET,
+		duffelApiKey: process.env.DUFFEL_API_KEY,
+		dataRequestFlowId: process.env.DIRECTUS_DATA_REQUEST_FLOW_ID,
+		sessionTokenName: process.env.DIRECTUS_SESSION_TOKEN_NAME as string || 'directus_session_token',
+		refreshTokenName: process.env.DIRECTUS_REFRESH_TOKEN_NAME as string || 'directus_refresh_token',
+		scripts: {
+			googleMaps: {
+				apiKey: 'AIzaSyAyj3Ebj4qOEGVWx84gkuP7Nq6UQAQ5J78', // NUXT_PUBLIC_SCRIPTS_GOOGLE_MAPS_API_KEY
+			},
+		},
 	},
 	shadcn: {
 		/**
@@ -80,6 +184,7 @@ export default defineNuxtConfig({
 	},
 
 	security: {
+		enabled: process.env.NODE_ENV !== 'production' || !process.env.NUXT_PRERENDER_NODE_ENV ? false : true,
 		headers: {
 			contentSecurityPolicy: {
 				'img-src': ["'self'", 'data:', '*'],
@@ -110,7 +215,7 @@ export default defineNuxtConfig({
 		strategy: 'prefix_except_default',
 		locales: [
 		{ name:'en', code: 'en', language: 'en-US', file: 'en.json'},
-		{ name:'tw', code: 'zh_tw', language: 'zh_tW', file: 'tw.json'}
+		//{ name:'tw', code: 'zh_tw', language: 'zh_tW', file: 'tw.json'}
 		],
 		defaultLocale: 'en',
 	},
@@ -120,8 +225,65 @@ export default defineNuxtConfig({
 	vue: {
 		propsDestructure: true,
 	},
+	vite: {
+		plugins: [
+		tailwindcss(),
+		],
+	},
 	sitemap: {
 		sources: ['/api/sitemap'],
+	},
+
+	hooks: {
+		async 'prerender:routes'(ctx) {
+		// Ensure we only do this during a production build
+		if (process.env.NODE_ENV === 'development') return
+		if (isSandbox) return	
+		const directusUrl = process.env.DIRECTUS_URL || 'https://admin.congress.apoaonline.com'
+		const token = process.env.DIRECTUS_SERVER_TOKEN // Use a static token if your collections are private
+
+		try {
+			console.log('Fetching dynamic routes for prerendering...')
+
+			// 1. Fetch Pages and Posts in parallel via standard fetch
+			// (This avoids issues with SDK initialization inside the config file)
+			const [pagesRes, postsRes] = await Promise.all([
+			fetch(`${directusUrl}/items/pages?filter[status][_eq]=published&fields=permalink&limit=-1`, {
+				headers: token ? { Authorization: `Bearer ${token}` } : {}
+			}),
+			fetch(`${directusUrl}/items/posts?filter[status][_eq]=published&fields=slug&limit=-1`, {
+				headers: token ? { Authorization: `Bearer ${token}` } : {}
+			})
+			])
+
+			const pages = await pagesRes.json()
+			const posts = await postsRes.json()
+
+			// 2. Format and add Pages
+			pages.data?.forEach((page: any) => {
+			const path = page.permalink.startsWith('/') ? page.permalink : `/${page.permalink}`
+			ctx.routes.add(path)
+			})
+
+			// 3. Format and add Posts
+			posts.data?.forEach((post: any) => {
+			ctx.routes.add(`/blog/${post.slug}`)
+			})
+
+			console.log(`Successfully added ${ctx.routes.size} routes to prerender.`)
+		} catch (error) {
+			console.error('Prerender hook failed:', error)
+		}
+		}
+	},
+	nitro: {
+		prerender: {
+			// This is the most important part:
+      		crawlLinks: false,
+			/*crawlLinks: true,
+			routes: ['/', '/sitemap_index.xml'],*/
+			failOnError: false,
+		}
 	},
 
 	compatibilityDate: '2025-01-16',

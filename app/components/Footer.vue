@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { getDirectusAssetURL } from '@@/server/utils/directus-utils';
+
 export interface SocialLink {
 	service: string;
 	url: string;
@@ -18,13 +20,14 @@ export interface FooterProps {
 		items: NavigationItem[];
 	};
 	site: {
-		logo?: string | null;
-		logo_dark_mode?: string | null;
+		logo?: DirectusFile | string | null;
+		logo_dark_mode?: DirectusFile | string | null;
 		description?: string | null;
 		social_links?: SocialLink[];
 	},
 	organiser : {
-		logo?: string | null;
+		id: string;
+		logo?: DirectusFile | string | null;
 		name?: string | null;
 		email?: string | null;
 		address?: string | null;
@@ -34,35 +37,28 @@ export interface FooterProps {
 }
 
 const props = defineProps<FooterProps>();
-const runtimeConfig = useRuntimeConfig();
 
 // Using template ref to expose the footer to the layout for visual editing
 const footerRef = useTemplateRef('footerRef');
 defineExpose({ footerRef });
 
-const lightLogoUrl = computed(() =>
-	props.site.logo ? `${runtimeConfig.public.directusUrl}/assets/${props.site.logo}` : '/images/logo.svg',
-);
+const lightLogoUrl = computed(() => getDirectusAssetURL(props.site.logo) || '/images/logo.svg');
 
-const OrgLogoUrl = computed(() =>
-	props.organiser.logo ? `${runtimeConfig.public.directusUrl}/assets/${props.organiser.logo}` : '/images/logo.svg',
-);
+const OrgLogoUrl = computed(() => getDirectusAssetURL(props.organiser.logo) || '/images/logo.svg');
 
-const darkLogoUrl = computed(() =>
-	props.site.logo_dark_mode ? `${runtimeConfig.public.directusUrl}/assets/${props.site.logo_dark_mode}` : '',
-);
+const darkLogoUrl = computed(() => getDirectusAssetURL(props.site.logo_dark_mode));
 </script>
 
 <template>
-	<UFooter v-if="site" ref="footerRef" class="bg-secondary py-16">
+	<UFooter v-if="site" ref="footerRef" class="bg-secondary py-16" :ui="{ center: 'justify-start'}">
 		<template #left>
-			<div class="flex-1 text-white">
+			<div class="flex-1 text-white px-4 pt-4">
 					<NuxtLink to="/" class="inline-block transition-opacity hover:opacity-70">
 						<img
-							v-if="lightLogoUrl"
-							:src="lightLogoUrl"
+							v-if="darkLogoUrl"
+							:src="darkLogoUrl"
 							alt="Logo"
-							:class="['w-[120px] h-auto', darkLogoUrl ? 'dark:hidden' : '']"
+							:class="['w-[300px] h-auto', darkLogoUrl ? 'dark:hidden' : '']"
 						/>
 						<img
 							v-if="darkLogoUrl"
@@ -94,11 +90,11 @@ const darkLogoUrl = computed(() =>
 					</div>
 				</div>
 		</template>
-		<Container class="text-white">
+		<Container class="text-white m-0">
 			<div class="flex flex-col md:flex-row items-start gap-8 pt-8">
 				<div class="flex flex-col items-start flex-1">
 					<nav v-if="props.navigation.items?.length" class="w-full md:w-auto text-left">
-						<ul class="space-y-4 list-disc">
+						<ul class="space-y-4 list-none list-inside">
 							<li v-for="item in props.navigation.items" :key="item.id">
 								<NuxtLink
 									v-if="item.page?.permalink"
@@ -121,7 +117,7 @@ const darkLogoUrl = computed(() =>
 				<div class="flex flex-col md:flex-row justify-between items-start gap-8 pt-8">
 					<div class="flex flex-col items-start flex-1">
 						<Tagline tagline="Conference Scretariat" class="text-white"> </Tagline>
-						<NuxtLink :to="props.organiser.website || ''" class="inline-block transition-opacity hover:opacity-70">
+						<NuxtLink :to="`/organisations/${props.organiser.id}`" class="inline-block transition-opacity hover:opacity-70">
 							<img
 								v-if="OrgLogoUrl"
 								:src="OrgLogoUrl"

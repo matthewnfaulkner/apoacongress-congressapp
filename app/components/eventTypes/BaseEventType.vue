@@ -1,37 +1,26 @@
 <script setup lang="ts">
-
-import Symposiums from './Symposiums.vue';
-import Plenaries from './Plenaries.vue';
-import Talks from './Talks.vue';
-import Workshops from './Workshops.vue';
-import Discussions from './Discussions.vue';
+import type { CongressEvent } from '~~/shared/types/schema';
 
 interface BaseEventTypeProps {
-	type: {
-		collection: string;
-		item: any;
-		id: string;
-	};
+	event: CongressEvent;
 }
 
 const props = defineProps<BaseEventTypeProps>();
 
-const typeRef = ref<HTMLElement | null>(null);
+const summary = computed(() => {
+	const bits = [
+		props.event.title,
+		props.event.topic,
+	].filter(Boolean);
 
-const components: Record<string, any> = {
-    symposiums: Symposiums,
-    plenaries: Plenaries,
-    talks: Talks,
-    workshops: Workshops,
-	discussions: Discussions
-};
+	if (props.event.type === 'workshop' && props.event.price != null) {
+		bits.push(`$${props.event.price}`);
+	}
 
-const Component = computed(() => components[props.type.collection] || null);
-const componentData = computed(() => props.type.item);
+	return bits.join(' — ');
+});
 </script>
 
 <template>
-	<div ref="typeRef" class="text-wrap">
-		<component :is="Component" v-if="Component" :id="`eventType-${type.id}`" :data="componentData" />
-	</div>
+	<div class="text-wrap">{{ summary }}</div>
 </template>

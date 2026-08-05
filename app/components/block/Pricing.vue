@@ -14,11 +14,16 @@ interface PricingProps {
 				price?: string;
 				badge?: string;
 				features?: string[];
-				button?: {
-					id: string;
-					label: string | null;
-					variant: string | null;
-					url: string | null;
+				button_group?: {
+					buttons: Array<{
+						id: string;
+						label: string | null;
+						variant: string | null;
+						url: string | null;
+						type: 'url' | 'page' | 'post';
+						pagePermalink?: string | null;
+						postSlug?: string | null;
+					}>;
 				};
 				is_highlighted?: boolean;
 			}>;
@@ -27,9 +32,30 @@ interface PricingProps {
 }
 const { setAttr } = useVisualEditing();
 defineProps<PricingProps>();
+
+import { nextTick } from 'vue'
+
+onMounted(async () => {
+  await nextTick()
+
+  window.dispatchEvent(
+    new CustomEvent('directus:refresh')
+  )
+})
+
+const onTabChange = async () => {
+  await nextTick()
+  // give Vue time to paint DOM
+  requestAnimationFrame(() => {
+    window.dispatchEvent(
+      new CustomEvent('directus:refresh')
+    )
+  })
+}
 </script>
 
 <template>
+	
 	<section>
 		<Tagline
 			v-if="data.tagline"
@@ -37,7 +63,7 @@ defineProps<PricingProps>();
 			:data-directus="
 				setAttr({
 					collection: 'block_pricing',
-					item: data.id,
+					item: data.id as string,
 					fields: 'tagline',
 					mode: 'popover',
 				})
@@ -49,14 +75,14 @@ defineProps<PricingProps>();
 			:data-directus="
 				setAttr({
 					collection: 'block_pricing',
-					item: data.id,
+					item: data.id as string,
 					fields: 'headline',
 					mode: 'popover',
 				})
 			"
 		/>
 
-		<UTabs :items="data.tabs" color="accent" size="xl" class="mt-4">
+		<UTabs :items="data.tabs" color="accent" size="xl" class="mt-4" :unmountOnHide="false" @update:modelValue="onTabChange">
 			<template #content="{item}">
 				<PricingTab :tab="item"></PricingTab>
 			</template>

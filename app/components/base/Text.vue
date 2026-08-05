@@ -15,13 +15,14 @@ onMounted(() => {
 	if (!contentEl.value) return;
 
 	const anchors = Array.from(contentEl.value.getElementsByTagName('a'));
+	const siteHostname = new URL(config.public.siteUrl).hostname;
 
 	for (const anchor of anchors) {
 		const href = anchor.getAttribute('href');
 		if (!href) continue;
 
 		const url = new URL(href, window.location.origin);
-		const isLocal = url.hostname === config.public.siteUrl;
+		const isLocal = url.hostname === siteHostname;
 
 		if (isLocal) {
 			anchor.addEventListener('click', (e) => {

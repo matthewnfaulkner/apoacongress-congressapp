@@ -2,18 +2,13 @@
 import { type scheduleGridItem, GridItemTypes } from '@/types/grid-types';
 import { readItems, deleteItem } from '@directus/sdk';
 import type { TableColumn } from '@nuxt/ui'
-import EditModal from "~/components/grid/EditModal.vue";
 import { useToast } from '@nuxt/ui/runtime/composables/useToast.js';
 import { ConfirmationModal } from "~/components/ui/modal";
-import EditEventModal from "~/components/grid/EditEventModal.vue";
 import type { Row, TableMeta } from '@tanstack/vue-table'
-import type { EditEventMode } from './EditEventModal.vue';
 import BaseEventType from '~/components/eventTypes/BaseEventType.vue';
 
-import { disable } from '@directus/visual-editing';
 const overlay = useOverlay()
-const editModal = overlay.create(EditModal);
-const editEventModal = overlay.create(EditEventModal);
+
 
 const confirmationModal = overlay.create(ConfirmationModal);
 
@@ -26,13 +21,13 @@ const toast = useToast();
 const props = defineProps<{
   x: number | string;
   y: number | string;
-  room: VenueRoom | undefined;
+  rooms: VenueRoom[] | undefined;
+  allRooms?: VenueRoom[];
   startTime: string | null;
   endTime: string | null;
   session: CongressSession;
   events?: CongressEvent[]
   day?: string;
-  sections?: string[];
   schedule?: string;
   timeSubDivision: number,
   yLimit: number,
@@ -48,6 +43,9 @@ label.value = props?.label || '';
 
 const session = ref<CongressSession>();
 session.value = props.session;
+
+const { organisationNames, firstTag } = useSessionLabel(session)
+
 
 const toUpdate = ref(false);
 
@@ -66,30 +64,12 @@ const { data } = await useAsyncData <CongressEvent[]>('congress_events', async()
 										'title',
 										'relative_start',
 										'duration',
-										{
-                      type: [
-                        'id',
-                        'collection',
-                        {
-                          item: {
-                            plenaries: [
-                              '*'
-                            ],
-                            symposiums: [
-                              '*'
-                            ],
-                            workshops: [
-                              '*'
-                            ],
-                            talks: [
-                              '*'
-                            ],
-                          }
-                        },
-                      ]
-                    },
+										'type',
+										'topic',
+										'price',
 										{
 											assignments: [
+                          'id',
 													{
 														person: [
 															'id',
@@ -107,30 +87,12 @@ const { data } = await useAsyncData <CongressEvent[]>('congress_events', async()
 										}
 									]
 								},
-									{
-										type: [
-											'id',
-											'collection',
-											{
-												item: {
-                          plenaries: [
-                            '*'
-                          ],
-                          symposiums: [
-                            '*'
-                          ],
-                          workshops: [
-                            '*'
-                          ],
-                          talks: [
-                            '*'
-                          ],
-                        }
-											},
-										]
-									},
+									'type',
+									'topic',
+									'price',
 									{
 										assignments: [
+                      'id',
 												{
 													person: [
 														'id',
@@ -192,7 +154,7 @@ const eventItems = computed(() => {
     defaultExpanded: true,
     id: event.id,
     title: event?.title,
-    topic: event?.type[0],
+    topic: event,
     event: event,
     roles: event.assignments.flatMap(assignment => {
 					return assignment
@@ -206,7 +168,7 @@ const eventItems = computed(() => {
       defaultExpanded: true,
       id: childevent.id,
       title: childevent?.title,
-      topic: childevent?.type[0],
+      topic: childevent,
       roles: childevent.assignments.flatMap(assignment => {
 					return assignment
 				})
@@ -217,7 +179,7 @@ const eventItems = computed(() => {
 interface EventEntry {
     id: string;
     title: string;
-    topic: string;
+    topic: CongressEvent;
     startTime: string;
     endTime: string;
     children: EventEntry[];
@@ -298,9 +260,9 @@ const columns: TableColumn<EventEntry>[] = [
 		accessorKey: 'topic',
 		header: 'Topic',
     cell: ({row}) => {
-      return h(BaseEventType, 
+      return h(BaseEventType,
         {
-          type: row.getValue('topic') as {id: string, collection: string, item: []}
+          event: row.getValue('topic') as CongressEvent
         }
       )
     }
@@ -369,166 +331,24 @@ function getRowItems(row: Row<EventEntry>) {
   ]
 }
 
-const expanded = ref({ 0: true })
-const open = ref(false)
-
-const openEditModal = async () => {
-  const instance = editModal.open({
-    i: session.value?.id,
-    label: label.value,
-    session: session.value,
-    x: props.x,
-    y: props.y,
-    room: props.room,
-    startTime:  addMinutesToTime('00:00', props.startTime),
-    day: props.day,
-    schedule: props.schedule,
-    timeSubDivision: props.timeSubDivision,
-    yLimit: props.yLimit,
-    type: GridItemTypes.Session
-  });
-
-  await instance.result.then(
-      (result) => {
-        if(result) {
-          label.value = result.label || props.label;
-          session.value = result.session;
-          toUpdate.value = result;
-          toast.add({ title: 'Success', description: 'Session Updated', color: 'accent'})
-
-        }
-      }
-  )
-}
-
-const  openEditSubEventModal= async (mode: EditEventMode, parent: CongressEvent | null, row: EventEntry | null) => {
-  const instance = editEventModal.open({
-    mode: mode,
-    session: props.session,
-    event: row?.event || null,
-    parent: parent,
-    timeSubDivision: props.timeSubDivision,
-  });
-
-
-  await instance.result.then(
-    (result) => {
-      if(result) {
-        if(mode == 'create'){
-          const siblings = computed(() => events.value?.find(event => event.id == result?.parent)?.children || []);
-          const index = siblings.value.findIndex(child => child.relative_start > result.relative_start);
-          if(index != -1) {
-            siblings.value?.splice(index, 0, result);
-          }
-          else{
-            siblings.value?.push(result);
-          }
-        }
-        else if (mode == 'update') {
-          const siblings = computed(() => events.value?.find(event => event.id == result?.parent)?.children || []);
-          const oldIndex = siblings.value.findIndex(event => event.id === result.id)
-          if (oldIndex !== -1) {
-            siblings.value.splice(oldIndex, 1)
-          }
-          const newIndex = siblings.value?.findIndex(event => event.relative_start > result.relative_start);
-          if(newIndex != -1) {
-            siblings.value?.splice(newIndex, 0, result);
-          }
-          else{
-            siblings.value?.push(result);
-          } 
-        }
-      }
-    }
-  )
-}
-
-const openEditEventModal = async (mode: EditEventMode, row: EventEntry | null) => {
-  const instance = editEventModal.open({
-    mode: mode,
-    session: props.session,
-    event: row?.event || null,
-    parent: row?.parent || null,
-    timeSubDivision: props.timeSubDivision,
-  });
-
-
-  await instance.result.then(
-    (result) => {
-      if(result) {
-        if(mode == 'create') {
-          const index = events.value?.findIndex(event => event.relative_start > result.relative_start);
-          if(index != -1) {
-            events.value?.splice(index, 0, result);
-          }
-          else{
-            events.value?.push(result);
-          }
-        }
-        else if (mode == 'update') {
-          const oldIndex = events.value.findIndex(event => event.id === result.id)
-          if (oldIndex !== -1) {
-            events.value.splice(oldIndex, 1)
-          }
-          const newIndex = events.value?.findIndex(event => event.relative_start > result.relative_start);
-          if(newIndex != -1) {
-            events.value?.splice(newIndex, 0, result);
-          }
-          else{
-            events.value?.push(result);
-          } 
-        }
-      }
-    }
-  )
-}
-
-
-const deleteEvent = async (eventId : string, parent: CongressEvent | undefined) => {
-
-  if(!eventId) return;
-
-  try{
-
-    $directus.request(deleteItem('congress_events',
-      eventId
-    ))
-
-    if(parent) {
-       const siblings = computed(() => events.value?.find(event => event.id == parent.id)?.children || []);
-       const index = siblings.value.findIndex(child => child.id ==  eventId);
-       siblings.value.splice(index, 1);
-    }
-    else{
-      const index = events.value?.findIndex(event => event.id == eventId);
-      events.value.splice(index, 1);
-    }
-
-    toast.add({ title: 'Success', description: 'Event Deleted', color: 'accent'})
-
-  } catch(error) {
-    console.log(error);
-  }
-}
-
 
 </script>
 
 <template>
-
+  
   <UModal
     v-model:open="open"
     :close="{ onClick: () => emit('close', toUpdate) }"
-    :title="`${room?.title} : ${endTime} : ${session?.section?.name} ${session?.title}`"
   >
   
     <template #title class="block">
-      <p class="p-0 m-0 text-accent"> {{ room?.title }}</p>
-      <p class="text-2xl">
-          {{ label }} 
+      <p class="p-0 m-0 text-accent">{{ props.rooms?.map((room) => room.title).join(' + ') }}</p>
+      <p v-if="organisationNames" class="text-md text-secondary">{{ organisationNames }}</p>
 
-          <UButton icon="i-lucide-pen" color="secondary" variant="ghost" @click="openEditModal"/>
+      <p class="text-2xl">
+        {{ label }}
       </p>
+      <i v-if="firstTag" class="text-sm text-muted">Tag: {{ firstTag }}</i>
       <p class="text-muted">{{ startTime }} : {{ endTime }} - {{ day }}</p>
     </template>
     <template #body>
@@ -539,6 +359,7 @@ const deleteEvent = async (eventId : string, parent: CongressEvent | undefined) 
             :get-sub-rows="(row) => row.children"
             class="flex-1"
             :meta="meta"
+            empty="Coming Soon"
             :ui="{
               base: 'border-separate border-spacing-0',
               tbody: '[&>tr:last-child>td]:border-b-0',
@@ -563,8 +384,6 @@ const deleteEvent = async (eventId : string, parent: CongressEvent | undefined) 
               </div>
           </template>-->
         </UTable>
-
-        <UButton color="accent" variant="outline" label="Add New Event" icon="i-lucide-plus" class="w-full justify-center" @click="openEditEventModal('create', null)"/>
     </template>
     <template #footer>
     </template>

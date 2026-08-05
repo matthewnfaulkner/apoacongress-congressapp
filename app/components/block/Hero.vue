@@ -74,8 +74,8 @@ defineProps<HeroProps>();
 			v-if="data.image"
 			class="relative w-full"
 			:class="{
-				'md:w-3/4 xl:w-2/3 h-[400px]': data.layout === 'image_center',
-				'md:w-1/2 h-[562px]': data.layout !== 'image_center',
+				'md:w-3/4 xl:w-2/3': data.layout === 'image_center',
+				'md:w-1/2': data.layout !== 'image_center',
 			}"
 		>
 			<DirectusImage

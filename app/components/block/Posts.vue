@@ -100,7 +100,7 @@ const { setAttr } = useVisualEditing();
 					<div class="relative w-full h-[256px] overflow-hidden rounded-lg">
 						<DirectusImage
 							v-if="post.image"
-							:uuid="typeof post.image === 'string' ? post.image : post.image?.id"
+							:uuid="post.image"
 							:alt="post.title"
 							class="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-110"
 							sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"

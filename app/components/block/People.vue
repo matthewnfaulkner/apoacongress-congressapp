@@ -10,14 +10,12 @@ interface PeopleProps {
 		tagline: string;
 		headline: string;
 		display: string;
+		show_country: boolean;
+		show_title: boolean;
+		show_flag: boolean;
 		people: BlockPeoplePeople[]
 	};
 }
-
-const components: Record<string, any> = {
-	committee: PeopleCommittee,
-	people_list: PeopleList
-};
 
 const { setAttr } = useVisualEditing();
 const props = defineProps<PeopleProps>();
@@ -34,9 +32,16 @@ const validPeople = computed(() =>
 
 
 <template>
+	<Headline :headline="data.headline" />
 	<div v-for="people in validPeople" :key="people.id" class="py-0">
 		<Container>
-			<BasePeople :people="people" :display="props.data.display"/>
+			<BasePeople
+					:people="people"
+					:display="props.data.display"
+					:show-country="props.data.show_country"
+					:show-flag="props.data.show_flag"
+					:show-title="props.data.show_title"
+				/>
 		</Container>
 	</div>
 </template>

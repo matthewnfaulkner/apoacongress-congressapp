@@ -2,12 +2,13 @@
 import type { Person, DirectusUser } from '#shared/types/schema';
 import { removeSeconds } from '@/utils/time-utils';
 import BaseEventType from '~/components/eventTypes/BaseEventType.vue';
-import type { TableColumn, TableRow } from '@nuxt/ui'
-import { readMe, updateMe } from '@directus/sdk';
+import type { TableColumn, TableRow, DropdownMenuItem } from '@nuxt/ui'
+import { readMe, updateMe, uploadFiles } from '@directus/sdk';
 import * as z from 'zod'
 import type { FormError, FormSubmitEvent } from '@nuxt/ui'
 import { ConfirmationModal } from "~/components/ui/modal";
 import { useToast } from '@nuxt/ui/runtime/composables/useToast.js';
+import { useClipboard } from '@vueuse/core';
 
 
 
@@ -22,7 +23,21 @@ const config = useRuntimeConfig();
 
 const overlay = useOverlay()
 const confirmationModal = overlay.create(ConfirmationModal);
+
+const profileMenuItems = ref<DropdownMenuItem[]>([
+    {
+        label: 'Policy Agreements',
+        icon: 'i-lucide-shield-check',
+        to: '/policies',
+    },
+    {
+        label: 'Request My Data',
+        icon: 'i-lucide-download',
+        to: '/mydatarequests',
+    },
+])
 const ready = ref(false);
+const { copy, copied } = useClipboard();
 
 const auth = await useAuthStore();
 
@@ -30,12 +45,28 @@ const isLoggedIn = computed(() =>
   auth.isAuthenticated !== false
 )
 
-if(!isLoggedIn) {
-    navigateTo('/login?redirect=/profile');
-}
 
 const personFields = [
-    '*',
+    'id',
+    'first_name',
+    'last_name',
+    'email',
+    { avatar: ['id', 'filename_download', 'type'] },
+    'has_subscription',
+    'country',
+    'membership_number',
+    'title',
+    {
+        'voucher_codes': [
+            'code',
+            {
+                'voucher': [
+                    'name',
+                    'description'
+                ]
+            }
+        ]
+    },
     {
         person : [
             'id',
@@ -44,9 +75,9 @@ const personFields = [
             'last_name',
             'title',
             'qualifications',
-            'image',
             'bio',
             'affiliations',
+            { image: ['id', 'filename_download', 'type'] },
             {
                 committee_positions:[
                     {
@@ -63,7 +94,7 @@ const personFields = [
                     }
                 ]
             },
-            {
+            /*{
                 assignments: [
                     'id',
                     {
@@ -87,7 +118,6 @@ const personFields = [
                                         ],
                                         workshops: [
                                         'id',
-                                        
                                         ],
                                         talks: [
                                         'id',
@@ -189,7 +219,7 @@ const personFields = [
                         ]
                     }
                 ]
-            }
+            }*/
         ]
     }
 	
@@ -214,21 +244,61 @@ const items = computed(() => {
   return crumbs
 })
 
-const profile = ref<DirectusUser>();
+type UserProfile = DirectusUser & {
+    has_subscription?: boolean | null;
+    membership_number?: string | null;
+    person?: any;
+};
+const profile = ref<UserProfile>();
 
 const {
 	public: { directusUrl },
 } = useRuntimeConfig();
 
+const countryCode = computed(() => {
+    const raw = profile.value?.country as any;
+    if (!raw) return '';
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    return (parsed?.key ?? '').toUpperCase();
+});
+
+const countryFlag = computed(() => {
+    if (!countryCode.value) return '';
+    return [...countryCode.value].map(c => String.fromCodePoint(c.charCodeAt(0) + 127397)).join('');
+});
+
+const voucherCodes = computed(() => (profile.value as any)?.voucher_codes ?? []);
+
+function voucherName(v: any) {
+    return typeof v.voucher === 'object' && v.voucher ? (v.voucher.name ?? '') : '';
+}
+
+function voucherDescription(v: any) {
+    return typeof v.voucher === 'object' && v.voucher ? (v.voucher.description ?? '') : '';
+}
+
 watch(
   ready,
   async (ready) => {
-    if (!ready) return
-    const { data } = await useAsyncData <DirectusUser>('profile', async() => {
+    if (!ready || !isLoggedIn) return
+    const { data } = await useAsyncData <DirectusUser>('profile-' + auth.isAuthenticated.id , async() => {
         return await $directus.request<DirectusUser>(readMe(
             {   
                 fields: personFields,
                 deep: {
+                        voucher_codes: {
+                            _filter: {
+                                status: { '_eq' : 'active'},
+                                voucher: {
+                                    congress: {
+                                        site: {
+                                            '_eq' : config.public.siteId
+                                        }
+                                    }
+                                }
+                            }
+                            
+                        },
                         person: {
                             _limit: 1,
                             committee_positions: {
@@ -279,7 +349,7 @@ watch(
                             }
                         }
                         }
-                        }
+                }
             
             }
         ))})
@@ -303,7 +373,7 @@ const person_events = computed(() => person.value ?
         const room = event?.parent ? session.room : session.room;
         return {
             parent: isSubEvent ? event.parent : null,
-            topic: event?.type ? event?.type[0] : {},
+            topic: event,
             title: isSubEvent ? `${event.title} - ${event.parent.title}` : `${event.title}`, 
             day: session?.schedule?.day?.title,
             startTime: isSubEvent ? 
@@ -338,15 +408,13 @@ onMounted(() => {
 	});
 });
 
-useHead({
-  title: `My Profile`
-})
+useSeoMeta({ title: 'My Profile', ogTitle: 'My Profile', robots: 'noindex' });
 
 type EventEntry = {
   id: string
   startTime: string | number | null
   endTime: string | null
-  topic: string | null | undefined
+  topic: CongressEvent | null | undefined
   role: string[]	 | null | undefined | Assignment[]
   color: string | null | undefined
   room: string
@@ -384,9 +452,9 @@ const columns: TableColumn<EventEntry>[] = [
 		accessorKey: 'topic',
 		header: 'Details',
         cell: ({ row }) => {
-                return h(BaseEventType, 
+                return h(BaseEventType,
                 {
-                type: row.getValue('topic') as {id: string, collection: string, item: []}
+                event: row.getValue('topic') as CongressEvent
                 }
             )
 		}
@@ -417,7 +485,7 @@ const schema = z.object({
      })
 });
 
-type Schema = typeof schema
+type Schema = z.infer<typeof schema>
 
 const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
 	try {
@@ -471,6 +539,46 @@ const disassociatePerson = async () => {
 }
 
 
+const avatarInput = ref<HTMLInputElement | null>(null);
+const avatarUploading = ref(false);
+
+const AVATAR_ALLOWED_TYPES = ['image/jpeg', 'image/png'];
+const AVATAR_MAX_BYTES = 1 * 1024 * 1024; // 1 MB
+
+const onAvatarChange = async (e: Event) => {
+    const input = e.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+
+    if (!AVATAR_ALLOWED_TYPES.includes(file.type)) {
+        toast.add({ title: 'Invalid file type', description: 'Please upload a JPEG or PNG image.', color: 'error' });
+        return;
+    }
+    if (file.size > AVATAR_MAX_BYTES) {
+        toast.add({ title: 'File too large', description: 'Avatar must be under 1 MB.', color: 'error' });
+        return;
+    }
+
+    avatarUploading.value = true;
+    try {
+        const fd = new FormData();
+        fd.append('folder', config.public.userAvatarFolder as string);
+        fd.append('file', file, file.name);
+        const uploaded = await $directus.request(uploadFiles(fd)) as { id?: string };
+        if (!uploaded?.id) throw new Error('Upload failed');
+
+        await $directus.request(updateMe({ avatar: uploaded.id }));
+        if (profile.value) profile.value.avatar = uploaded.id;
+        toast.add({ title: 'Avatar updated', color: 'accent' });
+    } catch (e) {
+        toast.add({ title: 'Upload failed', color: 'error' });
+        console.error(e);
+    } finally {
+        avatarUploading.value = false;
+    }
+};
+
 onMounted(async () => {
   // if your store has a fetch method, call it here
   ready.value = true
@@ -478,11 +586,207 @@ onMounted(async () => {
 
 </script>
 <template>
-    {{ profile?.person }}
-    {{ person }}
-	<div  ref="wrapperRef">
+    
+    <UError
+      v-if="!isLoggedIn"
+      redirect="/login"
+      :clear="{
+        color: 'neutral',
+        size: 'xl',
+        trailingIcon: 'i-lucide-arrow-right',
+        class: 'rounded-full',
+        label: 'Log In',
+      }"
+      :error="{
+        statusCode: 404,
+        statusMessage: 'Sign In Required',
+        message: 'You need to sign in to access this page.'
+      }"
+    />
+	<div  v-else ref="wrapperRef">
 		<Container class="py-12">
-            <Headline headline="Congress Profile" class="text-accent text-center"/>
+            <Headline headline="My Profile" class="text-accent text-center"/>
+
+            <!-- User Account Card -->
+            <div v-if="profile" class="max-w-2xl mx-auto mb-10">
+                <UCard class="ring-1 ring-accent/20 relative">
+                    <UDropdownMenu
+                        :items="profileMenuItems"
+                        :content="{ align: 'end' }"
+                        :ui="{ content: 'w-56' }"
+                        class="absolute top-4 right-4"
+                    >
+                        <UButton
+                            icon="i-lucide-ellipsis-vertical"
+                            color="neutral"
+                            variant="ghost"
+                            aria-label="Profile actions"
+                        />
+                    </UDropdownMenu>
+                    <div class="flex items-center gap-6">
+                        <!-- Avatar -->
+                        <div
+                            class="relative shrink-0 w-24 h-24 cursor-pointer"
+                            @click="avatarInput?.click()"
+                        >
+                            <DirectusImage
+                                v-if="profile.avatar"
+                                :uuid="profile.avatar"
+                                alt="Profile avatar"
+                                class="w-24 h-24 rounded-full object-cover ring-2 ring-accent/30"
+                            />
+                            <div v-else class="w-24 h-24 rounded-full ring-2 ring-accent/30 bg-accent/10 flex items-center justify-center">
+                                <UIcon name="i-lucide-circle-user-round" size="72" class="text-accent/60" />
+                            </div>
+                            <div class="absolute bottom-0 left-0 w-7 h-7 rounded-full bg-accent flex items-center justify-center ring-2 ring-white dark:ring-gray-900">
+                                <UIcon v-if="!avatarUploading" name="i-lucide-pencil" size="14" class="text-white" />
+                                <UIcon v-else name="i-lucide-loader-circle" size="14" class="text-white animate-spin" />
+                            </div>
+                            <input
+                                ref="avatarInput"
+                                type="file"
+                                accept="image/jpeg,image/png"
+                                class="hidden"
+                                @change="onAvatarChange"
+                            />
+                        </div>
+
+                        <!-- Profile fields -->
+                        <div class="flex-1 min-w-0 space-y-1">
+                            <p v-if="profile.title" class="text-sm text-muted">{{ profile.title }}</p>
+                            <h2 class="font-heading text-2xl leading-tight truncate">
+                                {{ profile.first_name }} {{ profile.last_name }}
+                            </h2>
+                            <div class="mt-2 space-y-1.5 text-sm">
+                                <div class="flex items-center gap-2">
+                                    <UIcon name="i-lucide-mail" class="text-muted shrink-0" />
+                                    <span class="truncate">{{ profile.email }}</span>
+                                </div>
+                                <div v-if="countryCode" class="flex items-center gap-2">
+                                    <UIcon name="i-lucide-map-pin" class="text-muted shrink-0" />
+                                    <span>{{ countryFlag }}</span>
+                                    <CountryName :country-codes="[countryCode]" />
+                                </div>
+                                <div v-if="profile.membership_number" class="flex items-center gap-2">
+                                    <UIcon name="i-lucide-id-card" class="text-muted shrink-0" />
+                                    <span>Membership Number: {{ profile.membership_number }}</span>
+                                </div>
+                                <div v-else>
+                                    <UAlert icon="i-lucide-triangle-alert" title="No Active APOA Membership" color="accent" class="w-fit my-2 ring text-accent-100" />
+                                    <div class="flex items-center gap-2 space-y-1.5 ">
+                                        <span>Not a member yet?</span>
+                                        <UButton to="https://apoaonline.com/auth/apoa/signup.php" color="secondary"  variant="outline" label="Join the APOA" />
+                                    </div>
+                                    <div class="flex items-center gap-2 py-1">
+                                        <span>Membership Missing?</span>
+                                        <UButton to="/contact-us" color="secondary" variant="outline" label="Get Help" />
+                                    </div>
+                                </div>
+                                
+                                <div class="pt-1">
+                                    <UBadge
+                                        v-if="profile.has_subscription"
+                                        color="accent"
+                                        variant="subtle"
+                                        icon="i-lucide-circle-check"
+                                        label="Active Subscription"
+                                    />
+                                    <UBadge
+                                        v-else
+                                        color="neutral"
+                                        variant="subtle"
+                                        icon="i-lucide-circle-x"
+                                        label="No Subscription"
+                                    />
+                                </div>
+
+                                
+                            </div>
+                        </div>
+                    </div>
+                    <div v-if="voucherCodes.length" class="pt-2 space-y-3">
+                        <h4>Vouchers</h4>
+                        <div v-for="v in voucherCodes" :key="v.code" class="flex flex-col gap-1">
+                            <span v-if="voucherName(v)" class=" text-md truncate">{{ voucherName(v) }}</span>
+                            <div class="flex items-center gap-2 w-fit rounded-md border border-accent/40 bg-accent/10 pl-3 pr-1 py-1.5">
+                                <UIcon name="i-lucide-ticket" class="text-accent shrink-0" />
+                                <span class="font-mono font-semibold text-lg tracking-wide">{{ v.code }}</span>
+                                <UButton
+                                    :icon="copied ? 'i-lucide-copy-check' : 'i-lucide-copy'"
+                                    size="xs"
+                                    color="neutral"
+                                    variant="ghost"
+                                    @click="copy(v.code)"
+                                />
+                            </div>
+                            <p v-if="voucherDescription(v)" class="text-xs text-muted">{{ voucherDescription(v) }}</p>
+                        </div>
+                    </div>
+                </UCard>
+            </div>
+            
+            <!-- What's Next suggestions -->
+            <div class="max-w-4xl mx-auto my-8">
+                <Headline headline="What would you like to do?" class="text-center mb-6" />
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <UPageCard
+                        to="/program/planner"
+                        title="View Program"
+                        description="Browse the congress schedule and plan which sessions to attend."
+                        icon="i-lucide-calendar-days"
+                        highlight-color="accent"
+                        class="hover:ring-accent/50 transition-all"
+                        :ui="{ leadingIcon: 'text-accent' }"
+                    />
+                    <UPageCard
+                        to="/abstracts/submission"
+                        title="Submit / Manage an Abstract"
+                        description="Share your research and contribute to the scientific programme."
+                        icon="i-lucide-file-text"
+                        highlight-color="accent"
+                        class="hover:ring-accent/50 transition-all"
+                        :ui="{ leadingIcon: 'text-accent' }"
+                    />
+                    <UPageCard
+                        to="/host/travel"
+                        title="Travel Advice"
+                        description="Get information on flights, visas, and getting to the congress."
+                        icon="i-lucide-plane"
+                        highlight-color="accent"
+                        class="hover:ring-accent/50 transition-all"
+                        :ui="{ leadingIcon: 'text-accent' }"
+                    />
+                    <UPageCard
+                        to="/registration/congress"
+                        title="Register for Congress"
+                        description="Secure your place at APOA 2026 in Taiwan."
+                        icon="i-lucide-calendar-check"
+                        highlight-color="accent"
+                        class="hover:ring-accent/50 transition-all"
+                        :ui="{ leadingIcon: 'text-accent' }"
+                    />
+                    <UPageCard
+                        to="/contact-us"
+                        title="Get Help"
+                        description="Need assistance? Reach out to the congress team."
+                        icon="i-lucide-message-circle-question-mark"
+                        highlight-color="accent"
+                        class="hover:ring-accent/50 transition-all"
+                        :ui="{ leadingIcon: 'text-accent' }"
+                    />
+                    <UPageCard
+                        to="/host/venue"
+                        title="Venue & Host City"
+                        description="Discover the congress venue and explore what Taiwan has to offer."
+                        icon="i-lucide-map-pin"
+                        highlight-color="accent"
+                        class="hover:ring-accent/50 transition-all"
+                        :ui="{ leadingIcon: 'text-accent' }"
+                    />
+                </div>
+            </div>
+
+            <Headline v-if="profile?.person" headline="Congress Profile" class="text-accent text-center mt-8"/>
             <div v-if="profile?.person" >
                 <div class="w-full flex flex-col justify-center">
                     <UButton label="Not You?" color="accent" class="w-30 m-auto justify-center text-xl" @click="disassociatePerson"/>
@@ -526,7 +830,7 @@ onMounted(async () => {
 
 				</UPageCard>
                 <UPageList v-if="person.committee_positions && person.committee_positions.length > 0"  class="p-5">
-                    <Tagline :tagline="$t('committees')" ></Tagline>
+                    <Tagline tagline="Committees" ></Tagline>
                     <UPageCard
                         v-for="(committee_position, index) in person.committee_positions"
                         :key="index"
@@ -543,7 +847,7 @@ onMounted(async () => {
                         </UPageCard>
                     </UPageList>
                     <div v-if="person_events?.length > 0">
-                    <Tagline :tagline="$t('Events')"></Tagline>
+                    <Tagline tagline="Events"></Tagline>
                     <UTable
                         :data="person_events"
                         :columns="columns"
@@ -557,7 +861,7 @@ onMounted(async () => {
                     </UTable>
                 </div>
             </div>
-            <div v-else class="text-center text-xl flex-column">
+            <!---<div v-else class="text-center text-xl flex-column">
                 <p>No Congress Profile link with your account.</p>
                 <small >
                     You can link your user profile with a facaulty profile. <br>
@@ -572,7 +876,7 @@ onMounted(async () => {
                     </UButton>
                 </UForm>
             </div>
-
+            -->
 		</Container>
 	</div>
 	

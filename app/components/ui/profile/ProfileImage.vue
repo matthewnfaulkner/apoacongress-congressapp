@@ -1,7 +1,7 @@
 <script setup lang="ts" >
 
 interface ProfileImageProps {
-	image: string,
+	image: DirectusFile | string | null | undefined,
 }
 
 const props = defineProps<ProfileImageProps>();
@@ -18,7 +18,7 @@ const props = defineProps<ProfileImageProps>();
 
 <style>
 .rounded-edge {
-background-image: url('/images/taipei-bg.jpg');
+background-image: url('/images/taipei-bg.png');
 background-size: contain;
 }
 </style>

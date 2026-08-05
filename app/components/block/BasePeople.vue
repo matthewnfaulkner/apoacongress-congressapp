@@ -4,6 +4,9 @@ import PeopleList from './PeopleList.vue';
 
 interface BasePeopleProps {
 	display: string,
+	showCountry?: boolean,
+	showFlag?: boolean,
+	showTitle?: boolean,
 	people: {
 		collection: string;
 		item: any;
@@ -24,6 +27,15 @@ const componentData = computed(() => props.people.item);
 
 <template>
 	<div ref="blockRef" class="relative">
-		<component :is="Component" v-if="Component" :id="`blockpeople-${people.id}`" :data="componentData" :display="props.display"/>
+		<component
+			:is="Component"
+			v-if="Component"
+			:id="`blockpeople-${people.id}`"
+			:data="componentData"
+			:display="props.display"
+			:show-country="props.showCountry"
+			:show-flag="props.showFlag"
+			:show-title="props.showTitle"
+		/>
 	</div>
 </template>

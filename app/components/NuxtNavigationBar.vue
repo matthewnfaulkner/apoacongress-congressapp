@@ -9,18 +9,22 @@
 		<span>
 			<UUser 
 				:avatar="{
-					class: 'lg:hidden xl:block rounded-none w-fit',
+					class: 'lg:hidden xl:block rounded-none max-w-25',
 					src: lightLogoUrl,
-					icon: 'i-lucide-image'
+					icon: 'i-lucide-image',
+					ui: {
+						root: 'w-fit bg-transparent'
+					}
 				}" 
 				size="2xl" class="relative font-heading" 
-				:name="props.site.title"/>
+			/>
 		</span>
       </NuxtLink>
     </template>
 
     <!-- UNavigationMenu with parsed items -->
 	<template #right>
+
 		<UNavigationMenu 
 			:items="menuItems" 
 			class="hidden lg:flex" 
@@ -68,44 +72,52 @@
 			</template>
 		</UNavigationMenu>
 		<div v-if="storeReady">
-			<UDropdownMenu
-				v-if=" auth.isAuthenticated" 
-				:items="items"
-				:content="{
-					side: 'bottom',
-				}"
-				:ui="{
-					content: 'w-48',
-					item: 'cursor-pointer'
-				}"
-			>
-				<UButton
-					v-if=" auth.isAuthenticated" 
-					:avatar="{
-						text: `${auth.isAuthenticated?.first_name[0] + auth.isAuthenticated?.last_name[0]}`,
-						src: `${getDirectusAssetURL(auth.isAuthenticated.avatar)}`,
-						size: 'xl'
+			<ClientOnly>
+				<UDropdownMenu
+					v-if="auth.isAuthenticated" 
+					:items="items"
+					:content="{
+						side: 'bottom',
 					}"
-					size="xl"
-					color="accent"
-					variant="outline"
-					class="p-1"
-				/>
-			</UDropdownMenu>
+					:ui="{
+						content: 'w-48',
+						item: 'cursor-pointer'
+					}"
+				>
+					<UButton
+						v-if=" auth.isAuthenticated" 
+						:avatar="{
+							text: `${authUser?.first_name?.[0] ?? ''}${authUser?.last_name?.[0] ?? ''}`,
+							src: getDirectusAssetURL(authUser?.avatar) || '',
+							size: 'xl',
+							ui: {fallback: 'overflow-visible'}
+						}"
+						size="xl"
+						color="accent"
+						variant="outline"
+						class="p-1 w-12 h-12"
+					/>
+				</UDropdownMenu>
 			
 			<UButton
 				v-else
-				:href="loginUrl" 
+				:to="loginUrl" 
+				target="_self"
 				label="Log In"
 				color="accent"
 				variant="outline"
 				class="mx-3"/>
 
 				
+			</ClientOnly>
+				
 		</div>
-		<NuxtLink v-for="locale in availableLocales" :key="locale.code" :to="switchLocalePath(locale.code)">
+		<div v-else>
+			<USkeleton class="h-12 w-12 rounded-1 w-12" />
+		</div>
+		<!--<NuxtLink v-for="locale in availableLocales" :key="locale.code" :to="switchLocalePath(locale.code)">
 					{{ locale.name }}
-				</NuxtLink>
+				</NuxtLink>-->
 	</template>
 
 	<template #body>
@@ -133,15 +145,21 @@ import { useAuthStore } from '~/stores/auth';
 import { getDirectusAssetURL } from '@@/server/utils/directus-utils';
 import type { DropdownMenuItem } from '@nuxt/ui';
 import { useDirectusTranslation } from '@/composables/useDirectusTranslation';
+import { withLeadingSlash, withoutTrailingSlash } from 'ufo';
 
 const { $logout } = useNuxtApp();
 const localePath = useLocalePath();
-
+const route  = useRoute();
+const path = computed(() => withoutTrailingSlash(withLeadingSlash(route.path)));
 const auth = await useAuthStore();
 const storeReady = ref(false)
 
 const isLoggedIn = computed(() =>
   auth.isAuthenticated !== false
+)
+
+const authUser = computed(() =>
+  typeof auth.isAuthenticated === 'object' ? auth.isAuthenticated : null
 )
 
 const { locale, locales } = useI18n();
@@ -155,16 +173,15 @@ const availableLocales = computed(() => {
 // Props already defined
 const props = defineProps<{
   navigation: { items: NavigationItem[] };
-  site: { logo?: string; logo_dark_mode?: string, title?: string };
+  site: { logo?: DirectusFile | string | null; logo_dark_mode?: DirectusFile | string | null, title?: string };
 }>();
 
 
 const runtimeConfig = useRuntimeConfig();
-const loginUrl = runtimeConfig.public.loginUrl || '';
+
+const loginUrl = computed(() => runtimeConfig.public.loginUrl + `?redirect=${path.value}` || '');
 // Logo URLs
-const lightLogoUrl = computed(() =>
-  props.site?.logo ? `${runtimeConfig.public.directusUrl}/assets/${props.site.logo}` : '/images/logo.svg'
-);
+const lightLogoUrl = computed(() => getDirectusAssetURL(props.site?.logo) || '/images/logo.svg');
 
 const siteTitle = computed(() => {
 	return props.site.title;
@@ -180,9 +197,9 @@ interface parsedMenuItem {
 function parseMenu(items: NavigationItem[]) : parsedMenuItem[] {
   return items.map((item) => 
 	{ 	
-		const { translated } = useDirectusTranslation(item.translations);
+		//const { translated } = useDirectusTranslation(item.translations);
 		return {
-			label: computed(() => translated.value?.title || item.title),
+			label: computed(() => item.title),
 			to: computed(() => item.page?.permalink ? localePath(item.page?.permalink) : item.url || undefined),
 			children: item.children?.length ? parseMenu(item?.children) : undefined,
 			slot: item?.children?.length ? 'parent' : '',
@@ -204,6 +221,11 @@ const items = ref<DropdownMenuItem[]>([
     label: 'Profile',
     icon: 'i-lucide-user',
 	to: '/profile'
+  },
+  {
+    label: 'Support Tickets',
+    icon: 'i-lucide-message-circle-question-mark',
+	to: '/support/mytickets'
   },
   {
     label: 'Log Out',

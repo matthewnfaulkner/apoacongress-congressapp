@@ -5,6 +5,11 @@ import { buildZodSchema } from '~/lib/zodSchemaBuilder';
 import type { FormField } from '#shared/types/schema';
 import BaseFormField from './BaseFormField.vue';
 import BaseButton from '../base/BaseButton.vue';
+import type { DirectusUser } from '@directus/sdk';
+
+
+const authStore = useAuthStore();
+const auth = authStore.isAuthenticated ? authStore.isAuthenticated as DirectusUser : {};
 
 const props = defineProps<{
 	fields: FormField[];
@@ -38,7 +43,7 @@ const initialValues = computed(() => {
 	return validFields.value.reduce(
 		(defaults, field) => {
 			const name = field.name;
-
+			const nameNormal = name.replace('-', '_');
 			switch (field.type) {
 				case 'checkbox':
 					defaults[name] = false;
@@ -46,7 +51,7 @@ const initialValues = computed(() => {
 				case 'checkbox_group':
 					defaults[name] = [];
 					break;
-				case 'select':
+				case 'select':	
 				case 'radio':
 					defaults[name] = '';
 					break;
@@ -56,7 +61,7 @@ const initialValues = computed(() => {
 				case 'textarea':
 				case 'text':
 				default:
-					defaults[name] = '';
+					defaults[name] = nameNormal in auth ? auth[nameNormal as keyof typeof auth]: '';
 			}
 
 			return defaults;
@@ -82,7 +87,6 @@ const onSubmitForm = handleSubmit(async (formValues) => {
 </script>
 
 <template>
-
 	<form
 		v-if="schema"
 		:validation-schema="schema"

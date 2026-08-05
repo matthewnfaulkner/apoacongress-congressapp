@@ -26,6 +26,7 @@ const {
 	refresh,
 } = await useFetch<Page>('/api/pages/one', {
 	key: `pages-${permalink}`,
+	headers: useRequestHeaders(['cookie']),
 	query: {
 		permalink,
 		preview: enabled.value ? true : undefined,
@@ -52,7 +53,7 @@ useSeoMeta({
 
 <template>
 	<div class="relative my-5">
-		
+		<PageBuilder v-if="pageBlocks" :sections="pageBlocks" />
         <section>
             <div  class="text-center">
                 <UButton v-if="isLoggedIn" :to="localePath('/abstracts/submission')" label="Go to Abstract Submission" variant="solid" color="accent" size="xl"/>
