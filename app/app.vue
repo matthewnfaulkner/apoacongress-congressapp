@@ -34,7 +34,6 @@ onMounted(() => {
 					bar: 'bg-secondary',
 				}"
 			/>
-			<PolicyConsentModal />
 		</ClientOnly>
 	</UApp>
 </template>

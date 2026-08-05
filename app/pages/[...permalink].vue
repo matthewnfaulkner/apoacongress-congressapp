@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { Page, PageBlock } from '#shared/types/schema';
-import { withLeadingSlash, withoutTrailingSlash } from 'ufo';
 
 const route = useRoute();
 const { enabled, state } = useLivePreview();

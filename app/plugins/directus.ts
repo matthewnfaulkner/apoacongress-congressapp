@@ -37,14 +37,42 @@ export default defineNuxtPlugin(() => {
         },
     };
 
+    // Catches sessions that go bad server-side (revoked, password changed) while the
+    // local token still looks unexpired — without this, protected requests would just
+    // 401 into whatever ad-hoc error handling (or lack of it) the calling page has.
+    let redirectingToLogin = false;
+
+    const handleUnauthorized = () => {
+        // Sandbox has its own live per-navigation policy check in the route middleware.
+        if (config.public.isSandbox || !import.meta.client || redirectingToLogin) return;
+
+        const auth = useAuthStore();
+        // Only an *unexpected* 401 — i.e. we thought the user was logged in — warrants
+        // this. An anonymous readMe probe 401ing is normal and already handled by the
+        // auth store staying `isAuthenticated: false`.
+        if (!auth.checked || !auth.isAuthenticated) return;
+
+        redirectingToLogin = true;
+        auth.reset();
+
+        const redirect = window.location.pathname + window.location.search;
+        window.location.href = `${config.public.loginUrl}${config.public.loginUrl.includes('?') ? '&' : '?'}redirect=${encodeURIComponent(redirect)}`;
+    };
+
+    const authAwareFetch = async (input: string, init?: RequestInit) => {
+        const response = await fetch(input, init);
+        if (response.status === 401) handleUnauthorized();
+        return response;
+    };
+
     // Sandbox: cookie-based session (same .apoaonline.com domain, Directus manages tokens)
     // Production: json mode with localStorage (cross-domain, tokens exchanged via /api/auth/callback)
     const directus = config.public.isSandbox
-        ? createDirectus(config.public.directusUrl)
+        ? createDirectus(config.public.directusUrl, { globals: { fetch: authAwareFetch } })
         .with(authentication("session", { credentials: "include", autoRefresh: true }))
         .with(rest({ credentials: "include"}))
 
-        : createDirectus(config.public.directusUrl)
+        : createDirectus(config.public.directusUrl, { globals: { fetch: authAwareFetch } })
             .with(authentication("json", { storage: tokenStorage }))
             .with(rest({ credentials: "include" }));
 
