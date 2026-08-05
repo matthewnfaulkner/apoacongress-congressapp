@@ -6,6 +6,7 @@ const route = useRoute();
 const { enabled, state } = useLivePreview();
 const pageUrl = useRequestURL();
 const { isVisualEditingEnabled, apply, setAttr } = useVisualEditing();
+const config = useRuntimeConfig();
 
 
 const permalink = computed(() => {
@@ -33,8 +34,9 @@ const {
 		version,
 	},
 	watch: [permalink],
-	//getCachedData: (key, nuxtApp) => nuxtApp.payload.data[key] ?? nuxtApp.static.data[key],
-
+	...(!config.public.isSandbox
+		? { getCachedData: (key: string, nuxtApp: any) => nuxtApp.payload.data[key] ?? nuxtApp.static.data[key] }
+		: {}),
 });
 
 const pageBlocks = computed(() => (page.value?.blocks as PageBlock[]) || []);
