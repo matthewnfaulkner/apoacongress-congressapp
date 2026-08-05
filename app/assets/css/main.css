@@ -1,8 +1,6 @@
-@import "tailwindcss";
 @import "@nuxt/ui";
 @import "./fonts.css";
-
-
+@import "tailwindcss";
 
 @layer base {
   h1 { @apply text-4xl font-bold my-4; }
