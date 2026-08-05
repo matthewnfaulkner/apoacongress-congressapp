@@ -35,24 +35,10 @@ const pageFields = [
 						}
 					],
 					block_richtext: [
-						'id', 
-						'tagline', 
-						'headline', 
-						'content', 
-						'alignment',
-						{
-							'translations' :[
-								'headline',
-								'tagline',
-								'content',
-								'languages_code'
-							]
-						}
+						'*',
 					],
 					block_gallery: [
-						'id',
-						'tagline',
-						'headline',
+						'*',
 						{
 							items: [
 								'id',
@@ -63,9 +49,7 @@ const pageFields = [
 						},
 					],
 					block_pricing: [
-						'id',
-						'tagline',
-						'headline',
+						'*',
 						{
 							tabs: [
 								'id',
@@ -92,7 +76,7 @@ const pageFields = [
 											button_group: [
 												'id',
 												{
-													buttons: ['id', 'label', 'variant', 'url', 'type', { page: ['permalink'] }, { post: ['slug'] }],
+													buttons: ['*', { page: ['permalink'] }, { post: ['slug'] }],
 												},
 											],
 										},
@@ -108,7 +92,7 @@ const pageFields = [
 							button_group: [
 								'id',
 								{
-									buttons: ['id', 'label', 'variant', 'url', 'type', { page: ['permalink'] }, { post: ['slug'] }],
+									buttons: ['*', { page: ['permalink'] }, { post: ['slug'] }],
 								},
 							],
 						},
@@ -133,7 +117,7 @@ const pageFields = [
 							button_group: [
 								'id',
 								{
-									buttons: ['id', 'label', 'variant', 'url', 'type', { page: ['permalink'] }, { post: ['slug'] }],
+									buttons: ['*', { page: ['permalink'] }, { post: ['slug'] }],
 								},
 							],
 						},
@@ -141,9 +125,7 @@ const pageFields = [
 					block_posts: ['id', 'tagline', 'headline', 'collection', 'limit'],
 					block_form_flow: ['*'],
 					block_form: [
-						'id',
-						'tagline',
-						'headline',
+						'*',
 						{
 							form: [
 								'*',
@@ -156,9 +138,7 @@ const pageFields = [
 						},
 					],
 					block_chargetable: [
-						'id',
-						'headline',
-						'tagline',
+						'*',
 						{
 							tabs: [
 								'id',
@@ -278,15 +258,10 @@ const pageFields = [
 						}
 					],
 					block_messages: [
-						'id',
-						'tagline',
-						'headline',
-						'type',
+						'*',
 						{
 							messages: [
-								'id',
-								'tagline',
-								'content',
+								'*',
 								{
 									people: [
 										'id',
@@ -305,7 +280,7 @@ const pageFields = [
 									button_group: [
 										'id',
 										{
-											buttons: ['id', 'label', 'variant', 'url', 'type', { page: ['permalink'] }, { post: ['slug'] }],
+											buttons: ['*', { page: ['permalink'] }, { post: ['slug'] }],
 										},
 									],
 								},
@@ -313,11 +288,7 @@ const pageFields = [
 						}
 					],
 					block_sponsors: [
-						'id',
-						'tagline',
-						'headline',
-						'description',
-						'include_tiers',
+						'*',
 						{
 							sponsors: [
 								{
@@ -415,18 +386,16 @@ async function handler(event: H3Event) {
 				page = (await directusServer.request(
 					withToken(
 						token ?? sessionToken as string,
-						withSearch(
-							readItem('pages', pageId, {
-								version: String(version),
-								fields: pageFields as any,
-								// Deep query options for complex nested data:
-								// - Sort blocks by their sort order
-								// - Filter out hidden blocks
-								deep: {
-									blocks: { _sort: ['sort'], _filter: { hide_block: { _neq: true } } },
-								},
-							}),
-						),
+						readItem('pages', pageId, {
+							version: String(version),
+							fields: pageFields as any,
+							// Deep query options for complex nested data:
+							// - Sort blocks by their sort order
+							// - Filter out hidden blocks
+							deep: {
+								blocks: { _sort: ['sort'], _filter: { hide_block: { _neq: true } } },
+							},
+						}),
 					),
 				)) as unknown as Page;
 			} catch (versionError) {
@@ -441,21 +410,19 @@ async function handler(event: H3Event) {
 			const pageData = await directusServer.request(
 				withToken(
 					(token ?? sessionToken) as string,
-					withSearch(
-						readItems('pages', {
-							filter: token
-								? { permalink: { _eq: permalink }, site : {id: {_eq: config.public.siteId} }}
-								: { permalink: { _eq: permalink }, status: { _eq: 'published' }, site : {id: {_eq: config.public.siteId} } },
-							limit: 1,
-							fields: pageFields as any,
-							// Deep query options for complex nested data:
-							// - Sort blocks by their sort order
-							// - Filter out hidden blocks
-							deep: {
-								blocks: { _sort: ['sort'], _filter: { hide_block: { _neq: true } } },
-							},
-						}),
-					),
+					readItems('pages', {
+						filter: token
+							? { permalink: { _eq: permalink }, site : {id: {_eq: config.public.siteId} }}
+							: { permalink: { _eq: permalink }, status: { _eq: 'published' }, site : {id: {_eq: config.public.siteId} } },
+						limit: 1,
+						fields: pageFields as any,
+						// Deep query options for complex nested data:
+						// - Sort blocks by their sort order
+						// - Filter out hidden blocks
+						deep: {
+							blocks: { _sort: ['sort'], _filter: { hide_block: { _neq: true } } },
+						},
+					}),
 				),
 			);
 
