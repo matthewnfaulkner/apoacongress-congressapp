@@ -324,6 +324,7 @@ export interface CongressCharge {
 	/** @primaryKey */
 	id: string;
 	sort?: number | null;
+	description?: string | null;
 	date_created?: string | null;
 	user_created?: DirectusUser | string | null;
 	date_updated?: string | null;
@@ -333,8 +334,12 @@ export interface CongressCharge {
 	category?: string | null; 
 	sub_category?: string | null;
 	price?: string | null;
-	details: RegistrationChargeDetail[] | AccommodationChargeDetail[] | null;
+	details: RegistrationChargeDetail[] | AccommodationChargeDetail[] | GenericChargeDetail[] | null;
 	hotel?: Hotel | string | null;
+	tickets?: CongressTicket[] | string[] | null;
+	members_only?: boolean | null;
+	tagline?: string | null;
+	short_description?: string | null
 }
 
 export interface RegistrationChargeDetail {
@@ -346,6 +351,11 @@ export interface AccommodationChargeDetail {
 	check_in: string;
 	check_out: string;
 	stay_length?: string | null;
+}
+
+export interface GenericChargeDetail {
+	name: string;
+	description?: string | null;
 }
 
 
@@ -690,6 +700,9 @@ export interface Congress {
 	organisations?: CongressOrganisation[] | string[] | null;
 	vouchers?: CongressVoucher[] | string[] | null;
 	key_dates?: CongressKeyDate[] | string [] | null;
+	tt_event_id?: string | null;
+	tt_event_series_id?: string | null;
+	tt_bypass_id?: string | null;
 }
 
 export interface CongressKeyDate {
@@ -1016,7 +1029,10 @@ export interface FormField {
 	/** @description Unique field identifier, not shown to users (lowercase, hyphenated) */
 	name?: string | null;
 	/** @description Input type for the field */
-	type?: 'text' | 'textarea' | 'checkbox' | 'checkbox_group' | 'checkbox_group_alt' | 'radio' | 'file' | 'select' | 'hidden' | 'voucher' | null;
+	// 'address' and 'phone' aren't real Directus choice options yet — add them
+	// to the forms.fields collection's type field in Directus, then this
+	// widening can be dropped once `npm run generate:types` picks it up for real.
+	type?: 'text' | 'textarea' | 'checkbox' | 'checkbox_group' | 'checkbox_group_alt' | 'radio' | 'file' | 'select' | 'hidden' | 'voucher' | 'address' | 'phone' | null;
 	/** @description Text label shown to form users. */
 	label?: string | null;
 	/** @description Default text shown in empty input. */
@@ -1284,6 +1300,7 @@ export interface CongressHotel {
 	id: number;
 	hotel: Hotel | string | null;
 	congress: Congress | string | null;
+	tagline?: string | null;
 	directions?: string | null;
 }
 
@@ -1320,6 +1337,8 @@ export interface Site {
 	organisations?: SiteOrganisations[] | string[] | null;
 	preview?: boolean;
 	support_form?: Form | string | null;
+	checkout_form?: Form | string | null;
+
 	user_policies?: SitePolicy[] | number[] | null;
 }
 
@@ -1565,6 +1584,18 @@ export interface CongressSponsorTier{
 	date_updated?: string | null;
 }
 
+export interface CongressTicket {
+	id: string;
+	/** @description Smaller copy shown above the headline to label a section or add extra context. */
+	name?: string | null,
+	charge?: CongressCharge | string | null,
+	congress?: Congress | string | null,
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+}
+
 export interface SupportCase { 
 	id: string;
 	date_created?: string | null;
@@ -1636,7 +1667,8 @@ export interface Venue {
 	visa_general_info?: string | null;
 	visa_link?: string | null;
 	visa_info_by_country?: VenueVisaInfo[] | string[] | null;
-	airport_codes?: string[] | null
+	airport_codes?: string[] | null;
+	location?: string | null;
 }
 
 export interface VenueRoom { 

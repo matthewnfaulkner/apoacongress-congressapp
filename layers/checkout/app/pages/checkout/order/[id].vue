@@ -1,0 +1,88 @@
+<script setup lang="ts">
+import type { TTOrder } from '../../../types/ticket-tailor'
+
+const route = useRoute()
+const orderId = route.params.id as string
+
+// Same client-only trick as my-orders.vue: production's json auth mode keeps
+// its token in localStorage, which the server can't read during SSR, so
+// this fetch is forced client-only rather than guessing wrong on the server.
+const auth = useAuthStore()
+const requestCookieHeaders = useRequestHeaders(['cookie'])
+
+const { data: order, status, error } = useFetch<TTOrder>(`/api/checkout/order/${orderId}`, {
+  key: `checkout-order-${orderId}`,
+  server: false,
+  headers: computed(() => ({
+    ...requestCookieHeaders,
+    ...(auth.lastToken ? { Authorization: `Bearer ${auth.lastToken}` } : {}),
+  })),
+})
+</script>
+
+<template>
+  <Container class="my-8 max-w-2xl">
+    <UButton to="/checkout/my-orders" variant="ghost" color="neutral" icon="i-lucide-arrow-left" label="Back to my orders" class="mb-6" />
+
+    <div v-if="status === 'pending' || status === 'idle'" class="text-description">Loading order…</div>
+    <div v-else-if="error" class="text-error">Could not load this order right now. Please try again shortly.</div>
+
+    <div v-else-if="order" class="border border-input rounded-lg p-4 font-mono">
+      <div class="flex justify-between items-center mb-1">
+        <h1 class="text-2xl font-semibold text-foreground">Order #{{ order.id.slice(3) }}</h1>
+        <UBadge :color="orderStatusColor(order)" variant="solid" size="xl" :label="orderStatusLabel(order)" />
+      </div>
+
+      <p class="text-md text-description mb-1">{{ orderDate(order) }}</p>
+      <p v-if="order.payment_method?.name" class="text-sm text-description mb-6">Paid via {{ order.payment_method.name }}</p>
+      <p v-else class="mb-6" />
+
+      <h2 class="font-semibold text-foreground mb-3">Tickets</h2>
+      <ul class="space-y-3 mb-6">
+        <li v-for="ticket in issuedTickets(order)" :key="ticket.id" class="border border-input rounded-md p-3">
+          <div class="flex justify-between text-sm gap-4">
+            <span class="font-medium">{{ ticket.description }}</span>
+            <span v-if="ticket.listed_price !== null" class="font-medium shrink-0">{{ formatMoney(ticket.listed_price, order.currency.code) }}</span>
+          </div>
+          <p v-if="ticket.full_name" class="text-sm text-description">{{ ticket.full_name }}</p>
+          <p v-if="ticket.email" class="text-sm text-description">{{ ticket.email }}</p>
+        </li>
+      </ul>
+
+      <div class="border-t border-input pt-3 mb-6 space-y-1">
+        <div class="flex justify-between text-sm">
+          <span>Subtotal</span>
+          <span class="font-medium">{{ formatMoney(orderSubtotal(order), order.currency.code) }}</span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span>Booking fee</span>
+          <span class="font-medium">{{ formatMoney(orderBookingFee(order), order.currency.code) }}</span>
+        </div>
+        <div class="flex justify-between font-semibold text-foreground pt-1">
+          <span>Total</span>
+          <span>{{ formatMoney(order.total, order.currency.code) }}</span>
+        </div>
+      </div>
+      <div
+        class="gap-2 flex">
+        <UButton
+          :to="`/checkout?orderId=${order.id}`"
+          variant="outline"
+          color="accent"
+          size="xl"
+          class="m-right"
+          label="Add to Order"
+        />
+        <UButton
+          :to="{ path: '/contact', query: { issue: `Order #${order.id.slice(3)}: ` } }"
+          variant="ghost"
+          color="neutral"
+          size="xl"
+          icon="i-material-symbols-help"
+          class="m-right"
+          label="Get Help"
+        />
+      </div>
+    </div>
+  </Container>
+</template>

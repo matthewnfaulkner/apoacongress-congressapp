@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Hotel } from '#shared/types/schema';
+import type { GeoJSONPoint, Hotel } from '#shared/types/schema';
 
 const route = useRoute();
 const id = (route.params.id as string[])[0];
@@ -13,7 +13,12 @@ const breadcrumbs = computed(() => {
 	return crumbs;
 });
 
-type HotelWithCongress = Hotel & { congresses: Array<{ directions: string | null }> };
+type HotelWithCongress = Hotel & {
+	congresses: Array<{
+		directions: string | null;
+		congress: { venue: { title: string | null; location: GeoJSONPoint | null } | null } | null;
+	}>;
+};
 
 const { data, error } = await useFetch<HotelWithCongress>('/api/hotel/one', {
 	key: `hotel-${id}`,
@@ -32,6 +37,21 @@ const mapsUrl = computed(() => {
 	if (!coords) return null;
 	const [lng, lat] = coords;
 	return `https://www.google.com/maps/search/?api=1&query=${hotel.value.name},${lat},${lng}`;
+});
+
+// Directions "from here" (the hotel) "to there" (the congress venue) —
+// Google Maps' directions endpoint (not the plain search one mapsUrl uses
+// above), origin/destination both as lat,lng pairs since both hotels.location
+// and venues.location are already geocoded. Same computed as
+// CheckoutHotelDetailsModal.vue.
+const directionsToVenueUrl = computed(() => {
+	const origin = hotel.value.location?.coordinates;
+	const destination = hotel.value.congresses?.[0]?.congress?.venue?.location?.coordinates;
+	if (!origin || !destination) return null;
+
+	const [originLng, originLat] = origin;
+	const [destLng, destLat] = destination;
+	return `https://www.google.com/maps/dir/?api=1&origin=${originLat},${originLng}&destination=${destLat},${destLng}`;
 });
 
 const hotelUrl = useRequestURL();
@@ -57,7 +77,7 @@ useSeoMeta({
 							<UIcon
 								v-for="n in hotel.star_rating"
 								:key="n"
-								name="i-lucide-star"
+								name="i-material-symbols-star-rate"
 								class="w-5 h-5 fill-current"
 							/>
 						</div>
@@ -109,6 +129,19 @@ useSeoMeta({
 							class="w-full justify-center"
 						>
 							View on Google Maps
+						</UButton>
+
+						<UButton
+							v-if="directionsToVenueUrl"
+							:to="directionsToVenueUrl"
+							target="_blank"
+							rel="noopener"
+							variant="outline"
+							color="accent"
+							icon="i-lucide-route"
+							class="w-full justify-center mt-2"
+						>
+							Directions to the congress venue
 						</UButton>
 					</template>
 				</UPageCard>

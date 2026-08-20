@@ -1,4 +1,4 @@
-import type { Hotel } from '#shared/types/schema';
+import type { GeoJSONPoint, Hotel } from '#shared/types/schema';
 import type { H3Event } from 'h3';
 
 const config = useRuntimeConfig();
@@ -21,7 +21,11 @@ async function handler(event: H3Event) {
 			'id', 'name', 'star_rating', 'website', 'phone',
 			'address', 'rooms', 'location', 'ammenities',
 			{ image: ['id', 'filename_download', 'type'] },
-			{ congresses: ['directions'] },
+			// venue.location backs the "getting to the congress from here"
+			// directions link (see CheckoutHotelDetailsModal.vue) — venues.location
+			// exists in Directus (a geometry.Point, same shape as hotels.location)
+			// but isn't in the generated schema.ts types yet, hence the casts.
+			{ congresses: ['directions', 'tagline', { congress: [{ venue: ['title', 'location'] }] }] },
 		] as any,
 	};
 
@@ -35,7 +39,12 @@ async function handler(event: H3Event) {
 		throw createError({ statusCode: 404, statusMessage: 'Hotel not found' });
 	}
 
-	return hotel as Hotel & { congresses: Array<{ directions: string | null }> };
+	return hotel as Hotel & {
+		congresses: Array<{
+			directions: string | null;
+			congress: { venue: { title: string | null; location: GeoJSONPoint | null } | null } | null;
+		}>;
+	};
 }
 
 export default config.public.isSandbox

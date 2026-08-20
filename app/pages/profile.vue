@@ -766,6 +766,15 @@ onMounted(async () => {
                         :ui="{ leadingIcon: 'text-accent' }"
                     />
                     <UPageCard
+                        to="/checkout/my-orders"
+                        title="My Orders"
+                        description="View your registration orders and tickets."
+                        icon="i-lucide-receipt"
+                        highlight-color="accent"
+                        class="hover:ring-accent/50 transition-all"
+                        :ui="{ leadingIcon: 'text-accent' }"
+                    />
+                    <UPageCard
                         to="/contact-us"
                         title="Get Help"
                         description="Need assistance? Reach out to the congress team."

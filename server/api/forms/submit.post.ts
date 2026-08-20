@@ -68,9 +68,11 @@ export default defineEventHandler(async (event) => {
 
 		const token = userToken ?? TOKEN;
 
-		await directusServer.request(withToken(token, createItem('form_submissions' as any, payload)));
+		const submission = await directusServer.request<{ id: string }>(
+			withToken(token, createItem('form_submissions' as any, payload)),
+		);
 
-		return { success: true };
+		return { success: true, id: submission.id };
 	} catch (e) {
 		throw createError({ statusCode: 500, statusMessage: 'Internal Server Error' });
 	}
