@@ -73,9 +73,19 @@ async function handleRefresh() {
   await Promise.all([refresh(), new Promise((resolve) => setTimeout(resolve, 600))])
 }
 
-onMounted(() => {
-  store.reset()
+// Only a genuinely completed order clears the basket — a cancelled or still-
+// pending one (e.g. awaiting a bank transfer) leaves it alone, so a customer
+// whose payment didn't actually go through yet doesn't lose their basket for
+// nothing.
+watch(
+  order,
+  (newOrder) => {
+    if (newOrder?.status === 'completed') store.reset()
+  },
+  { immediate: true },
+)
 
+onMounted(() => {
   // If Ticket Tailor's checkout widget redirects without breaking out of the
   // CheckoutEmbed iframe itself, this confirmation would otherwise render
   // trapped inside that small embedded frame instead of taking over the tab.
