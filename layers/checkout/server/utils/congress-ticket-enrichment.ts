@@ -43,20 +43,25 @@ export async function fetchTicketEnrichment(ticketTypeIds: string[]): Promise<Ma
 	let rows: CongressTicketRow[] = [];
 
 	try {
+		const config = useRuntimeConfig();
+
 		rows = (await directusServer.request(
-			readItems('congress_tickets' as any, {
-				filter: { id: { _in: ticketTypeIds } },
-				fields: [
-					'id',
-					{
-						charge: [
-							'id', 'description', 'category', 'sub_category', 'details', 'members_only', 'tagline', 'short_description',
-							{ hotel: ['id', 'name', 'star_rating', 'image', { congresses: ['tagline'] }] },
-						],
-					},
-				],
-				limit: -1,
-			} as any),
+			withToken(
+				config.directusOrderBotToken as string,
+				readItems('congress_tickets' as any, {
+					filter: { id: { _in: ticketTypeIds } },
+					fields: [
+						'id',
+						{
+							charge: [
+								'id', 'description', 'category', 'sub_category', 'details', 'members_only', 'tagline', 'short_description',
+								{ hotel: ['id', 'name', 'star_rating', 'image', { congresses: ['tagline'] }] },
+							],
+						},
+					],
+					limit: -1,
+				} as any),
+			),
 		)) as CongressTicketRow[];
 	} catch (error) {
 		// Was silently swallowed before — logged now since a failure here (e.g.

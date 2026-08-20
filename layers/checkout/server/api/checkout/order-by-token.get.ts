@@ -31,7 +31,7 @@ export default defineEventHandler(async (event: H3Event): Promise<TTOrder> => {
 		// it up.
 		const congressOrder = await directusServer.request<{ token: string | null }>(
 			withToken(
-				config.directusServerToken as string,
+				config.directusOrderBotToken as string,
 				readItem('congress_orders' as any, orderId, { fields: ['token'] }),
 			),
 		);

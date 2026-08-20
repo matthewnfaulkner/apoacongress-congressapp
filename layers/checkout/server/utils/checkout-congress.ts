@@ -12,11 +12,14 @@ export async function getCongressEventId(): Promise<string | null> {
 	const config = useRuntimeConfig();
 
 	const rows = await directusServer.request<Array<{ tt_event_id: string | null }>>(
-		readItems('congress', {
-			filter: { site: { _eq: config.public.siteId } } as any,
-			limit: 1,
-			fields: ['tt_event_id'],
-		}),
+		withToken(
+			config.directusOrderBotToken as string,
+			readItems('congress', {
+				filter: { site: { _eq: config.public.siteId } } as any,
+				limit: 1,
+				fields: ['tt_event_id'],
+			}),
+		),
 	);
 
 	return rows[0]?.tt_event_id ?? null;
@@ -35,11 +38,14 @@ export async function getCongressBypassTicketId(): Promise<string | null> {
 	const config = useRuntimeConfig();
 
 	const rows = await directusServer.request<Array<{ tt_bypass_id: string | null }>>(
-		readItems('congress', {
-			filter: { site: { _eq: config.public.siteId } } as any,
-			limit: 1,
-			fields: ['tt_bypass_id'],
-		}),
+		withToken(
+			config.directusOrderBotToken as string,
+			readItems('congress', {
+				filter: { site: { _eq: config.public.siteId } } as any,
+				limit: 1,
+				fields: ['tt_bypass_id'],
+			}),
+		),
 	);
 
 	return rows[0]?.tt_bypass_id ?? null;

@@ -181,6 +181,17 @@ export default defineNuxtConfig({
 		},
 		directusServerToken: process.env.DIRECTUS_SERVER_TOKEN,
 		directusSupportUserToken: process.env.DIRECTUS_SUPPORT_USER_TOKEN,
+		// Privileged token used by every checkout-layer API route that needs
+		// elevated Directus access — either a genuine bot write (no logged-in
+		// user to write as) or a read that would otherwise depend on the
+		// Public role having the right field permissions (see
+		// checkout-congress.ts, congress-ticket-enrichment.ts,
+		// checkout-form.get.ts). Routes that check a specific customer's own
+		// ownership/permissions (checkout-auth.ts, order.get.ts, my-orders.get.ts,
+		// order/[id].get.ts) deliberately keep using that customer's own session
+		// token instead — swapping those to this bot token would bypass the
+		// per-user Directus permissions the ownership check actually relies on.
+		directusOrderBotToken: process.env.DIRECTUS_ORDER_BOT_TOKEN,
 		authExchangeSecret: process.env.AUTH_EXCHANGE_SECRET,
 		anthropicApiKey: process.env.ANTHROPIC_API_KEY,
 		voyageApiKey: process.env.VOYAGE_API_KEY,
@@ -246,10 +257,14 @@ export default defineNuxtConfig({
 				// app.head.script) makes its own network calls, including a CSP
 				// self-test ping, independent of the script tag's own src (already
 				// covered by script-src's wildcard).
-				'connect-src': ["'self'", process.env.DIRECTUS_URL  || '', 'https://api.tickettailor.com', 'https://*.tickettailor.com', 'https://maps.googleapis.com', 'https://maps.gstatic.com'],
+				// tickets.apoaonline.com: the box office's custom domain — Ticket
+				// Tailor's own checkout_url (and therefore the embedded widget's
+				// data-url) now resolves here instead of *.tickettailor.com, so both
+				// need to stay allowlisted rather than swapping one for the other.
+				'connect-src': ["'self'", process.env.DIRECTUS_URL  || '', 'https://api.tickettailor.com', 'https://*.tickettailor.com', 'https://tickets.apoaonline.com', 'https://maps.googleapis.com', 'https://maps.gstatic.com'],
 				'frame-ancestors': ["'self'", process.env.DIRECTUS_URL || ''],
 				// Allows the checkout layer to embed Ticket Tailor's hosted checkout widget.
-				'frame-src': ["'self'", 'https://*.tickettailor.com'],
+				'frame-src': ["'self'", 'https://*.tickettailor.com', 'https://tickets.apoaonline.com'],
 			},
 		},
 	},

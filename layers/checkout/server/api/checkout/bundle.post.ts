@@ -206,7 +206,7 @@ export default defineEventHandler(async (event: H3Event): Promise<CreateBundleRe
 	try {
 		await directusServer.request(
 			withToken(
-				config.directusServerToken as string,
+				config.directusOrderBotToken as string,
 				createItem('congress_order_owners' as any, {
 					bundle_id: bundle.id,
 					user: userId,
