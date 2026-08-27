@@ -18,6 +18,7 @@ export default defineNuxtConfig({
 	plugins: [
 		'~/plugins/vue3-grid-layout-next.client.ts'
 	],
+	
 	future: {
 		compatibilityVersion: 4,
 	},
@@ -82,6 +83,14 @@ export default defineNuxtConfig({
 		'@dargmuesli/nuxt-cookie-control',
 		'@nuxtjs/turnstile'
 	],
+	scripts: {
+		registry: {
+			googleAnalytics: [
+				{ id: process.env.NUXT_PUBLIC_SCRIPTS_GOOGLE_ANALYTICS_ID },
+				{ trigger: 'onNuxtReady' },
+			]
+		}
+	},
 	// Google Maps loaded as a plain head script (async/defer) rather than via
 	// @nuxt/scripts' registry — that module's `onNuxtReady` trigger only
 	// starts fetching the script after Nuxt's app has fully mounted, which is
@@ -95,7 +104,7 @@ export default defineNuxtConfig({
 		head: {
 			script: [
 				{
-					src: `https://maps.googleapis.com/maps/api/js?key=${process.env.NUXT_PUBLIC_SCRIPTS_GOOGLE_MAPS_API_KEY || 'AIzaSyAyj3Ebj4qOEGVWx84gkuP7Nq6UQAQ5J78'}&libraries=places`,
+					src: `https://maps.googleapis.com/maps/api/js?key=${process.env.NUXT_PUBLIC_SCRIPTS_GOOGLE_MAPS_API_KEY}&libraries=places`,
 					async: true,
 					defer: true,
 				},
@@ -178,6 +187,7 @@ export default defineNuxtConfig({
 			requestAccessForm: process.env.NUXT_PUBLIC_REQUEST_ACCESS_FORM as string || '',
 			samlProviderName: process.env.NUXT_PUBLIC_SAML_PROVIDER_NAME as string,
 			checkoutNationalRedirectUrl: process.env.CHECKOUT_NATIONAL_REDIRECT_URL,
+			googleMapsApiKey: process.env.NUXT_PUBLIC_SCRIPTS_GOOGLE_MAPS_API_KEY,
 		},
 		directusServerToken: process.env.DIRECTUS_SERVER_TOKEN,
 		directusSupportUserToken: process.env.DIRECTUS_SUPPORT_USER_TOKEN,
@@ -196,7 +206,6 @@ export default defineNuxtConfig({
 		anthropicApiKey: process.env.ANTHROPIC_API_KEY,
 		voyageApiKey: process.env.VOYAGE_API_KEY,
 		rebuildIndexSecret: process.env.REBUILD_INDEX_SECRET,
-		duffelApiKey: process.env.DUFFEL_API_KEY,
 		dataRequestFlowId: process.env.DIRECTUS_DATA_REQUEST_FLOW_ID,
 		// Capability-scoped Ticket Tailor keys — each server call uses the
 		// narrowest one that covers what it actually does, rather than one
