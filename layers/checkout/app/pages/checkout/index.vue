@@ -13,5 +13,5 @@ const nationalRedirectUrl = config.public.checkoutNationalRedirectUrl as string 
         instead.
       </p>
     </template>
-  </CheckoutStepPage> ``
+  </CheckoutStepPage>
 </template>

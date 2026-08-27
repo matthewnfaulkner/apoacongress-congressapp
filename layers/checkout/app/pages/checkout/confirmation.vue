@@ -73,14 +73,14 @@ async function handleRefresh() {
   await Promise.all([refresh(), new Promise((resolve) => setTimeout(resolve, 600))])
 }
 
-// Only a genuinely completed order clears the basket — a cancelled or still-
-// pending one (e.g. awaiting a bank transfer) leaves it alone, so a customer
-// whose payment didn't actually go through yet doesn't lose their basket for
-// nothing.
+// Cleared for 'completed' or 'pending' - both mean the customer actually
+// finished checkout (pending just covers payment methods that settle
+// asynchronously, e.g. bank transfer). Only 'cancelled' leaves it alone,
+// since that's the only case where they didn't actually complete anything.
 watch(
   order,
   (newOrder) => {
-    if (newOrder?.status === 'completed') store.reset()
+    if (newOrder?.status === 'completed' || newOrder?.status === 'pending') store.reset()
   },
   { immediate: true },
 )

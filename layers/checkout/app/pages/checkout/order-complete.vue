@@ -21,9 +21,20 @@ const heading = computed(() => {
   return 'Payment pending'
 })
 
-onMounted(() => {
-  store.reset()
+// Cleared for 'completed' or 'pending' - both mean the customer actually
+// finished checkout (pending just covers payment methods that settle
+// asynchronously, e.g. bank transfer). Only 'cancelled' - or the ECPay path,
+// where there's no order data to check at all - leaves the basket alone,
+// since those are the only cases where they didn't actually complete anything.
+watch(
+  order,
+  (newOrder) => {
+    if (newOrder?.status === 'completed' || newOrder?.status === 'pending') store.reset()
+  },
+  { immediate: true },
+)
 
+onMounted(() => {
   // If Ticket Tailor's checkout widget redirects without breaking out of the
   // CheckoutEmbed iframe itself, this confirmation would otherwise render
   // trapped inside that small embedded frame instead of taking over the tab.

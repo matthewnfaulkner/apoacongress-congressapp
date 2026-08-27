@@ -264,8 +264,9 @@ export default defineNuxtConfig({
 				'connect-src': ["'self'", process.env.DIRECTUS_URL  || '', 'https://api.tickettailor.com', 'https://*.tickettailor.com', 'https://tickets.apoaonline.com', 'https://maps.googleapis.com', 'https://maps.gstatic.com', 'https://challenges.cloudflare.com'],
 				'frame-ancestors': ["'self'", process.env.DIRECTUS_URL || ''],
 				// Allows the checkout layer to embed Ticket Tailor's hosted checkout
-				// widget, and challenges.cloudflare.com for Turnstile's own challenge iframe.
-				'frame-src': ["'self'", 'https://*.tickettailor.com', 'https://tickets.apoaonline.com', 'https://challenges.cloudflare.com'],
+				// widget, challenges.cloudflare.com for Turnstile's own challenge iframe,
+				// and www.google.com for the Maps Embed API iframe (GoogleMapEmbed.vue).
+				'frame-src': ["'self'", 'https://*.tickettailor.com', 'https://tickets.apoaonline.com', 'https://challenges.cloudflare.com', 'https://www.google.com'],
 			},
 		},
 	},
