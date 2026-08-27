@@ -100,7 +100,7 @@ const { data: order, status, error } = useFetch<TTOrder>(`/api/checkout/order/${
           color="accent"
           size="xl"
           class="m-right"
-          label="Add to Order"
+          label="Add to My Booking"
         />
         <UButton
           :to="{ path: '/contact', query: { issue: `Order #${order.id.slice(3)}: ` } }"

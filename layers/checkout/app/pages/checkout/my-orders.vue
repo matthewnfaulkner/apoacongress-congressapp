@@ -140,7 +140,16 @@ async function requestAccessLink(submitEvent: FormSubmitEvent<EmailSchema>) {
             size="xl"
             label="View Details"
           />
+          <UButton
+          :to="`/checkout?orderId=${order.id}`"
+          variant="outline"
+          color="accent"
+          size="xl"
+          class="m-right"
+          label="Add to My Booking"
+        />
         </div>
+        
       </div>
       <ULink to="/contact" class="underline text-accent" >Can't find your order? </ULink>
 

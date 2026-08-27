@@ -83,14 +83,11 @@ export default defineNuxtConfig({
 		'@dargmuesli/nuxt-cookie-control',
 		'@nuxtjs/turnstile'
 	],
-	scripts: {
-		registry: {
-			googleAnalytics: [
-				{ id: process.env.NUXT_PUBLIC_SCRIPTS_GOOGLE_ANALYTICS_ID },
-				{ trigger: 'onNuxtReady' },
-			]
-		}
-	},
+	// Google Analytics is NOT registered here - loading it unconditionally via
+	// scripts.registry would fire on every page load regardless of cookie
+	// consent. It's instead loaded from app/plugins/analytics-consent.client.ts,
+	// which only calls useScriptGoogleAnalytics() once the "ga" cookie category
+	// has actually been accepted in the cookie-control banner.
 	// Google Maps loaded as a plain head script (async/defer) rather than via
 	// @nuxt/scripts' registry — that module's `onNuxtReady` trigger only
 	// starts fetching the script after Nuxt's app has fully mounted, which is
@@ -130,35 +127,26 @@ export default defineNuxtConfig({
 				description: {
 					en: 'This cookie enables authentication.'
 				},
-				id: process.env.DIRECTUS_SESSION_TOKEN_NAME as string, // use a short cookie id to save bandwidth and prefixes to separate
-				isPreselected: false, // `true` is not GDPR compliant! This flag does not enable any cookies, it only preselects the cookie's modal toggle. The default is `false`.
+				id: process.env.DIRECTUS_SESSION_TOKEN_NAME as string,
+				isPreselected: false,
 				name: {
-					en: 'Directus Session Token' // you always have to specify a cookie name (in English)
+					en: 'Directus Session Token'
 				},
-				links: {
-					'https://example.com/privacy': 'Privacy Policy',
-					'https://example.com/terms': 'Terms of Service',
-				},
-				src: 'https://example.com/preferences/js?id=<API-KEY>',
-				targetCookieIds: [process.env.DIRECTUS_SESSION_TOKEN_NAME as string],
 				}
 		],
 		optional: [
 			{
 				description: {
-					en: 'This cookie stores preferences.'
+					en: 'Used by Google Analytics to measure site usage.'
 				},
-				id: 'pa', // use a short cookie id to save bandwidth and prefixes to separate
-				isPreselected: false, // `true` is not GDPR compliant! This flag does not enable any cookies, it only preselects the cookie's modal toggle. The default is `false`.
+				id: 'ga',
+				isPreselected: false,
 				name: {
-					en: 'Preferences' // you always have to specify a cookie name (in English)
+					en: 'Analytics'
 				},
-				links: {
-					'https://example.com/privacy': 'Privacy Policy',
-					'https://example.com/terms': 'Terms of Service',
-				},
-				src: 'https://example.com/preferences/js?id=<API-KEY>',
-				targetCookieIds: ['xmpl_a', 'xmpl_b'],
+				// GA4's own cookies - deleted on decline. _ga_<id> is derived from the
+				// measurement id (the part after "G-"), which is how GA4 names it.
+				targetCookieIds: ['_ga', `_ga_${(process.env.NUXT_PUBLIC_SCRIPTS_GOOGLE_ANALYTICS_ID || '').replace(/^G-/, '')}`],
 				}
 		],
 		}
@@ -188,6 +176,7 @@ export default defineNuxtConfig({
 			samlProviderName: process.env.NUXT_PUBLIC_SAML_PROVIDER_NAME as string,
 			checkoutNationalRedirectUrl: process.env.CHECKOUT_NATIONAL_REDIRECT_URL,
 			googleMapsApiKey: process.env.NUXT_PUBLIC_SCRIPTS_GOOGLE_MAPS_API_KEY,
+			googleAnalyticsId: process.env.NUXT_PUBLIC_SCRIPTS_GOOGLE_ANALYTICS_ID,
 		},
 		directusServerToken: process.env.DIRECTUS_SERVER_TOKEN,
 		directusSupportUserToken: process.env.DIRECTUS_SUPPORT_USER_TOKEN,

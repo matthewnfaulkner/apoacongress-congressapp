@@ -76,6 +76,7 @@ const continueLabel = computed(() => {
       <div class="lg:w-80 flex flex-col gap-4">
         <CheckoutBasketSummary :checkout-event="checkoutEvent" />
         <p v-if="requireSelection && !canContinue" class="text-sm text-error">Add at least one registration package to continue.</p>
+        <ULink to="/checkout/my-orders" variant="subtle" size="sm" color="neutral" class="text-sm">Already booked? Add more tickets, add-ons, tours, or workshops</ULink>
         <div class="flex justify-between w-full">
           <UButton v-if="previousPath" :to="checkoutStepLink(previousPath, orderId)" size='xl' variant="outline" color="accent" label="Back" />
           <div v-else />
