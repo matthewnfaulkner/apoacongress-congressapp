@@ -6,8 +6,6 @@ const route = useRoute();
 const toast = useToast();
 
 const isLoggedIn = computed(() => auth.isAuthenticated !== false);
-const userId = typeof auth.isAuthenticated === 'object' ? auth.isAuthenticated.id : null;
-const userEmail = typeof auth.isAuthenticated === 'object' ? (auth.isAuthenticated as any).email : null;
 const ticketId = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id;
 
 useSeoMeta({ title: 'Support Ticket', ogTitle: 'Support Ticket', robots: 'noindex' });
@@ -93,17 +91,17 @@ const submitReply = async () => {
     try {
         const fd = new FormData();
         fd.append('ticketId', ticketId as string);
-        fd.append('userId', userId ?? '');
-        fd.append('userEmail', userEmail ?? '');
         fd.append('message', messageText.value.trim());
         if (ticket.value?.folder) fd.append('folder', ticket.value.folder as string);
         for (const file of attachments.value) {
             fd.append('file', file, file.name);
         }
 
+        const accessToken = config.public.isSandbox ? null : ($directusTokenStorage as any).get()?.access_token;
         const newMessage = await $fetch<CaseMessage>('/api/support/submit-message', {
             method: 'POST',
             body: fd,
+            headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
         });
 
         // createItem returns file entries as bare IDs; enrich with local File metadata

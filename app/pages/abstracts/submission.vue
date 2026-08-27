@@ -2,7 +2,7 @@
 import { withLeadingSlash, withoutTrailingSlash } from 'ufo';
 import * as z from 'zod'
 import type { FormSubmitEvent, FormErrorEvent } from '@nuxt/ui'
-import { createItem, readItems, deleteItem, updateItem, uploadFiles } from '@directus/sdk';
+import { readItems, deleteItem, uploadFiles } from '@directus/sdk';
 import type { AbstractSubmission, AbstractSubmissionValue, AbstractSubmissionFile, CongressAbstracts } from '~~/shared/types/schema';
 import { getDirectusAssetURL } from '@@/server/utils/directus-utils';
 import type { AccordionItem } from '@nuxt/ui'
@@ -25,6 +25,7 @@ const isLoggedIn = computed(() =>
 )
 
 const turnstileToken = ref();
+const turnstileRef = ref<{ reset: () => void } | null>(null);
 
 const congressAbstract = ref<CongressAbstracts | null>(null);
 const submissions = ref<AbstractSubmission[] | null>(null)
@@ -327,6 +328,8 @@ function resetState() {
   state.figures = [];
   state.consent = false;
   error.value = null;
+  turnstileToken.value = undefined;
+  turnstileRef.value?.reset();
 }
 
 
@@ -440,34 +443,33 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
             };
         }));
 
-        const payload = {
-            congress_abstract: congressAbstract.value?.id || null,
-            submitter: isAuthenticated.id,
-            keywords: formData.keywords,
-            figures,
-            submission_values: [
-                sv('category', formData.category),
-                sv('title', formData.title),
-                sv('abstract', formData.abstract),
-                sv('authors', JSON.stringify(formData.authors)),
-            ]
-        }
+        const { $directusTokenStorage } = useNuxtApp();
+        const accessToken = config.public.isSandbox ? null : ($directusTokenStorage as any).get()?.access_token;
 
-        if(!state.id) {
-            await $directus.request<AbstractSubmission>(createItem(
-                'abstract_submissions', payload
-            ))
-        } else{
-            await $directus.request<AbstractSubmission>(updateItem(
-                'abstract_submissions', state.id, payload
-            ))
-        }
+        await $fetch('/api/abstracts/submission', {
+            method: 'POST',
+            headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+            body: {
+                id: state.id,
+                turnstileToken: turnstileToken.value,
+                keywords: formData.keywords,
+                figures,
+                submissionValues: [
+                    sv('category', formData.category),
+                    sv('title', formData.title),
+                    sv('abstract', formData.abstract),
+                    sv('authors', JSON.stringify(formData.authors)),
+                ],
+            },
+        });
         await fetchSubmissions();
         resetState();
         openSubmissionForm.value = false;
 	} catch (e) {
 		error.value = 'Failed to submit the form. Please try again later.';
         console.log(e);
+        turnstileToken.value = undefined;
+        turnstileRef.value?.reset();
 	} finally{
         storeReady.value = true;
     }
@@ -719,7 +721,7 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                             </UFormField>
                             <div>
                             <UFormField  class="py-5 text-center" name="captcha">
-                                <NuxtTurnstile v-model="turnstileToken" />
+                                <NuxtTurnstile ref="turnstileRef" v-model="turnstileToken" />
                             </UFormField>
                             </div>
                             <UAlert v-if="error" color="error" variant="subtle" :description="error" class="mb-3" />
