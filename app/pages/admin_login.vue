@@ -28,6 +28,23 @@ const qrCodeUrl = ref('');
 const qrCodeSecret = ref('');
 const enforceTfa = ref(false);
 
+// Gates the provider buttons until we know whether there's already a live
+// session - without this they're clickable immediately, which feels broken
+// if a competing redirect (already logged in) lands moments after the click.
+const checkingAuth = ref(true)
+
+onMounted(async () => {
+  try {
+    const me = await $isAuthenticated()
+    if (me) {
+      navigateTo('/')
+      return
+    }
+  } finally {
+    checkingAuth.value = false
+  }
+})
+
 const fields = computed((): AuthFormField[] => {
   if (step.value === 'providers') {
     return []
@@ -221,6 +238,8 @@ function goToApoaOnline() {
               color="neutral"
               variant="subtle"
               class="w-full justify-center"
+              :loading="checkingAuth"
+              :disabled="checkingAuth"
               @click="goToApoaOnline"
             />
             Or
@@ -230,6 +249,8 @@ function goToApoaOnline() {
               color="neutral"
               variant="subtle"
               class="w-full justify-center"
+              :loading="checkingAuth"
+              :disabled="checkingAuth"
               @click="() =>  {step = 'email'}"
             />
           </div>    

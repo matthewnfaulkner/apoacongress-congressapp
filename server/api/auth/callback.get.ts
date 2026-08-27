@@ -1,4 +1,5 @@
 import { createExchangeToken } from '../../utils/auth-exchange';
+import { isSafeRedirect } from '~~/shared/utils/redirect';
 
 export default defineEventHandler(async (event) => {
 	const config = useRuntimeConfig();
@@ -19,6 +20,20 @@ export default defineEventHandler(async (event) => {
 		return { query: Object.keys(query), cookieHeader: getHeader(event, 'cookie') };
 	}
 
+	// Carried through from the original /login?redirect=... so login.vue can
+	// still send the user on to where they were headed once this SSO
+	// round-trip finishes, instead of always landing back on the homepage.
+	// Only a same-origin relative path is trusted - see isSafeRedirect.
+	const redirectTarget = isSafeRedirect(query.redirect) ? query.redirect : null;
+
+	function loginRedirectUrl(exchangeToken?: string) {
+		const params = new URLSearchParams();
+		if (exchangeToken) params.set('k', exchangeToken);
+		if (redirectTarget) params.set('redirect', redirectTarget);
+		const qs = params.toString();
+		return `${config.public.siteUrl}/login${qs ? `?${qs}` : ''}`;
+	}
+
 	try {
 		const response = await $fetch<{
 			data: { access_token: string; refresh_token: string; expires: number };
@@ -29,12 +44,9 @@ export default defineEventHandler(async (event) => {
 
 		const exchangeToken = createExchangeToken(response.data, config.authExchangeSecret);
 
-		return sendRedirect(
-			event,
-			`${config.public.siteUrl}/login?k=${encodeURIComponent(exchangeToken)}`,
-		);
+		return sendRedirect(event, loginRedirectUrl(exchangeToken));
 	} catch (e){
 		console.log('AUTH CALLBACK exchange failed:', e);
-		return sendRedirect(event, `${config.public.siteUrl}/login`);
+		return sendRedirect(event, loginRedirectUrl());
 	}
 });
