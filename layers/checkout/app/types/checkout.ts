@@ -1,4 +1,4 @@
-export type CheckoutStep = 'registration' | 'accommodation' | 'addons' | 'tours' | 'workshops';
+export type CheckoutStep = 'registration' | 'addons' | 'tours' | 'workshops';
 
 export interface CheckoutTicketOption {
 	id: string;
@@ -109,6 +109,10 @@ export interface CreateBundleRequest {
 	// claim bundle.post.ts writes, so the submission can be traced back to
 	// whichever order it was for.
 	formSubmissionId?: string | null;
+	// Attached to the congress_order_owners claim (see bundle.post.ts) for
+	// traceability - the client already has this from the site-data store's
+	// Site.congress, so it's passed through rather than re-resolved server-side.
+	congressId?: string | null;
 }
 
 export interface CreateBundleResponse {

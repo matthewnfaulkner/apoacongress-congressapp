@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Form, FormField } from '#shared/types/schema'
+import type { Form, FormField, Site } from '#shared/types/schema'
 import type { CreateBundleResponse } from '../../types/checkout'
 import type FormBuilder from '~/components/forms/FormBuilder.vue'
 
@@ -8,6 +8,16 @@ const { store, isEmpty } = useCheckoutBasket()
 const { $directusTokenStorage } = useNuxtApp()
 const { orderId } = useCheckoutAddOn()
 const auth = useAuthStore()
+const siteDataStore = useSiteDataStore()
+
+// Attached to the congress_order_owners claim (see bundle.post.ts) for
+// traceability - already loaded here from the initial page load's site-data
+// fetch (Site.congress), so no need for bundle.post.ts to re-resolve it
+// itself with a second Directus round-trip.
+const congressId = computed(() => {
+  const congress = (siteDataStore.siteData as Site).congress?.[0]
+  return (typeof congress === 'object' ? congress?.id : congress) ?? null
+})
 
 // Same object-vs-false idiom used elsewhere (e.g. useCheckoutEvent.ts's
 // isMember) — the auth store's isAuthenticated is either `false` or the
@@ -30,10 +40,19 @@ const creating = ref(false)
 const createError = ref<string | null>(null)
 const formBuilderRef = ref<InstanceType<typeof FormBuilder> | null>(null)
 
+// Polled (cached server-side, see checkTicketTailorHealth) so a Ticket
+// Tailor outage shows up here — before the customer fills out the whole
+// form — rather than only surfacing once proceedToPayment's own bundle.post.ts
+// call fails.
+const { data: health } = useFetch<{ available: boolean }>('/api/checkout/health', { key: 'checkout-health' })
+const checkoutUnavailable = computed(() => health.value?.available === false)
+
 // Bundle creation happens here, between the review step and the payment
 // step — not automatically on mount. An existing bundle (basket unchanged
 // since it was made) is reused rather than recreated.
 async function proceedToPayment() {
+  if (checkoutUnavailable.value) return
+
   creating.value = true
   createError.value = null
 
@@ -65,6 +84,7 @@ async function proceedToPayment() {
           locality: store.localityOverride,
           orderId: orderId.value,
           formSubmissionId: formBuilderRef.value?.lastSubmissionId ?? null,
+          congressId: congressId.value,
         },
       })
       store.setBundle(bundle)
@@ -114,13 +134,14 @@ async function proceedToPayment() {
         <div class="text-center">
           <CheckoutBasketSummary :checkout-event="checkoutEvent" />
 
-          <p v-if="createError" class="text-error text-sm mb-3">{{ createError }}</p>
+          <p v-if="checkoutUnavailable" class="text-error text-sm mb-3">Checkout is temporarily unavailable. Please try again shortly.</p>
+          <p v-else-if="createError" class="text-error text-sm mb-3">{{ createError }}</p>
 
         </div>
-        
+
       </div>
       <div class="text-center">
-          <UButton color="accent" size="xl" :loading="creating" @click="proceedToPayment" class="m-auto mt-5" label="Proceed to Payment" />
+          <UButton color="accent" size="xl" :loading="creating" :disabled="checkoutUnavailable" @click="proceedToPayment" class="m-auto mt-5" label="Proceed to Payment" />
       </div>
     </template>
   </Container>

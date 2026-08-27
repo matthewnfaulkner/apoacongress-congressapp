@@ -6,6 +6,18 @@ import { checkoutEventOptions, checkoutEventGroups } from '../../../app/utils/ch
 
 export default defineEventHandler(async (event: H3Event): Promise<CreateBundleResponse> => {
 	const config = useRuntimeConfig();
+
+	// Defense-in-depth: complete.vue already checks /api/checkout/health and
+	// disables its own "Proceed to Payment" button, but that check could be
+	// stale (cached client-side fetch) or bypassed entirely by a direct POST —
+	// this is the one call in the whole checkout flow that actually mutates
+	// anything in Ticket Tailor, so it gets its own fast, clear failure
+	// instead of falling through to whichever of the calls below happens to
+	// hit the outage first.
+	if (!(await checkTicketTailorHealth())) {
+		throw createError({ statusCode: 503, statusMessage: 'Checkout is temporarily unavailable. Please try again shortly.' });
+	}
+
 	const body = await readBody<CreateBundleRequest>(event);
 	const ticketTailorEventId = await resolveCheckoutEventId();
 
@@ -212,6 +224,10 @@ export default defineEventHandler(async (event: H3Event): Promise<CreateBundleRe
 					user: userId,
 					token: guestToken,
 					submission: body?.formSubmissionId ?? null,
+					// Not re-resolved server-side: the site-data store already has this
+					// from the initial page load (Site.congress), no need for a second
+					// Directus round-trip for a non-sensitive traceability field.
+					congress: body?.congressId ?? null,
 				}),
 			),
 		);
