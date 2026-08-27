@@ -2,7 +2,6 @@
 const steps = [
   { value: '/checkout', title: 'Registration', icon: 'i-lucide-ticket' },
   { value: '/checkout/addons', title: 'Add-ons', icon: 'i-lucide-package-plus' },
-  { value: '/checkout/accommodation', title: 'Accommodation', icon: 'i-lucide-bed' },
   { value: '/checkout/tours', title: 'Tours', icon: 'i-lucide-map' },
   { value: '/checkout/workshops', title: 'Workshops', icon: 'i-lucide-graduation-cap' },
   { value: '/checkout/complete', title: 'Review', icon: 'i-lucide-check' },

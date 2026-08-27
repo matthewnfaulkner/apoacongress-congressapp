@@ -1,4 +1,4 @@
-import type { VenueVisaInfo, CountryTravelInfo } from '#shared/types/schema';
+import type { GeoJSONPoint, VenueVisaInfo, CountryTravelInfo } from '#shared/types/schema';
 import type { H3Event } from 'h3';
 
 const config = useRuntimeConfig();
@@ -19,6 +19,7 @@ async function handler(event: H3Event) {
 			'airport_codes',
 			'travel_general_info',
 			'visa_general_info',
+			'location',
 			{
 				visa_info_by_country: ['id', 'details', 'link', { countries: ['id', 'country'] }, 'date_updated', 'date_created'],
 				travel_info_by_country: ['id', 'details', 'link', 'country', 'date_updated', 'date_created'],
@@ -40,6 +41,7 @@ async function handler(event: H3Event) {
 			travelGeneralInfo: (v?.travel_general_info ?? null) as string | null,
 			visaInfo: (v?.visa_info_by_country ?? []) as VenueVisaInfo[],
 			travelInfo: (v?.travel_info_by_country ?? []) as CountryTravelInfo[],
+			venueLocation: (v?.location ?? null) as GeoJSONPoint | null,
 		};
 	} catch (e) {
 		throw createError({ statusCode: 500, statusMessage: 'Failed to fetch travel information' });

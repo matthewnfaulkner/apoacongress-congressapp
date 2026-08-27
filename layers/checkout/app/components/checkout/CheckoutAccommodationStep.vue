@@ -111,7 +111,9 @@ const showDetails = ref(false)
         label="View hotel details"
       />
 
-    <div v-if="status === 'pending' || status === 'idle'" key="pending" class="text-description">Loading options…</div>
+    <div v-if="status === 'pending' || status === 'idle'" key="pending" class="min-h-[50vh] flex items-center justify-center">
+      <UProgress color="secondary" size="xl" :v-model="null" class="w-50" />
+    </div>
     <div v-else-if="error" key="error" class="text-error">Could not load options right now. Please try again shortly.</div>
     <div v-else-if="hotels.length === 0" key="empty" class="text-description">No accommodation options are available yet.</div>
 

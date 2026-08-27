@@ -46,6 +46,12 @@ const { data: travelData, error } = await useFetch<{
 	getCachedData: (key, nuxtApp) => nuxtApp.payload.data[key] ?? nuxtApp.static.data[key],
 });
 
+// destinationAirport/venueLocation aren't in the useFetch generic above
+// (same loose-typing convention the existing destinationAirport read at line
+// ~245 already uses) — the server route returns them, just not declared here.
+const destinationAirportCode = computed(() => (travelData.value as any)?.destinationAirport as string | null);
+const venueCoordinates = computed(() => (travelData.value as any)?.venueLocation?.coordinates as [number, number] | null);
+
 
 
 // Pre-populate country from the logged-in user's profile
@@ -370,7 +376,7 @@ watch(selectedCityCode, async (cityCode) => {
 						</template>
 						<div
 							v-if="info.details"
-							class="prose prose-sm dark:prose-invert max-w-none"
+							class="prose dark:prose-invert max-w-none"
 							v-html="highlightCountry(info.details)"
 						/>
 						<template v-if="info.link" #footer>
@@ -412,7 +418,7 @@ watch(selectedCityCode, async (cityCode) => {
 						</template>
 						<div
 							v-if="countryTravelInfo.details"
-							class="prose prose-sm dark:prose-invert max-w-none"
+							class="prose dark:prose-invert max-w-none"
 							v-html="highlightCountry(countryTravelInfo.details)"
 						/>
 						<template v-if="countryTravelInfo.link" #footer>
@@ -440,9 +446,19 @@ watch(selectedCityCode, async (cityCode) => {
 
 				<div
 					v-if="travelData?.travelGeneralInfo"
-					class="prose prose-sm dark:prose-invert max-w-none mt-6"
+					class="prose dark:prose-invert max-w-none mt-6"
 					v-html="travelData.travelGeneralInfo"
 				/>
+
+				<template v-if="destinationAirportCode && venueCoordinates">
+					<h3 class="font-heading text-lg mt-6 mb-2">Getting to the Congress from {{ destinationAirportCode }} Airport</h3>
+					<GoogleMapEmbed
+						:origin-query="`${destinationAirportCode} Airport`"
+						:destination-lat="venueCoordinates[1]"
+						:destination-lng="venueCoordinates[0]"
+						class="h-150 w-full"
+					/>
+				</template>
 				</div>
 			</template>
 

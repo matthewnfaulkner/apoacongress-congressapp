@@ -1,4 +1,4 @@
-import type { TTOrder } from '../types/ticket-tailor'
+import type { TTIssuedTicket, TTOrder } from '../types/ticket-tailor'
 
 // Shared between my-orders.vue (the list) and checkout/order/[id].vue (a
 // single order's detail breakdown) so the two stay in sync.
@@ -26,6 +26,14 @@ export function orderDate(order: TTOrder) {
 // they're excluded.
 export function issuedTickets(order: TTOrder) {
   return (order.issued_tickets ?? []).filter((ticket) => ticket.status === 'valid')
+}
+
+// Pulled from order.local_issued_tickets (the congress_orders row's own
+// repeater, matched by ticket id) rather than the Ticket Tailor ticket
+// itself — see TTOrder.local_issued_tickets.
+export function ticketCustomFields(order: TTOrder, ticket: TTIssuedTicket) {
+  const localTicket = order.local_issued_tickets?.find((t) => t.id === ticket.id)
+  return localTicket?.custom_fields ?? []
 }
 
 function bundleLineItem(order: TTOrder) {

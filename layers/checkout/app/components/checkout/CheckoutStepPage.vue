@@ -28,7 +28,6 @@ const canContinue = computed(() => !props.requireSelection || isAddOn.value || h
 
 const stepNouns: Record<CheckoutStep, string> = {
   registration: 'registration',
-  accommodation: 'accommodation',
   addons: 'add-ons',
   tours: 'tours',
   workshops: 'workshops',
@@ -49,7 +48,9 @@ const continueLabel = computed(() => {
 
     <slot name="banner" />
 
-    <div v-if="status === 'pending' || status === 'idle'" class="text-description">Loading options…</div>
+    <div v-if="status === 'pending' || status === 'idle'" class="min-h-[50vh] flex items-center justify-center">
+      <UProgress color="secondary" size="xl" :v-model="null" class="w-50" />
+    </div>
     <div v-else-if="error" class="text-error">Could not load options right now. Please try again shortly.</div>
     <div v-else-if="groups.length === 0" class="text-description">Nothing to select for this step.</div>
 
@@ -67,8 +68,11 @@ const continueLabel = computed(() => {
             />
           </div>
         </section>
+            <p  v-if="step != 'registration'" class="py-4 text-muted">
+      Can't decide? Don't worry you can come back after registration and add on.
+    </p>
       </div>
-
+      
       <div class="lg:w-80 flex flex-col gap-4">
         <CheckoutBasketSummary :checkout-event="checkoutEvent" />
         <p v-if="requireSelection && !canContinue" class="text-sm text-error">Add at least one registration package to continue.</p>

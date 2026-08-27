@@ -157,6 +157,19 @@ export interface TTOrder {
 	// Nullable per Ticket Tailor's docs — one entry per physically-issued
 	// ticket. See TTIssuedTicket.
 	issued_tickets: TTIssuedTicket[] | null;
+	// Bolted on by order/[id].get.ts from the congress_orders row's own
+	// issued_tickets repeater (see run-script.js's extract_order) — not part
+	// of Ticket Tailor's own order shape. This is the trustworthy source for
+	// each ticket's answered custom fields: Ticket Tailor's own order-detail
+	// endpoint isn't confirmed to return custom_questions on issued_tickets
+	// at all, unlike the webhook payload TTIssuedTicket above was modeled on.
+	local_issued_tickets?: Array<{ id: string; custom_fields: Array<{ name: string; answer: string | null }> }> | null;
+	// Same bolt-on pattern as local_issued_tickets, from congress_orders.invoices
+	// (an M2M to directus_files — see the generate_invoice / Generate PDF
+	// operations on the webhook flow). Already reversed to newest first,
+	// trusting the M2M's own creation order rather than uploaded_on for
+	// sorting — uploaded_on is only carried along here for display.
+	local_invoices?: Array<{ id: string; filename_download: string; uploaded_on: string }>;
 	[key: string]: unknown;
 }
 

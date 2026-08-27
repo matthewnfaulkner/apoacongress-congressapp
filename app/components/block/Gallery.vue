@@ -143,7 +143,7 @@ onUnmounted(() => {
 					/>
 					<div 
 						v-if="currentItem?.caption" 
-						class="bottom-0 absolute bg-black/70 text-white py-2 px-3 text-lg rounded-t max-w-[80%] text-center" >
+						class="bottom-0 absolute bg-black/70 text-white py-2 px-3 text-lg rounded-t max-w-[60%] lg:max-w-[80%] text-center" >
 						{{ currentItem.caption }}
 					</div>
 				</div>

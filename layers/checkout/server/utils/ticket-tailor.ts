@@ -39,3 +39,35 @@ export function ticketTailorFetch<T>(
 		},
 	});
 }
+
+// Module-scoped rather than a proper cache backend — the checkout layer has
+// no existing storage/caching pattern to follow (see ticket-tailor-health),
+// and this is only ever meant to keep a flaky/slow Ticket Tailor from being
+// pinged on every single page render, not to survive a server restart.
+let cachedHealth: { available: boolean; checkedAt: number } | null = null;
+const HEALTH_CACHE_MS = 15_000;
+
+/**
+ * Pings Ticket Tailor's own uptime check rather than a real data endpoint —
+ * cheap enough to call on every checkout page load (subject to the cache
+ * above) without burning into any capability's real rate limit. Uses the
+ * eventRead key purely because every checkout session needs that capability
+ * anyway (see event.get.ts) — /ping doesn't care which key it gets, but this
+ * both confirms connectivity and that the configured key itself still works.
+ */
+export async function checkTicketTailorHealth(): Promise<boolean> {
+	if (cachedHealth && Date.now() - cachedHealth.checkedAt < HEALTH_CACHE_MS) {
+		return cachedHealth.available;
+	}
+
+	let available: boolean;
+	try {
+		await ticketTailorFetch('/ping', 'eventRead', { timeout: 5000 });
+		available = true;
+	} catch {
+		available = false;
+	}
+
+	cachedHealth = { available, checkedAt: Date.now() };
+	return available;
+}
