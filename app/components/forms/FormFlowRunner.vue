@@ -61,6 +61,10 @@ watch(stepRef, (step) => {
 const currentStep = computed(() => steps.value[currentStepIndex.value])
 const isLastStep = computed(() => currentStepIndex.value >= steps.value.length - 1)
 const summaryEnabled = computed(() => props.flow.show_summary !== false)
+const botProtection = computed(() => props.flow.bot_protection !== false)
+const turnstileToken = ref()
+const turnstileRef = ref<{ reset: () => void } | null>(null)
+const showCaptcha = computed(() => botProtection.value && (showSummary.value || (!summaryEnabled.value && isLastStep.value)))
 
 type Choice = { text: string; value: string }
 
@@ -174,6 +178,10 @@ function onPrev() {
 }
 
 async function submit() {
+  if (botProtection.value && !turnstileToken.value) {
+    submitError.value = 'Please complete the CAPTCHA before submitting.'
+    return
+  }
   isSubmitting.value = true
   submitError.value = null
   try {
@@ -192,6 +200,7 @@ async function submit() {
     const body = new FormData()
     body.append('flowId', props.flow.id)
     body.append('fields', JSON.stringify(allFields))
+    body.append('turnstileToken', turnstileToken.value ?? '')
     for (const [key, val] of Object.entries(allValues)) {
       if (!ownNames.has(key)) continue
       body.append(key, val instanceof File ? val : String(val ?? ''))
@@ -214,6 +223,8 @@ async function submit() {
   } catch (e) {
     submitError.value = 'Failed to submit. Please try again later.'
     console.error(e)
+    turnstileToken.value = undefined
+    turnstileRef.value?.reset()
   } finally {
     isSubmitting.value = false
   }
@@ -238,6 +249,10 @@ async function submit() {
     </div>
 
     <UAlert v-if="submitError" color="error" variant="subtle" :description="submitError" class="mb-4" />
+
+    <div v-if="showCaptcha" class="flex justify-center py-4">
+      <NuxtTurnstile ref="turnstileRef" v-model="turnstileToken" />
+    </div>
 
     <Transition :name="transitionName" mode="out-in" appear>
       <div v-if="showSummary" key="summary">

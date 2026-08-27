@@ -13,6 +13,7 @@ interface CustomFormData {
 	success_redirect_url?: string | null;
 	is_active?: boolean | null;
 	fields: FormField[];
+	bot_protection?: boolean | null;
 }
 
 const props = withDefaults(
@@ -124,6 +125,7 @@ defineExpose({
 				:showSubmitButton="showSubmitButton"
 				:persistedValues="persistedValues"
 				:onValuesChange="onValuesChange"
+				:botProtection="form.bot_protection !== false"
 			/>
 		</ClientOnly>
 	</div>

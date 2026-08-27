@@ -29,11 +29,18 @@ const props = withDefaults(
 		// Fired (debounced) whenever the form's values change, so a parent can
 		// persist them somewhere that survives this component unmounting.
 		onValuesChange?: (values: Record<string, any>) => void;
+		// Whether to require a solved Turnstile challenge before submitting -
+		// driven by the forms/form_flows collection's own bot_protection field
+		// (see FormBuilder.vue), defaults to protected.
+		botProtection?: boolean;
 	}>(),
-	{ showSubmitButton: true },
+	{ showSubmitButton: true, botProtection: true },
 );
 
 const isSubmitting = ref(false);
+const turnstileToken = ref();
+const turnstileRef = ref<{ reset: () => void } | null>(null);
+const captchaError = ref<string | null>(null);
 
 const { setAttr } = useVisualEditing();
 
@@ -139,14 +146,24 @@ const onSubmitForm = handleSubmit(
 	async (formValues) => {
 		if (isSubmitting.value) return;
 		lastSubmitSucceeded.value = false;
+
+		if (props.botProtection && !turnstileToken.value) {
+			captchaError.value = 'Please complete the CAPTCHA before submitting.';
+			return;
+		}
+		captchaError.value = null;
+
 		try {
 			isSubmitting.value = true;
-			await props.onSubmit(formValues);
+			await props.onSubmit({ ...formValues, turnstileToken: turnstileToken.value });
 			lastSubmitSucceeded.value = true;
 		} catch {
 			// props.onSubmit (FormBuilder's handleSubmit) rethrows after setting
 			// its own user-visible error state — caught here just to stop at
 			// lastSubmitSucceeded = false rather than an unhandled rejection.
+			// A Turnstile token is single-use, so a failed attempt needs a fresh one.
+			turnstileToken.value = undefined;
+			turnstileRef.value?.reset();
 		} finally {
 			isSubmitting.value = false;
 		}
@@ -185,6 +202,11 @@ defineExpose({
 	>
 		<div class="flex flex-wrap gap-4">
 			<BaseFormField v-for="field in validFields" :key="field.id" :field="field" :model-value="values[field.name]" />
+
+			<div v-if="botProtection" class="w-full flex flex-col items-center gap-2 py-2">
+				<NuxtTurnstile ref="turnstileRef" v-model="turnstileToken" />
+				<p v-if="captchaError" class="text-sm text-red-500">{{ captchaError }}</p>
+			</div>
 
 			<div v-if="showSubmitButton" class="w-full">
 				<div>

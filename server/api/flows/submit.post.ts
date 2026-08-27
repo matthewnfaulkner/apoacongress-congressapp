@@ -33,21 +33,43 @@ export default defineEventHandler(async (event) => {
 	try {
 		let flowId = ''
 		let fields: FieldMeta[] = []
+		let turnstileToken = ''
 
 		for (const part of formData) {
 			if (part.name === 'flowId') flowId = part.data.toString()
 			else if (part.name === 'fields') fields = JSON.parse(part.data.toString())
+			else if (part.name === 'turnstileToken') turnstileToken = part.data.toString()
 		}
 
 		if (!flowId) {
 			throw createError({ statusCode: 400, statusMessage: 'flowId is required' })
 		}
 
+		let botProtection = true
+		try {
+			const flow = await directusServer.request<{ bot_protection?: boolean | null }>(
+				withToken(TOKEN, readItem('form_flows' as any, flowId, { fields: ['bot_protection'] })),
+			)
+			botProtection = flow?.bot_protection !== false
+		} catch {
+			throw createError({ statusCode: 400, statusMessage: 'Invalid flow.' })
+		}
+
+		if (botProtection) {
+			if (!turnstileToken) {
+				throw createError({ statusCode: 400, statusMessage: 'Missing CAPTCHA token.' })
+			}
+			const captcha = await verifyTurnstileToken(turnstileToken, event)
+			if (!captcha.success) {
+				throw createError({ statusCode: 403, statusMessage: 'CAPTCHA verification failed.' })
+			}
+		}
+
 		const values: SubmissionValue[] = []
 
 		for (const part of formData) {
 			if (!part.name || !part.data) continue
-			if (part.name === 'flowId' || part.name === 'fields') continue
+			if (part.name === 'flowId' || part.name === 'fields' || part.name === 'turnstileToken') continue
 
 			const matched = fields.find((f) => f.name === part.name)
 			if (!matched) continue
