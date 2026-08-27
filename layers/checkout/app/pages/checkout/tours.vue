@@ -2,7 +2,7 @@
   <CheckoutStepPage
     step="tours"
     title="Tours"
-    previous-path="/checkout/accommodation"
+    previous-path="/checkout/addons"
     next-path="/checkout/workshops"
   />
 </template>
