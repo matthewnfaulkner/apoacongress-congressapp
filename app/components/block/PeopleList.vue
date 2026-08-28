@@ -72,7 +72,7 @@ const people = computed(() =>
 		container: 'gap-0 sm:gap-0 lg:gap-0 lg:py-0'
 	}">
 		<div v-if="people">
-			<UPageGrid class="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+			<div class="relative flex flex-wrap justify-center gap-8">
 				<PersonProfileCard
 					v-for="person in people"
 					:key="person.id"
@@ -88,7 +88,7 @@ const people = computed(() =>
 					:extratitle="person.extratitle"
 					:extratopic="person.extratopic"
 					highlight-color="accent"
-					card-class="h-full justify-center"
+					card-class="h-full justify-center w-full sm:w-[calc(50%-1rem)] lg:w-[calc(25%-1.5rem)] shrink-0 grow-0"
 					image-class="h-50"
 					:ui="{
 						wrapper: 'items-center',
@@ -99,7 +99,7 @@ const people = computed(() =>
 						flag: 'inline-flex items-center justify-center w-7 h-7 rounded-full overflow-hidden text-lg leading-none',
 					}"
 				/>
-			</UPageGrid>
+			</div>
 
 		</div>
 	</UPageSection>
