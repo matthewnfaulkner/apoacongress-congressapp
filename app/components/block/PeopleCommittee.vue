@@ -74,7 +74,7 @@ const flatMembers = computed(() =>
 						:show-country="showCountry"
 						card-class="flex flex-row w-50"
 						image-class="h-40"
-						:ui="{ badge: 'text-sm mx-auto', name: 'font-sans', body: 'mx-auto', header: 'mx-auto h-10 flex flex-col justify-center' }"
+						:ui="{ badge: 'text-sm mx-auto', name: 'font-heading', body: 'mx-auto', header: 'mx-auto h-10 flex flex-col justify-center' }"
 					/>
 			</UMarquee>
 			
@@ -101,7 +101,7 @@ const flatMembers = computed(() =>
 						container: 'sm:p-1 gap-y-0',
 						badgeWrapper: 'text-center font-sans whitespace-normal h-15 align-items-center flex flex-row',
 						badge: 'text-sm h-fit m-auto',
-						name: 'font-sans h-[2lh] text-2xl sm:text-lg',
+						name: 'font-heading h-[2lh] text-2xl sm:text-lg',
 						body: 'mx-auto',
 						header: 'mx-auto',
 						footer: 'w-full'
