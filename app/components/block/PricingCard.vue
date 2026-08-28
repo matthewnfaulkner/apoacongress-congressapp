@@ -246,7 +246,7 @@ watchEffect(() => {
 		</div>
 		<UButton
 			v-if="card.hotel"
-			:to="`/hotels/${card.hotel.id}`"
+			:to="`/accommodation/${card.hotel.id}`"
 			variant="ghost"
 			color="accent"
 			class="mt-4 w-full justify-center text-sm"

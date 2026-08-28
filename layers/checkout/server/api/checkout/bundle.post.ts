@@ -99,15 +99,23 @@ export default defineEventHandler(async (event: H3Event): Promise<CreateBundleRe
 		}
 	}
 
-	const price = lines.reduce((sum, line) => {
-		const option = allOptions.find((candidate) => candidate.id === line.ticketTypeId)!;
-		return sum + option.price * line.quantity;
-	}, 0);
+	// Sandbox is a test environment that still runs real bundles/payments
+	// through Ticket Tailor — flattening every bundle to $1 (in the event's own
+	// currency, minor units) keeps that flow exercisable end-to-end without
+	// risking a real-sized test charge.
+	const price = config.public.isSandbox
+		? 100
+		: lines.reduce((sum, line) => {
+				const option = allOptions.find((candidate) => candidate.id === line.ticketTypeId)!;
+				return sum + option.price * line.quantity;
+			}, 0);
 
-	const bookingFee = lines.reduce((sum, line) => {
-		const option = allOptions.find((candidate) => candidate.id === line.ticketTypeId)!;
-		return sum + option.bookingFee * line.quantity;
-	}, 0);
+	const bookingFee = config.public.isSandbox
+		? 0
+		: lines.reduce((sum, line) => {
+				const option = allOptions.find((candidate) => candidate.id === line.ticketTypeId)!;
+				return sum + option.bookingFee * line.quantity;
+			}, 0);
 
 	const description = lines
 		.map((line) => {

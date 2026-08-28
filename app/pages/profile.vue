@@ -90,7 +90,7 @@ const quickLinkCards: QuickLinkCard[] = [
         icon: 'i-lucide-map-pin',
     },
     {
-        to: '/hotels',
+        to: '/accommodation',
         title: 'Book a Hotel',
         description: 'Browse recommended hotels and book at the congress group rate.',
         icon: 'i-lucide-bed-double',

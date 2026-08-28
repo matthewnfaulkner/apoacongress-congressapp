@@ -43,7 +43,12 @@ if (!data.value || error.value) {
 }
 
 const hotel = computed(() => data.value!);
-const venueTitle = computed(() => hotel.value.congresses?.[0]?.congress?.venue?.title ?? null);
+const siteDataStore = useSiteDataStore();
+const venueTitle = computed(() => {
+	const congress = (siteDataStore.siteData as Site).congress?.[0];
+	const venue = congress && typeof congress !== 'string' ? congress.venue : null;
+	return venue && typeof venue !== 'string' ? (venue.title ?? null) : null;
+});
 // A map/link showing directions from the hotel to the congress venue is
 // meaningless when the hotel IS the venue (on-site accommodation) — the
 // written instructions (gettingThere) still make sense though (e.g. "take

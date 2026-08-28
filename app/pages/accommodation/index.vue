@@ -37,7 +37,7 @@ useSeoMeta({
 			<UPageCard
 				v-for="row in hotels"
 				:key="(row.hotel as Hotel).id"
-				:to="`/hotels/${(row.hotel as Hotel).id}`"
+				:to="`/accommodation/${(row.hotel as Hotel).id}`"
 				highlight-color="accent"
 				orientation="horizontal"
 				spotlight

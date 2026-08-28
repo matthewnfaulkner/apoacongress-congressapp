@@ -33,6 +33,12 @@ const mapsUrl = computed(() => {
 })
 
 const venue = computed(() => hotel.value?.congresses?.[0]?.congress?.venue ?? null)
+const siteDataStore = useSiteDataStore()
+const venueTitle = computed(() => {
+  const congress = (siteDataStore.siteData as Site).congress?.[0]
+  const siteVenue = congress && typeof congress !== 'string' ? congress.venue : null
+  return siteVenue && typeof siteVenue !== 'string' ? (siteVenue.title ?? null) : null
+})
 
 // Directions "from here" (the hotel) "to there" (the congress venue) —
 // Google Maps' directions endpoint (not the plain search one mapsUrl uses
@@ -42,7 +48,7 @@ const directionsToVenueUrl = computed(() => {
   const origin = hotel.value?.location?.coordinates
   const destination = venue.value?.location?.coordinates
   if (!origin || !destination) return null
-  if(hotel.value?.name == venue.value?.title) return null
+  if(hotel.value?.name == venueTitle.value) return null
 
   const [originLng, originLat] = origin
   const [destLng, destLat] = destination
@@ -118,7 +124,7 @@ const directionsToVenueUrl = computed(() => {
 
           <div v-if="hotel.congresses?.[0]?.directions" class="mt-4">
             <h3 class="text-sm font-semibold text-foreground mb-1">Directions</h3>
-            <p class="text-sm text-description whitespace-pre-line">{{ hotel.congresses[0].directions }}</p>
+            <div class="prose prose-sm max-w-none text-description" v-html="hotel.congresses[0].directions" />
           </div>
                     <UButton
             v-if="directionsToVenueUrl"
