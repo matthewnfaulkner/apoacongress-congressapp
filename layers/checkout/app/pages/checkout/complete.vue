@@ -28,13 +28,27 @@ const isLoggedIn = computed(() => typeof auth.isAuthenticated === 'object')
 // saved to is still to be wired up.
 const saveDetails = ref(false)
 
-// Optional form (Directus sites.checkout_form) shown alongside the basket —
-// e.g. dietary requirements, accessibility needs. Purely informational here;
-// its own submission (via FormBuilder -> /api/forms/submit) is independent
-// of the basket/bundle/payment flow, not a gate on proceeding to payment.
-const { data: checkoutForm } = useFetch<(Form & { fields: FormField[] }) | null>('/api/checkout/checkout-form', {
+// Form (Directus sites.checkout_form) shown alongside the basket — e.g.
+// dietary requirements, accessibility needs. Its own submission (via
+// FormBuilder -> /api/forms/submit) is independent of the basket/bundle/
+// payment flow, but a site with no checkout_form configured at all is
+// treated as a configuration error, not "nothing more to collect" — see
+// checkoutUnavailable below, which stays true until a real form comes back.
+const { data: checkoutForm, status: checkoutFormStatus } = useFetch<(Form & { fields: FormField[] }) | null>('/api/checkout/checkout-form', {
   key: 'checkout-form',
 })
+
+// Watches status rather than checkoutForm itself — the API can legitimately
+// resolve to null (no checkout_form configured), which wouldn't register as
+// a change if watched directly since the ref's value never actually differs.
+// immediate: true matters here — on a hard refresh, useFetch resolves during
+// SSR, so the client hydrates with status already at 'success' before this
+// watch is even set up; without immediate, that transition is missed and
+// checkoutFormFetched would never flip.
+const checkoutFormFetched = ref(false)
+watch(checkoutFormStatus, (status) => {
+  if (status === 'success' || status === 'error') checkoutFormFetched.value = true
+}, { immediate: true })
 
 const creating = ref(false)
 const createError = ref<string | null>(null)
@@ -45,7 +59,11 @@ const formBuilderRef = ref<InstanceType<typeof FormBuilder> | null>(null)
 // form — rather than only surfacing once proceedToPayment's own bundle.post.ts
 // call fails.
 const { data: health } = useFetch<{ available: boolean }>('/api/checkout/health', { key: 'checkout-health' })
-const checkoutUnavailable = computed(() => health.value?.available === false)
+// Also unavailable whenever checkoutForm isn't a real form yet — either
+// still fetching, or fetched and genuinely absent (no checkout_form
+// configured for this site). Both cases render the same "unavailable" state
+// below rather than letting checkout proceed with no form to submit.
+const checkoutUnavailable = computed(() => health.value?.available === false || !checkoutForm.value)
 
 // Bundle creation happens here, between the review step and the payment
 // step — not automatically on mount. An existing bundle (basket unchanged
@@ -113,9 +131,10 @@ async function proceedToPayment() {
     <template v-else>
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto items-start">
         <div>
-          <h3 class="text-3xl font-heading">Your Details</h3>
+          <h3  class="text-3xl font-heading">Your Details</h3>
+          <USkeleton v-if="!checkoutFormFetched" v-for=" i in Array.from({ length: 10 })" class="w-full h-11 my-4"/>
           <FormBuilder
-            v-if="checkoutForm"
+            v-else-if="checkoutForm"
             ref="formBuilderRef"
             :form="checkoutForm"
             :bordered="false"
@@ -123,6 +142,7 @@ async function proceedToPayment() {
             :persisted-values="store.checkoutFormValues"
             :on-values-change="store.setCheckoutFormValues"
           />
+          <p v-else class="text-error text-sm">Checkout is not available — please try again later.</p>
 
           <div v-if="checkoutForm && isLoggedIn && false" class="mt-5">
             <UCheckbox v-model="saveDetails" label="Save my details for next time" color="neutral" size="xl" :ui="{base: ' ring-neutral'}"/>
@@ -141,7 +161,7 @@ async function proceedToPayment() {
 
       </div>
       <div class="text-center">
-          <UButton color="accent" size="xl" :loading="creating" :disabled="checkoutUnavailable" @click="proceedToPayment" class="m-auto mt-5" label="Proceed to Payment" />
+          <UButton color="accent" size="xl" :loading="creating" :disabled="checkoutUnavailable" @click="proceedToPayment" class="m-auto mt-5" :label="checkoutUnavailable ? 'Checkout Unavailable' : 'Proceed to Payment'" />
       </div>
     </template>
   </Container>

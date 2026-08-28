@@ -14,7 +14,32 @@ const config = useRuntimeConfig();
 const siteDataStore = useSiteDataStore();
 const siteData = siteDataStore.siteData;
 
-const { $directus, $isAuthenticatedWithPolicy, $isAuthenticated } = useNuxtApp();
+const { $directus, $isAuthenticatedWithPolicy, $isAuthenticated, $directusTokenStorage } = useNuxtApp();
+
+// $directus.logout() only clears its own (localStorage) token storage after
+// a successful round-trip to /auth/logout — if that request throws, the
+// just-issued tokens are left sitting in storage despite the permission
+// check below having already rejected this login. Mirrors the fallback
+// clear the plugin's own $logout() wrapper does for the same reason.
+//
+// Separately, /api/auth/logout revokes the HttpOnly refresh-token cookie
+// used by the SSO/callback flow (see server/api/auth/logout.post.ts) —
+// that cookie is invisible to both client JS and $directus.logout() itself
+// (no credentials sent in json mode), so without this call it would survive
+// and login.vue/callback.get.ts would silently mint a fresh session from it.
+async function forceLogout() {
+  try {
+    await $directus.logout()
+  } catch {
+    $directusTokenStorage.set(null)
+  }
+
+  try {
+    await $fetch('/api/auth/logout', { method: 'POST' })
+  } catch {
+    // best-effort — client-side storage is already cleared regardless
+  }
+}
 
 type LoginStep = 'providers' | 'email' | 'password'
 
@@ -156,7 +181,7 @@ async function login(data: any) {
       if (!me) {
         validationError.value = "You don't have permission to access this." 
         showValidationErrors.value = true
-        await $directus.logout()
+        await forceLogout()
         loading.value = false
         return
       }
@@ -180,7 +205,7 @@ async function login(data: any) {
       if (!me) {
         validationError.value = "You don't have permission to access this." 
         showValidationErrors.value = true
-        await $directus.logout()
+        await forceLogout()
         loading.value = false
         return
       }

@@ -1,4 +1,12 @@
 
+// Directus geometry.Point fields (e.g. Hotel.location, Venue.location) come
+// back as raw GeoJSON, but the generator types them as a bare `string` —
+// pages/endpoints that read .coordinates off one cast to this instead.
+export interface GeoJSONPoint {
+	type: 'Point';
+	coordinates: [number, number];
+}
+
 export interface ExtensionSeoMetadata {
     title?: string;
     meta_description?: string;

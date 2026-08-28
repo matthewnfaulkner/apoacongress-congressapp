@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import type { CongressHotel, Hotel } from '#shared/types/schema';
+import type { CongressHotel, Hotel, Site } from '#shared/types/schema';
+
+const siteDataStore = useSiteDataStore();
+const congressTitle = computed(() => (siteDataStore.siteData as Site).title ?? 'The congress');
 
 const { data, error } = await useFetch<CongressHotel[]>('/api/hotel', {
 	key: 'hotels',
@@ -27,7 +30,10 @@ useSeoMeta({
 
 <template>
 	<Container class="py-12">
-		<Headline class="font-heading text-4xl mb-10" headline="Congress Hotels" />
+		<Headline class="font-heading text-4xl mb-4" headline="Congress Hotels" />
+		<p class="text-muted max-w-2xl mb-10">
+			{{ congressTitle }} has arranged special rates for congress attendees at a variety of luxurious hotels — book your stay today.
+		</p>
 
 		<div v-if="!hotels.length" class="text-muted text-center py-20">
 			No hotels found.

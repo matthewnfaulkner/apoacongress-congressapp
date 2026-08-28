@@ -300,7 +300,7 @@ function initialView() {
 
 <template>
   <UError
-    v-if="!isLoggedIn"
+    v-if="!isLoggedIn && false"
     :clear="{ color: 'neutral', size: 'xl', icon: 'i-lucide-arrow-left', class: 'rounded-full' }"
     :error="{ statusCode: 404, statusMessage: 'Permission Denied', message: 'You don\'t have permission to view this page' }"
   />

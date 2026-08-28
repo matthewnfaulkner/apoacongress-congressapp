@@ -132,7 +132,7 @@
 			color="secondary"
 			highlight
 			:ui="{
-				link: 'text-secondary text-2xl',
+				link: 'text-secondary text-xl',
 			}"/>
 			</div>
 
