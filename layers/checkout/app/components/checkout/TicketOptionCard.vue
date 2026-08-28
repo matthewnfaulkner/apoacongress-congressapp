@@ -45,7 +45,7 @@ const showDetails = ref(false)
       <div v-if="option.shortDescription" v-html="option.shortDescription" class="text-description text-md mt-0.5 mb-4 line-clamp-1">
       </div>
       <UButton
-        v-if="option.richDescription"
+        v-if="option.richDescription || option.detailsPermalink"
         variant="outline"
         color="secondary"
         size="xl"
@@ -57,7 +57,7 @@ const showDetails = ref(false)
     </div>
 
     <CheckoutTicketOptionDetailsModal
-      v-if="option.richDescription"
+      v-if="option.richDescription || option.detailsPermalink"
       v-model:open="showDetails"
       :option="option"
     />

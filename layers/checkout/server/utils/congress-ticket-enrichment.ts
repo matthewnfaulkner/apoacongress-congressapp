@@ -3,6 +3,7 @@ import type { CongressCharge, Hotel, AccommodationChargeDetail } from '#shared/t
 export interface TicketEnrichment {
 	richDescription: string | null;
 	shortDescription: string | null;
+	detailsPermalink: string | null;
 	tagline: string | null;
 	hotel: { id: string; name: string; starRating: number | null; image: string | null; tagline: string | null } | null;
 	roomSize: string | null;
@@ -15,10 +16,14 @@ export interface TicketEnrichment {
 interface CongressTicketRow {
 	id: string;
 	charge:
-		| (Pick<CongressCharge, 'id' | 'description' | 'category' | 'sub_category' | 'details' | 'members_only' | 'tagline' | 'short_description'> & {
+		| (Pick<
+				CongressCharge,
+				'id' | 'description' | 'category' | 'sub_category' | 'details' | 'members_only' | 'tagline' | 'short_description'
+		  > & {
 				hotel:
 					| (Pick<Hotel, 'id' | 'name' | 'star_rating' | 'image'> & { congresses: Array<{ tagline: string | null }> })
 					| null;
+				details_page: { permalink: string | null } | null;
 		  })
 		| null;
 }
@@ -56,6 +61,7 @@ export async function fetchTicketEnrichment(ticketTypeIds: string[]): Promise<Ma
 							charge: [
 								'id', 'description', 'category', 'sub_category', 'details', 'members_only', 'tagline', 'short_description',
 								{ hotel: ['id', 'name', 'star_rating', 'image', { congresses: ['tagline'] }] },
+								{ details_page: ['permalink'] },
 							],
 						},
 					],
@@ -93,6 +99,7 @@ export async function fetchTicketEnrichment(ticketTypeIds: string[]): Promise<Ma
 		enrichmentById.set(row.id, {
 			richDescription: charge.description ?? null,
 			shortDescription: charge.short_description ?? null,
+			detailsPermalink: charge.details_page?.permalink ?? null,
 			tagline: charge.tagline ?? null,
 			hotel,
 			roomSize: charge.sub_category ?? null,

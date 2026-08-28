@@ -52,6 +52,7 @@ function normalizeTicketType(
 		description: ticketType.description,
 		richDescription: enrichment?.richDescription ?? null,
 		shortDescription: enrichment?.shortDescription ?? null,
+		detailsPermalink: enrichment?.detailsPermalink ?? null,
 		tagline: enrichment?.tagline ?? null,
 		price: ticketType.price,
 		bookingFee: ticketType.booking_fee,

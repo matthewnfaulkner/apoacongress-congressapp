@@ -805,6 +805,7 @@ export interface CongressCharge {
 	tagline?: string | null;
 	short_description?: string | null;
 	tickets?: CongressTicket[] | string[];
+	details_page?: Page | string | null;
 }
 
 export interface CongressDay {

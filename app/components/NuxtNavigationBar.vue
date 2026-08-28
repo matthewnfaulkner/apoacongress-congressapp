@@ -123,15 +123,16 @@
 
 	<template #body>
 		<div class="block">
+			
 			<UNavigationMenu 
 			:items="menuItems" 
-			class="hidden md:flex text-black block" 
+			class="hidden md:flex text-black block text-2xl" 
 			orientation="vertical"
 			content-orientation="vertical"
 			color="secondary"
 			highlight
 			:ui="{
-				link: 'text-secondary',
+				link: 'text-secondary text-2xl',
 			}"/>
 			</div>
 

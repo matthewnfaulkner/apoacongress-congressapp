@@ -50,7 +50,7 @@ useHead({
 	style: [
 		{
 			id: 'accent-color',
-			innerHTML: `:root { --accent-color: ${unref(siteData)?.globals.accent_color || '#6644ff'} !important; }`,
+			innerHTML: `:root { --accent-color: ${unref(siteData)?.globals.accent_color || '#E41D21'} !important; }`,
 		},
 	],
 	bodyAttrs: {

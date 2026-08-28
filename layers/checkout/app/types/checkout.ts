@@ -11,6 +11,9 @@ export interface CheckoutTicketOption {
 	// Also from congress_charges: shortDescription for the card itself (before
 	// "View details"), tagline as a small badge above the option name.
 	shortDescription: string | null;
+	// congress_charges.details_page (a `pages` relation) — when set, the "View
+	// details" modal renders this page's blocks instead of richDescription.
+	detailsPermalink: string | null;
 	tagline: string | null;
 	price: number;
 	bookingFee: number;

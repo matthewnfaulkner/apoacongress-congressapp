@@ -122,7 +122,7 @@ const onTabChange = async () => {
 									fields: ['heading', 'charges'], 
 									mode: 'modal' })"
 				class="overflow-x-auto"			>
-				<table class="w-full text-sm">
+				<table class="w-full text-lg">
 					<thead>
 						<tr>
 							<th class="bg-secondary-400 text-white text-left p-3 font-medium w-40"></th>
