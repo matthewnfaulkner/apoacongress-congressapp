@@ -20,7 +20,7 @@ const scheduleFields = [
 			{ timeslots: ['id', 'starttime', 'endtime'] },
 			{
 				schedules: [
-					'id', 'name', 'status',
+					'id', 'name', 'status', 'preliminary',
 					{ breaks: ['id', 'name', 'starttime', 'endtime', { rooms: ['id', 'room'] }] },
 					{
 						sessions: [

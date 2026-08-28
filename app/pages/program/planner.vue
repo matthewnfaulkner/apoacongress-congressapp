@@ -29,6 +29,9 @@ if (!congress.value || error.value) {
 
 const rooms = computed(() => (congress.value?.venue?.rooms as VenueRoom[]) || []);
 const days = computed(() => (congress.value?.days as CongressDay[]) || []);
+const isPreliminary = computed(() =>
+	days.value.some((day) => ((day.schedules as CongressSchedule[]) ?? []).some((schedule) => !!schedule.preliminary)),
+);
 
 function buildSessionGridItems(schedule: CongressSchedule | undefined, day: CongressDay, dayRooms: VenueRoom[]) {
   if (!schedule) return []
@@ -302,6 +305,7 @@ function initialView() {
     :error="{ statusCode: 404, statusMessage: 'Permission Denied', message: 'You don\'t have permission to view this page' }"
   />
   <div class="py-2" v-else>
+    <ProgramPreliminaryBanner :preliminary="isPreliminary" />
     <div v-if="loading" class="text-black w-full h-full flex items-center justify-center">
       <UProgress color="secondary" size="xl" :v-model="null" class="flex justify-center py-10 w-50" />
     </div>

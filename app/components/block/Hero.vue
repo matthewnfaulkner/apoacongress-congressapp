@@ -45,9 +45,11 @@ defineProps<HeroProps>();
 		>
 			<Tagline
 				:tagline="data.tagline"
+				class="m-1"
 				:data-directus="setAttr({ collection: 'block_hero', item: data.id, fields: 'tagline', mode: 'popover' })"
 			/>
 			<Headline
+				class="m-0"
 				:headline="data.headline"
 				:data-directus="setAttr({ collection: 'block_hero', item: data.id, fields: 'headline', mode: 'popover' })"
 			/>

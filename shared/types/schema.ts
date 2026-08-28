@@ -984,6 +984,7 @@ export interface CongressSchedule {
 	parent?: CongressSchedule | string | null;
 	sessions?: CongressSession[] | string[];
 	breaks?: CongressBreak[] | string[];
+	preliminary?: Boolean | null;
 }
 
 export interface CongressSession {

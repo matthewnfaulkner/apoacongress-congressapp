@@ -50,6 +50,10 @@ if (!sectionSessions.value || error.value) {
 	throw createError({ statusCode: 404, statusMessage: 'Section not found', fatal: true });
 }
 
+const isPreliminary = computed(() =>
+	(sectionSessions.value ?? []).some((session) => typeof session.schedule !== 'string' && !!session.schedule?.preliminary),
+);
+
 
 const section = congressOrganisers.find((o) => (o?.organisation as Organisation).id == id)?.organisation as Organisation;
 
@@ -251,7 +255,8 @@ function getRowStyle(row) {
 </script>
 <template>
 	<div v-if="sessions" ref="wrapperRef">
-		<Container class="py-12">
+		<Container class="py-3">
+		<ProgramPreliminaryBanner :preliminary="isPreliminary" />
 		<Headline :headline="`Schedule - ${section?.short_name}`" />
                 <div v-for="(day, index) in sessionsByDay" class="py-5">
                     <ULink :to="`/program/day/${day.day.key}`" class="text-2xl text-accent font-heading"> 
