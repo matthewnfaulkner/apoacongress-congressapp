@@ -170,6 +170,10 @@ export interface TTOrder {
 	// trusting the M2M's own creation order rather than uploaded_on for
 	// sorting — uploaded_on is only carried along here for display.
 	local_invoices?: Array<{ id: string; filename_download: string; uploaded_on: string }>;
+	// Same bolt-on pattern, from congress_orders.payment_proof (a single Files
+	// M2O, not an M2M like invoices) — set once the customer has uploaded
+	// evidence of a manual/offline payment (see payment-proof.post.ts).
+	local_payment_proof?: { id: string; filename_download: string; uploaded_on: string } | null;
 	[key: string]: unknown;
 }
 

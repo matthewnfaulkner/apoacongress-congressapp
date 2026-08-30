@@ -102,6 +102,7 @@ export interface Abstract {
 	categories?: string[] | null;
 	submissions?: AbstractSubmission[] | string[];
 	reviewers?: AbstractReviewer[] | string[];
+	declaration_statement?: string | null;
 }
 
 export interface AbstractScoring {
@@ -940,6 +941,10 @@ export interface CongressOrder {
 	submission?: FormSubmission | string | null;
 	issued_tickets?: Array<{ id: string; custom_fields: Array<{ question: string; answer: string }> }> | null;
 	invoices?: CongressOrdersFile[] | string[];
+	// Customer-uploaded evidence of payment (receipt/bank transfer confirmation)
+	// for orders on a manual/offline payment method — see order/[id].get.ts and
+	// order/[id]/payment-proof.post.ts.
+	payment_proof?: DirectusFile | string | null;
 }
 
 export interface CongressOrderSession {

@@ -39,7 +39,7 @@ const { data } = await useAsyncData <CongressAbstracts[]>('abstract_submit', asy
         'abstracts',
         {   
             limit: 1,
-            fields: ['id', 'categories', 'submission_deadline', 'description', 'submission_limit'],
+            fields: ['id', 'categories', 'submission_deadline', 'description', 'submission_limit', 'declaration_statement'],
             filter: {
             congress: {
                 site:{
@@ -296,10 +296,18 @@ const schema = z.object({
     figures.every(f => !!f.file),
     { message: "Each figure must have an image uploaded" }
   ),
+  conflict: z.boolean(),
+  conflictDisclosure: z.string(),
   consent: z.boolean().refine(val => val === true, {
     message: "You must give your consent",
   })
-})
+}).refine(
+  (data) => !data.conflict || data.conflictDisclosure.trim() !== "",
+  {
+    message: "Please describe the conflict of interest",
+    path: ["conflictDisclosure"], // attaches the error to that field, not the whole object
+  }
+)
 
 type Schema = z.output<typeof schema>
 
@@ -315,7 +323,9 @@ const state = reactive<Partial<Schema>>({
   category: undefined,
   keywords: [],
   figures: [],
-  consent: false
+  conflict: false,
+  consent: false,
+  conflictDisclosure: ''
 })
 
 function resetState() {
@@ -326,6 +336,8 @@ function resetState() {
   state.category = undefined;
   state.keywords = [];
   state.figures = [];
+  state.conflict = false;
+  state.conflictDisclosure = '',
   state.consent = false;
   error.value = null;
   turnstileToken.value = undefined;
@@ -716,8 +728,34 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                                     class="m-auto"
                                     @click="() => { state.figures!.push({ file: null, label: '' }); revalidateFigures(); }"/>
                             </UFormField>
-                            <UFormField  class="pb-5" name="consent">
-                                <UCheckbox v-model="state.consent" size="lg" variant="card" label="I hereby agree to the terms and conditions of abstract submission." color="accent"/>
+
+                            <UFormField class="py-5 text-bold" size="xl" name="conflict" label="Conflict of Interest Declaration">
+                                <URadioGroup 
+                                  v-model="state.conflict" 
+                                  :items="[
+                                    {
+                                      value: false,
+                                      label: 'I have no conflicts of interest to declare.'
+                                    },
+                                    {
+                                      value: true,
+                                      label: 'I need to declare conflicts of interest.'
+                                    }
+                                  ]"
+                                  variant="card"
+                                  orientation="vertical"
+                                  color="accent"
+                                  /> 
+                            </UFormField>
+                            <UFormField v-if="state.conflict" class="py-5" name="conflictDisclosure" label="">
+                              <UTextarea v-model="state.conflictDisclosure" placeholder="Please provide details of the conflicts of interest." class="w-full lg:w-200" :rows=8 color="secondary" variant="subtle"/>
+                            </UFormField> 
+                            <UFormField  class="py-5" name="consent" label="">
+                                <UCheckbox 
+                                  v-model="state.consent" 
+                                  size="lg" 
+                                  variant="card" 
+                                  :label="congressAbstract.declaration_statement || 'I hereby agree to the terms and conditions of abstract submission.'" color="accent"/>
                             </UFormField>
                             <div>
                             <UFormField  class="py-5 text-center" name="captcha">

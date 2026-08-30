@@ -44,7 +44,7 @@ export default defineEventHandler(async (event: H3Event): Promise<TTOrder> => {
 				withToken(
 					userToken,
 					readItem('congress_orders' as any, orderId, {
-						fields: ['id', 'issued_tickets', 'invoices.directus_files_id'],
+						fields: ['id', 'issued_tickets', 'invoices.directus_files_id', 'payment_proof'],
 					}),
 				),
 			);
@@ -60,11 +60,11 @@ export default defineEventHandler(async (event: H3Event): Promise<TTOrder> => {
 
 		if (email) {
 			try {
-				congressOrder = await directusServer.request<{ email: string | null; issued_tickets: unknown; invoices: unknown }>(
+				congressOrder = await directusServer.request<{ email: string | null; issued_tickets: unknown; invoices: unknown; payment_proof: string | null }>(
 					withToken(
 						config.directusOrderBotToken as string,
 						readItem('congress_orders' as any, orderId, {
-							fields: ['email', 'issued_tickets', 'invoices.directus_files_id'],
+							fields: ['email', 'issued_tickets', 'invoices.directus_files_id', 'payment_proof'],
 						}),
 					),
 				);
@@ -99,6 +99,23 @@ export default defineEventHandler(async (event: H3Event): Promise<TTOrder> => {
 			).then((files) => invoiceIds.map((id) => files.find((file) => file.id === id)).filter((file): file is { id: string; filename_download: string; uploaded_on: string } => Boolean(file)))
 		: [];
 
+	// Same reasoning as invoices above — customers can read the raw file id off
+	// congress_orders itself, but not directus_files, so the filename/date have
+	// to be filled in with the bot token once ownership is already established.
+	const paymentProofId: string | null = (congressOrder as any)?.payment_proof ?? null;
+	const paymentProof = paymentProofId
+		? await directusServer
+				.request<{ id: string; filename_download: string; uploaded_on: string }>(
+					withToken(config.directusOrderBotToken as string, readFile(paymentProofId, { fields: ['id', 'filename_download', 'uploaded_on'] })),
+				)
+				.catch(() => null)
+		: null;
+
 	const order = await ticketTailorFetch<TTOrder>(`/orders/${orderId}`, 'orderRead');
-	return await omitBypassTicket({...order, local_issued_tickets: congressOrder?.issued_tickets, local_invoices: invoices});
+	return await omitBypassTicket({
+		...order,
+		local_issued_tickets: congressOrder?.issued_tickets,
+		local_invoices: invoices,
+		local_payment_proof: paymentProof,
+	});
 });

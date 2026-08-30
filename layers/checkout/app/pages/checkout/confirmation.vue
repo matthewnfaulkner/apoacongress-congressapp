@@ -51,6 +51,12 @@ const { data: order, refresh } = useFetch<TTOrder>(() => lookupUrl.value ?? '', 
   })),
 })
 
+// Named function rather than an inline template arrow — see the same note
+// in order/[id].vue.
+function handleProofUploaded(proof: NonNullable<TTOrder['local_payment_proof']>) {
+  if (order.value) order.value.local_payment_proof = proof
+}
+
 const heading = computed(() => {
   if (!order.value) return 'Processing your order'
   if (order.value.status === 'completed') return 'Order confirmed'
@@ -149,12 +155,17 @@ onMounted(() => {
         </div>
 
         <p class="text-md text-description mb-1">{{ orderDate(order) }}</p>
-        <p v-if="order.payment_method?.name" class="text-sm text-description mb-1">Paid via {{ order.payment_method.name }}</p>
+        <p v-if="order.payment_method?.name" class="text-sm text-description mb-1">Payment via {{ order.payment_method.name }}</p>
 
-        <div v-if="order.payment_method?.instructions" class="bg-warning/10 border border-warning rounded-lg p-3 mb-6 mt-3">
-          <h3 class="text-sm font-semibold text-foreground mb-1">Payment instructions</h3>
-          <p class="text-sm text-description whitespace-pre-line">{{ order.payment_method.instructions }}</p>
-        </div>
+        <CheckoutPaymentProofUpload
+          v-if="isAwaitingManualPayment(order)"
+          :order-id="order.id"
+          :existing-proof="order.local_payment_proof"
+          :guest-token="guestOrderToken"
+          :instructions="order.payment_method?.instructions"
+          class="mb-6"
+          @uploaded="handleProofUploaded"
+        />
         <p v-else class="mb-6" />
 
         <h3 class="font-semibold text-foreground mb-3">Tickets</h3>

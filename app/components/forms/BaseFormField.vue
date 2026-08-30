@@ -62,7 +62,7 @@ const getComponentProps = (field: FormField) => {
 		<FormItem class="pt-2">
 			<FormLabel :for="field.name ?? ''" class="flex items-center justify-between text-base">
 				<span v-if="field.type !== 'checkbox'">{{ field.label ?? '' }}</span>
-				<span v-if="field.required" class="text-sm text-gray-400">*Required</span>
+				<span v-if="field.required" class="text-xs text-gray-400">*Required</span>
 			</FormLabel>
 			<FormControl  class="">
 				<component :is="getFieldComponent()" v-bind="getComponentProps(field)" />

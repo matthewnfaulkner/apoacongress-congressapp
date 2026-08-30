@@ -15,6 +15,14 @@ export function orderStatusColor(order: TTOrder) {
   return 'warning'
 }
 
+// type === 'offline' is the general signal for a manual/box-office-configured
+// payment method (bank transfer, cash, etc.) rather than a card processor —
+// same check redirect.get.ts uses to spot ECPay specifically, just without
+// the name comparison since this isn't limited to that one method.
+export function isAwaitingManualPayment(order: TTOrder) {
+  return order.status === 'pending' && order.payment_method?.type === 'offline'
+}
+
 export function orderDate(order: TTOrder) {
   const date = new Date(order.created_at * 1000)
   return `${date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}, ${date.toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit' })}`

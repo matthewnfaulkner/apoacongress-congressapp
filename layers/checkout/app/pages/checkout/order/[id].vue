@@ -18,6 +18,16 @@ const { data: order, status, error } = useFetch<TTOrder>(`/api/checkout/order/${
     ...(auth.lastToken ? { Authorization: `Bearer ${auth.lastToken}` } : {}),
   })),
 })
+
+// A named function rather than an inline template arrow — inline multi-
+// statement handlers aren't reliably compiled with the same ref-auto-unwrap
+// template expressions get, so `order` inside one can end up referring to
+// the raw Ref rather than order.value, silently no-opping this assignment.
+// The toast itself is CheckoutPaymentProofUpload's own responsibility, not
+// duplicated here.
+function handleProofUploaded(proof: NonNullable<TTOrder['local_payment_proof']>) {
+  if (order.value) order.value.local_payment_proof = proof
+}
 </script>
 
 <template>
@@ -34,7 +44,16 @@ const { data: order, status, error } = useFetch<TTOrder>(`/api/checkout/order/${
       </div>
 
       <p class="text-md text-description mb-1">{{ orderDate(order) }}</p>
-      <p v-if="order.payment_method?.name" class="text-sm text-description mb-6">Paid via {{ order.payment_method.name }}</p>
+      <p v-if="order.payment_method?.name" class="text-sm text-description mb-1">Paid via {{ order.payment_method.name }}</p>
+
+      <CheckoutPaymentProofUpload
+        v-if="isAwaitingManualPayment(order)"
+        :order-id="order.id"
+        :existing-proof="order.local_payment_proof"
+        :instructions="order.payment_method?.instructions"
+        class="mb-6 mt-3"
+        @uploaded="handleProofUploaded"
+      />
       <p v-else class="mb-6" />
 
       <h2 class="font-semibold text-foreground mb-3">Tickets</h2>
