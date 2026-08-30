@@ -32,6 +32,17 @@ const submissions = ref<AbstractSubmission[] | null>(null)
 const storeReady = ref(false)
 const categories = ref([]);
 const guideLines = ref<AccordionItem>([]);
+const guidelinesRef = ref<HTMLElement | null>(null);
+const guidelinesOpen = ref<string | undefined>(undefined);
+
+// Used by the consent checkbox's "view submission guidelines" link to jump
+// back up to the accordion above the form and expand it, rather than making
+// the customer scroll up and click it open themselves.
+function openGuidelines(e: Event) {
+    e.preventDefault();
+    guidelinesOpen.value = '0';
+    nextTick(() => guidelinesRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+}
 
 
 const { data } = await useAsyncData <CongressAbstracts[]>('abstract_submit', async() => {
@@ -269,22 +280,24 @@ function getRowItems(row: TableRow<Submission>) {
 
 const schema = z.object({
   id: z.any().nullable(),
-  abstract: z.string('Abstract is required').max(250, 'Max 250 Characters'),
-  title: z.string('Title is required').max(150, "Max 150 Characters"),
-  category: z.string('Category is required'),
+  
+  category: z.string({ required_error: 'Category is required' }),
+  title: z.string({ required_error: 'Title is required' }).max(150, "Max 150 Characters"),
+  keywords: z.array(z.string().trim().nonempty("Keyword cannot be empty"))
+    .min(3, "At least 3 keywords are required")
+    .max(5, "Maximum of 5 keywords allowed"),
+  abstract: z.string({ required_error: 'Abstract is required' }).max(250, 'Max 250 Characters'),
   authors: z.array(
     z.object({
-        title: z.string().nonempty("Title is required"),
+        title: z.string().nonempty("Author Title is required"),
         name: z.string().nonempty("Author name is required"),
-        institution: z.string().nonempty("Institution is required")
+        institution: z.string().nonempty("Author Institution is required")
     })
   ).min(1, "At least one author is required").refine(authors =>
     authors.every(a => a.title.trim() !== "" && a.name.trim() !== "" && a.institution.trim() !== ""),
     { message: "All authors must have a title, name, and institution" }
   ),
-  keywords: z.array(z.string().trim().nonempty("Keyword cannot be empty"))
-    .min(3, "At least 3 keywords are required")
-    .max(5, "Maximum of 5 keywords allowed"),
+
   figures: z.array(
     z.object({
       id: z.union([z.string(), z.number()]).optional(),
@@ -339,7 +352,7 @@ function resetState() {
   state.conflict = false;
   state.conflictDisclosure = '',
   state.consent = false;
-  error.value = null;
+  error.value = [];
   turnstileToken.value = undefined;
   turnstileRef.value?.reset();
 }
@@ -366,11 +379,11 @@ function onFigureFileChange(e: Event, index: number) {
     input.value = '';
     if (!file) return;
     if (!file.type.startsWith('image/')) {
-        error.value = 'Figures must be image files.';
+        error.value = ['Figures must be image files.'];
         return;
     }
     if (file.size > FIGURE_MAX_BYTES) {
-        error.value = 'Figures must be under 2 MB.';
+        error.value = ['Figures must be under 2 MB.'];
         return;
     }
     (state.figures as FigureState[])[index].file = file;
@@ -388,30 +401,30 @@ function figureFilePreview(figure: FigureState) {
     return '';
 }
 
-const error = ref<string | null>(null);
+const error = ref<string[]>([]);
 
 function onFormError(event: FormErrorEvent) {
-    const messages = event.errors?.map(e => e.message).filter(Boolean) ?? [];
-    error.value = messages.length ? messages.join(' ') : 'Please check the highlighted fields and try again.';
+    const messages = event.errors?.map(e => e.message).filter(Boolean) as string[] ?? [];
+    error.value = messages.length ? messages : ['Please check the highlighted fields and try again.'];
 }
 
 const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
-	error.value = null;
+	error.value = [];
 	if (!turnstileToken.value) {
-		error.value = 'Please complete the CAPTCHA before submitting.';
+		error.value = ['Please complete the CAPTCHA before submitting.'];
 		return;
 	}
 
   if(!state.id && (submissions?.value?.length || 0) >= submission_limit) {
-    error.value = 'You have reached your submission limit.';
+    error.value = ['You have reached your submission limit.'];
 		return;
   }
   if(submissionsClosed) {
-    error.value = 'The deadline for abstract submission has passed.';
+    error.value = ['The deadline for abstract submission has passed.'];
 		return;
   }
   if(state.id && submissions.value?.find(s => s.id === state.id)?.status !== 'submitted') {
-    error.value = 'This submission can no longer be edited.';
+    error.value = ['This submission can no longer be edited.'];
 		return;
   }
 	try {
@@ -478,7 +491,7 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
         resetState();
         openSubmissionForm.value = false;
 	} catch (e) {
-		error.value = 'Failed to submit the form. Please try again later.';
+		error.value = ['Failed to submit the form. Please try again later.'];
         console.log(e);
         turnstileToken.value = undefined;
         turnstileRef.value?.reset();
@@ -558,20 +571,23 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                 <template #body>
                     <div >
                         <Headline :headline="state.id ? 'Updating Submission' : 'Abstract Submission Form'"/>
-                        <UAccordion 
-                            :items="guideLines" 
+                        <div ref="guidelinesRef">
+                        <UAccordion
+                            v-model="guidelinesOpen"
+                            :items="guideLines"
                             class="max-w-200"
                             :ui="{
                                 label: 'text-2xl text-accent',
                                 trailingIcon: 'text-2xl text-accent'
                             }">
-        
+
                             <template #content="{item}">
                                 <div v-html="item.content">
 
                                 </div>
                             </template>
                         </UAccordion>
+                        </div>
                         <UForm
                             ref="formRef"
                             @submit="handleSubmit"
@@ -751,18 +767,30 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                               <UTextarea v-model="state.conflictDisclosure" placeholder="Please provide details of the conflicts of interest." class="w-full lg:w-200" :rows=8 color="secondary" variant="subtle"/>
                             </UFormField> 
                             <UFormField  class="py-5" name="consent" label="">
-                                <UCheckbox 
-                                  v-model="state.consent" 
-                                  size="lg" 
-                                  variant="card" 
-                                  :label="congressAbstract.declaration_statement || 'I hereby agree to the terms and conditions of abstract submission.'" color="accent"/>
+                                <UCheckbox
+                                  v-model="state.consent"
+                                  size="lg"
+                                  variant="card"
+                                  :label="congressAbstract.declaration_statement || 'I hereby agree to the terms and conditions of abstract submission.'" color="accent">
+                                  <template #label="{ label }">
+                                    <span>{{ label }}</span>
+                                    <a href="#" class="text-accent underline ml-1" @click="openGuidelines">View submission guidelines</a>
+                                  </template>
+                                </UCheckbox>
                             </UFormField>
                             <div>
                             <UFormField  class="py-5 text-center" name="captcha">
                                 <NuxtTurnstile ref="turnstileRef" v-model="turnstileToken" />
                             </UFormField>
                             </div>
-                            <UAlert v-if="error" color="error" variant="subtle" :description="error" class="mb-3" />
+                            <UAlert v-if="error.length" color="error" variant="subtle" class="mb-3">
+                                <template #description>
+                                    <p v-if="error.length === 1">{{ error[0] }}</p>
+                                    <ul v-else class="list-disc list-inside space-y-0.5">
+                                        <li v-for="(message, index) in error" :key="index">{{ message }}</li>
+                                    </ul>
+                                </template>
+                            </UAlert>
                             <div class="w-full text-center">
                               <UButton
                                   :label="state.id ? 'Update' : 'Submit'"

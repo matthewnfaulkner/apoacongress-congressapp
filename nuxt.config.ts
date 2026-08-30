@@ -249,7 +249,11 @@ export default defineNuxtConfig({
 			// so it's turned off entirely instead.
 			crossOriginEmbedderPolicy: 'unsafe-none',
 			contentSecurityPolicy: {
-				'img-src': ["'self'", 'data:', '*'],
+				// blob: needed for client-side image previews before upload (e.g.
+				// URL.createObjectURL in abstracts/submission.vue's figure picker) —
+				// same reason data: is listed explicitly, since '*' only covers
+				// network schemes (http/https/ws/wss), not blob:/data:.
+				'img-src': ["'self'", 'data:', 'blob:', '*'],
 				'script-src': ["'self'", "'unsafe-inline'", '*'],
 				// maps.googleapis.com/maps.gstatic.com: the Google Maps JS API (see
 				// app.head.script) makes its own network calls, including a CSP
