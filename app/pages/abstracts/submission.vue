@@ -701,7 +701,7 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                                 :ui="{
                                   hint: 'text-sm wrap max-w-150'
                                 }"
-                                hint="Optionally upload up to 3 figures (image files, max 2 MB each), each with a label.">
+                                hint="Optionally upload up to 3 figures (image files, max 5 MB each), each with a label.">
                                 <div v-for="(figure, index) in state.figures" :key="index" class="mb-3 flex flex-col md:flex-row gap-2 md:items-center p-2 rounded-lg border border-default">
                                     <div class="flex items-center gap-3">
                                         <img

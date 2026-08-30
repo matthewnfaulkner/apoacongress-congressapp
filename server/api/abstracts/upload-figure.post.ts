@@ -49,7 +49,23 @@ export default defineEventHandler(async (event) => {
 	uploadFormData.append('folder', config.public.abstractFiguresFolder as string);
 	uploadFormData.append('file', blob, filePart.filename);
 
-	const uploaded = await directusServer.request<{ id: string }>(withToken(sessionToken, uploadFiles(uploadFormData)));
+	let uploaded: { id?: string } | undefined;
+	try {
+		uploaded = await directusServer.request<{ id: string }>(withToken(sessionToken, uploadFiles(uploadFormData)));
+	} catch (error: any) {
+		// ofetch (directusServer's globals.fetch — see directus-server.ts) auto-
+		// parses responses and throws its own FetchError on non-2xx, a different
+		// shape than the SDK's own error handling expects — logged in full here
+		// since the caller otherwise only sees a generic 500/undefined with no
+		// indication of whether this was a permissions, auth, or validation failure.
+		console.error('[upload-figure] Directus upload failed:', error?.data ?? error);
+		throw createError({ statusCode: 502, statusMessage: 'Could not upload the figure. Please try again.' });
+	}
+
+	if (!uploaded?.id) {
+		console.error('[upload-figure] Directus upload returned no file id:', uploaded);
+		throw createError({ statusCode: 502, statusMessage: 'Could not upload the figure. Please try again.' });
+	}
 
 	return { id: uploaded.id };
 });
