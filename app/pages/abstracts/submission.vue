@@ -39,8 +39,9 @@ const guidelinesOpen = ref<string | undefined>(undefined);
 // the customer scroll up and click it open themselves.
 function openGuidelines(e: Event) {
     e.preventDefault();
-    guidelinesOpen.value = '0';
-    nextTick(() => guidelinesRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+    
+    guidelinesRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    nextTick(() => guidelinesOpen.value = '0');
 }
 
 

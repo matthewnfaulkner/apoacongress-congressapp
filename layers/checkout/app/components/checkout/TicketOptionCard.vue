@@ -71,9 +71,13 @@ const showDetails = ref(false)
       </div>
 
       <div v-if="option.isOrderable" class="flex items-center gap-2">
-        <UButton variant="outline" size="sm" color="accent" :disabled="quantity <= 0" @click="updateQuantity(-1)" icon="i-lucide-minus" />
+        <UTooltip text="Remove from Cart">
+          <UButton variant="outline" size="sm" color="accent" :disabled="quantity <= 0" @click="updateQuantity(-1)" icon="i-lucide-minus" />
+        </UTooltip>
         <span class="w-5 text-center">{{ quantity }}</span>
-        <UButton variant="solid" size="sm" color="accent" :disabled="quantity >= maxSelectable" icon="i-lucide-plus" @click="updateQuantity(1)" />
+        <UTooltip text="Add to Cart">
+          <UButton variant="solid" size="sm" color="accent" :disabled="quantity >= maxSelectable" icon="i-lucide-plus" @click="updateQuantity(1)" />
+        </UTooltip>
       </div>
     </div>
   </div>

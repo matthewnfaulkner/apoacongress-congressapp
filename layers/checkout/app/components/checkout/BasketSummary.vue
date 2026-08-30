@@ -84,10 +84,14 @@ function confirmClear(close: () => void) {
 <template>
   <div class="border border-input rounded-lg p-4 font-mono">
     <div class="flex justify-between items-center mb-3">
-      <h3 class="text-lg font-semibold text-foreground">Your basket</h3>
+      
+      <h3 class="text-lg font-semibold text-foreground"> 
+        <UIcon name="i-lucide-shopping-cart" size="xl"/>
+        Your Cart
+      </h3>
       <UButton
         v-if="allUnits.length > 0"
-        label="Clear basket"
+        label="Clear Cart"
         icon="i-lucide-rotate-ccw"
         variant="link"
         color="neutral"
