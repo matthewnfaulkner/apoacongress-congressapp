@@ -4,7 +4,6 @@ import * as z from 'zod'
 import type { FormSubmitEvent, FormErrorEvent } from '@nuxt/ui'
 import { readItems, deleteItem } from '@directus/sdk';
 import type { AbstractSubmission, AbstractSubmissionValue, AbstractSubmissionFile, CongressAbstracts } from '~~/shared/types/schema';
-import { getDirectusAssetURL } from '@@/server/utils/directus-utils';
 import type { AccordionItem } from '@nuxt/ui'
 import { UBadge, UDropdownMenu, UButton } from '#components';
 import type { TableColumn, TableRow } from '@nuxt/ui';
@@ -398,9 +397,44 @@ function figureFileName(figure: FigureState) {
     return figure.existingFilename ?? '';
 }
 
+// Existing figures come back from Directus as just a file id, permission-
+// restricted (read scoped to uploaded_by == $CURRENT_USER — see
+// figure.get.ts), so unlike a plain public asset URL this has to be fetched
+// with the logged-in user's own credentials and turned into a blob URL —
+// same technique support/[...id].vue's openFile() uses for restricted
+// attachments. Cached by file id so each figure is only fetched once.
+const figurePreviewCache = ref<Record<string, string>>({});
+
+async function loadFigurePreview(fileId: string) {
+    if (figurePreviewCache.value[fileId]) return;
+    const { $directusTokenStorage } = useNuxtApp();
+    const accessToken = config.public.isSandbox ? null : ($directusTokenStorage as any).get()?.access_token;
+    try {
+        const response = await fetch(`/api/abstracts/figure?id=${fileId}`, {
+            headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+        });
+        if (!response.ok) return;
+        const blob = await response.blob();
+        figurePreviewCache.value[fileId] = URL.createObjectURL(blob);
+    } catch {
+        // Leave uncached — figureFilePreview falls back to '' and that
+        // figure's preview just won't render, rather than breaking the form.
+    }
+}
+
+watch(
+    () => state.figures,
+    (figures) => {
+        for (const figure of figures ?? []) {
+            if (typeof figure.file === 'string') loadFigurePreview(figure.file);
+        }
+    },
+    { immediate: true, deep: true },
+);
+
 function figureFilePreview(figure: FigureState) {
     if (figure.file instanceof File) return URL.createObjectURL(figure.file);
-    if (typeof figure.file === 'string') return getDirectusAssetURL(figure.file);
+    if (typeof figure.file === 'string') return figurePreviewCache.value[figure.file] ?? '';
     return '';
 }
 
@@ -806,7 +840,8 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                                   variant="solid"
                                   size="xl"
                                   class="m-auto"
-                                  type="submit">
+                                  type="submit"
+                                  loading-auto>
                               </UButton>
                             </div>
                         </UForm>

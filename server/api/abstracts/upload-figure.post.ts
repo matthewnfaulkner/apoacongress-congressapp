@@ -5,6 +5,12 @@
 // session. Routing through this endpoint instead lets those checks actually
 // be enforced, while still uploading under the customer's own session
 // (not a bot token) — the same permission model as before.
+//
+// Note: a customer's own token can get a successful upload but a bare 204
+// back from Directus (POST /files 204) if their role can create in
+// directus_files but not read it back — that's a Directus permissions fix
+// (grant read on directus_files scoped to uploaded_by == $CURRENT_USER),
+// not something to work around here.
 export default defineEventHandler(async (event) => {
 	const config = useRuntimeConfig();
 	const cookies = parseCookies(event);
