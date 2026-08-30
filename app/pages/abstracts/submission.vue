@@ -2,7 +2,7 @@
 import { withLeadingSlash, withoutTrailingSlash } from 'ufo';
 import * as z from 'zod'
 import type { FormSubmitEvent, FormErrorEvent } from '@nuxt/ui'
-import { readItems, deleteItem, uploadFiles } from '@directus/sdk';
+import { readItems, deleteItem } from '@directus/sdk';
 import type { AbstractSubmission, AbstractSubmissionValue, AbstractSubmissionFile, CongressAbstracts } from '~~/shared/types/schema';
 import { getDirectusAssetURL } from '@@/server/utils/directus-utils';
 import type { AccordionItem } from '@nuxt/ui'
@@ -371,19 +371,22 @@ async function revalidateFigures() {
     await formRef.value?.validate({ name: 'figures', silent: true });
 }
 
-const FIGURE_MAX_BYTES = 2 * 1024 * 1024; // 2 MB
+const FIGURE_MAX_BYTES = 5 * 1024 * 1024; // 5 MB
+// Same list enforced again server-side (upload-figure.post.ts) — this is
+// just for immediate feedback without a round trip.
+const FIGURE_ALLOWED_TYPES = ['image/jpeg', 'image/png'];
 
 function onFigureFileChange(e: Event, index: number) {
     const input = e.target as HTMLInputElement;
     const file = input.files?.[0];
     input.value = '';
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-        error.value = ['Figures must be image files.'];
+    if (!FIGURE_ALLOWED_TYPES.includes(file.type)) {
+        error.value = ['Figures must be JPEG or PNG images.'];
         return;
     }
     if (file.size > FIGURE_MAX_BYTES) {
-        error.value = ['Figures must be under 2 MB.'];
+        error.value = ['Figures must be under 5 MB.'];
         return;
     }
     (state.figures as FigureState[])[index].file = file;
@@ -449,15 +452,23 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
             value,
         });
 
-        // Upload any newly selected figure images before saving the submission.
+        const { $directusTokenStorage } = useNuxtApp();
+        const accessToken = config.public.isSandbox ? null : ($directusTokenStorage as any).get()?.access_token;
+
+        // Upload any newly selected figure images before saving the submission —
+        // via our own server route (upload-figure.post.ts) rather than straight
+        // to Directus, so the size/format checks are actually enforced and not
+        // just a client-side courtesy.
         const figures = await Promise.all((formData.figures ?? []).map(async (figure) => {
             let fileId = typeof figure.file === 'string' ? figure.file : null;
             if (figure.file instanceof File) {
                 const fd = new FormData();
-                fd.append('storage', 's3');
-                fd.append('folder', config.public.abstractFiguresFolder as string);
                 fd.append('file', figure.file, figure.file.name);
-                const uploaded = await $directus.request(uploadFiles(fd)) as { id?: string };
+                const uploaded = await $fetch<{ id: string }>('/api/abstracts/upload-figure', {
+                    method: 'POST',
+                    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+                    body: fd,
+                });
                 if (!uploaded?.id) throw new Error('Figure upload failed');
                 fileId = uploaded.id;
             }
@@ -467,9 +478,6 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
                 label: figure.label,
             };
         }));
-
-        const { $directusTokenStorage } = useNuxtApp();
-        const accessToken = config.public.isSandbox ? null : ($directusTokenStorage as any).get()?.access_token;
 
         await $fetch('/api/abstracts/submission', {
             method: 'POST',
@@ -705,7 +713,7 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                                             <input
                                                 :ref="(el) => setFigureInputRef(el, index)"
                                                 type="file"
-                                                accept="image/*"
+                                                accept="image/jpeg,image/png"
                                                 class="hidden"
                                                 @change="(e) => onFigureFileChange(e, index)" />
                                             <UButton
