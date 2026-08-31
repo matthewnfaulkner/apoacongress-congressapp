@@ -29,45 +29,46 @@
 			:items="menuItems" 
 			class="hidden lg:flex" 
 			content-orientation="vertical"
-			color="tertiary"
+			color="accent"
 			highlight
 			:ui="{
 				link: ' text-md'
 			}">
 			<template v-slot:[`parent-content`]="{ item }">
 				<div class="p-2">
-				<div v-for="subMenuItem in item.children" :key="subMenuItem.label">
-					<ULink v-if="!subMenuItem.children" :to="subMenuItem.to" class="p-2 block" active-class="text-secondary">
-						{{ subMenuItem.label }}
-					</ULink>
-					<!-- EXPANDING SUB-MENU (With children) -->
-					<UCollapsible v-else>
-							<!-- The Trigger -->
-							<UButton
-							:label="subMenuItem.label"
-							variant="ghost"
-							color="neutral"
-							trailing-icon="i-lucide-chevron-down"
-							block
-							class="justify-between p-2 text-accent hover:bg-gray-100 dark:hover:bg-gray-800"
-							/>
+					<div v-for="subMenuItem in item.children" :key="subMenuItem.label">
 
-							<!-- The Expanding Content -->
-							<template #content>
-							<div class="ml-4 border-l font-normal border-gray-200 dark:border-gray-800 pl-2 flex flex-col gap-1 mt-1">
-								<ULink 
-								v-for="child in subMenuItem.children" 
-								:key="child.label"
-								:to="child.to"
-								class="px-3 py-1.5 text-sm rounded-md hover:text-gray-900 transition-colors"
-								active-class="text-accent"
-								>
-								{{ child.label }}
-								</ULink>
-							</div>
-							</template>
-						</UCollapsible>
-				</div>
+						<ULink v-if="!subMenuItem.children" :active="subMenuItem.active" :to="subMenuItem.to" class="p-2 block" active-class="text-accent">
+							{{ subMenuItem.label }}
+						</ULink>
+						<!-- EXPANDING SUB-MENU (With children) -->
+						<UCollapsible v-else>
+								<!-- The Trigger -->
+								<UButton
+								:label="subMenuItem.label"
+								variant="ghost"
+								color="neutral"
+								trailing-icon="i-lucide-chevron-down"
+								block
+								class="justify-between p-2 hover:bg-gray-100 dark:hover:bg-gray-800 text-md text-muted"
+								/>
+
+								<!-- The Expanding Content -->
+								<template #content>
+								<div class="ml-4 border-l font-normal border-gray-200 dark:border-gray-800 pl-2 flex flex-col gap-1 mt-1">
+									<ULink 
+									v-for="child in subMenuItem.children" 
+									:key="child.label"
+									:to="child.to"
+									class="px-3 py-1.5 text-sm rounded-md hover:text-gray-900 transition-colors"
+									active-class="text-accent"
+									>
+									{{ child.label }}
+									</ULink>
+								</div>
+								</template>
+							</UCollapsible>
+					</div>
 				</div>
 			</template>
 		</UNavigationMenu>
@@ -122,15 +123,16 @@
 
 	<template #body>
 		<div class="block">
+			
 			<UNavigationMenu 
 			:items="menuItems" 
-			class="hidden md:flex text-black block" 
+			class="hidden md:flex text-black block text-2xl" 
 			orientation="vertical"
 			content-orientation="vertical"
 			color="secondary"
 			highlight
 			:ui="{
-				link: 'text-secondary',
+				link: 'text-secondary text-xl',
 			}"/>
 			</div>
 
@@ -144,8 +146,8 @@ import { computed } from 'vue';
 import { useAuthStore } from '~/stores/auth';
 import { getDirectusAssetURL } from '@@/server/utils/directus-utils';
 import type { DropdownMenuItem } from '@nuxt/ui';
-import { useDirectusTranslation } from '@/composables/useDirectusTranslation';
 import { withLeadingSlash, withoutTrailingSlash } from 'ufo';
+const active = ref();
 
 const { $logout } = useNuxtApp();
 const localePath = useLocalePath();
@@ -191,18 +193,35 @@ interface parsedMenuItem {
 	label: string;
 	to: string | undefined,
 	children: parsedMenuItem[]
+	active: boolean;
+}
+
+// An item counts as "active" if its own link matches the current route, or —
+// recursively — if any of its children's links do. Without this, a parent
+// trigger with children never highlights while you're on one of its submenu
+// pages, since UNavigationMenu's own active-detection only checks an item's
+// own `to`.
+function itemMatchesPath(item: NavigationItem, currentPath: string): boolean {
+	const page = typeof item.page === 'object' ? item.page : null
+	const itemPath = page?.permalink ? localePath(page.permalink) : item.url
+	if (itemPath && withoutTrailingSlash(withLeadingSlash(itemPath)) === currentPath) return true
+	const children = Array.isArray(item.children) ? item.children : []
+	return children.some((child) => typeof child === 'object' && itemMatchesPath(child, currentPath))
 }
 
 // Recursive function to convert your navigation items into UNavigationMenu format
 function parseMenu(items: NavigationItem[]) : parsedMenuItem[] {
-  return items.map((item) => 
-	{ 	
+  return items.map((item) =>
+	{
 		//const { translated } = useDirectusTranslation(item.translations);
+		const page = typeof item.page === 'object' ? item.page : null
+		const children = Array.isArray(item.children) ? item.children.filter((child): child is NavigationItem => typeof child === 'object') : []
 		return {
 			label: computed(() => item.title),
-			to: computed(() => item.page?.permalink ? localePath(item.page?.permalink) : item.url || undefined),
-			children: item.children?.length ? parseMenu(item?.children) : undefined,
-			slot: item?.children?.length ? 'parent' : '',
+			to: computed(() => page?.permalink ? localePath(page.permalink) : item.url || undefined),
+			children: children.length ? parseMenu(children) : undefined,
+			slot: children.length ? 'parent' : '',
+			active: itemMatchesPath(item, path.value),
 		}
 	});
 }
@@ -221,6 +240,11 @@ const items = ref<DropdownMenuItem[]>([
     label: 'Profile',
     icon: 'i-lucide-user',
 	to: '/profile'
+  },
+  {
+    label: 'My Orders',
+    icon: 'i-lucide-receipt',
+	to: '/checkout/my-orders'
   },
   {
     label: 'Support Tickets',

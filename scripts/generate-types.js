@@ -7,7 +7,7 @@ dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const projectRoot = resolve(__dirname, '../../'); // Go up two levels to project root
+const projectRoot = resolve(__dirname, '../'); // Go up one level to project root
 
 async function generateTypes() {
 	const directusUrl = process.env.DIRECTUS_URL;
@@ -19,7 +19,7 @@ async function generateTypes() {
 	}
 
 	try {
-		const outputPath = join(projectRoot, 'nuxt', 'shared', 'types', 'schema.ts');
+		const outputPath = join(projectRoot, 'shared', 'types', 'schema.ts');
 
 		// Log the path to help debug in case of errors
 		console.log('Attempting to write to:', outputPath);

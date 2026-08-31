@@ -1,0 +1,9 @@
+# Nuxt Build Output
+.nuxt/
+.nitro/
+.cache/
+.output/
+dist/
+node_modules
+.env
+.vercel

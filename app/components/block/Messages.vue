@@ -100,7 +100,7 @@ onMounted(() => {
 					>
 					<template #header class="mx-auto">
 						<Tagline
-							class="transition-all duration-700 ease-out"
+							class="transition-all duration-700 ease-out text-2xl md:text-3xl m-0"
 							:class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'"
 							:tagline="item.tagline"
 							:data-directus="

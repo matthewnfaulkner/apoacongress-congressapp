@@ -15,7 +15,7 @@ interface PricingCard {
 		features?: string[] | Feature[];
 		category?: 'registration' | 'accommodation';
 		congress_charges?: Array<{
-			charge: CongressCharge
+			charge: CongressCharge | null
 		}>
 		button_group?: {
 			id?: string;
@@ -49,9 +49,13 @@ watchEffect(() => {
 
 	const topCharge = ref<CongressCharge>();
 
-	// charges is now reactive
+	// charges is now reactive — entries whose linked charge relation didn't
+	// resolve (deleted/unlinked congress_charges row) are dropped here so
+	// nothing downstream needs to guard against a null `.charge`.
 	const charges = computed(() =>
-		props.card.congress_charges?.slice() ?? []
+		(props.card.congress_charges?.slice() ?? []).filter(
+			(entry): entry is { charge: CongressCharge } => entry.charge != null
+		)
 	);
 
 	const now = new Date();
@@ -81,7 +85,7 @@ watchEffect(() => {
 			use_congress_charges: true,
 			is_highlighted: props.card.is_highlighted,
 			hotel,
-			features: [top, ...localCharges].flatMap(c => {
+			features: [top, ...localCharges].filter((c): c is { charge: CongressCharge } => c != null).flatMap(c => {
 				return `<b class="text-accent text-lg">${c.charge.price}</b> - ${c.charge.sub_category}`;
 			})
 		};
@@ -242,7 +246,7 @@ watchEffect(() => {
 		</div>
 		<UButton
 			v-if="card.hotel"
-			:to="`/hotels/${card.hotel.id}`"
+			:to="`/accommodation/${card.hotel.id}`"
 			variant="ghost"
 			color="accent"
 			class="mt-4 w-full justify-center text-sm"

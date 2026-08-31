@@ -44,6 +44,7 @@ if (!data.value || error.value) {
 }
 
 const day = computed(() => data.value);
+const isPreliminary = computed(() => (day.value?.schedules ?? []).some((schedule) => typeof schedule !== 'string' && !!schedule.preliminary));
 
 const rooms = day?.value?.congress?.venue?.rooms || [];
 
@@ -269,7 +270,8 @@ function model(event) {
 </script>
 <template>
 	<div v-if="day" ref="wrapperRef">
-		<Container class="py-12">
+		<Container class="py-3">
+		<ProgramPreliminaryBanner :preliminary="isPreliminary" />
 		<Headline :headline="day.title" />
            <UTabs :items="tabsArray" v-model="activeTab" :unmountOnHide="false" 
       		color="accent"

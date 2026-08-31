@@ -44,7 +44,6 @@ const props = defineProps<PersonProfileCardProps>();
 	<UPageCard
 		class="text-center ring-0 bg-transparent"
 		:class="cardClass"
-		:to="`/people/${id}`"
 		orientation="vertical"
 		:highlight-color="highlightColor"
 		:ui="{

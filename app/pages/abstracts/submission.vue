@@ -2,9 +2,8 @@
 import { withLeadingSlash, withoutTrailingSlash } from 'ufo';
 import * as z from 'zod'
 import type { FormSubmitEvent, FormErrorEvent } from '@nuxt/ui'
-import { createItem, readItems, deleteItem, updateItem, uploadFiles } from '@directus/sdk';
+import { readItems, deleteItem } from '@directus/sdk';
 import type { AbstractSubmission, AbstractSubmissionValue, AbstractSubmissionFile, CongressAbstracts } from '~~/shared/types/schema';
-import { getDirectusAssetURL } from '@@/server/utils/directus-utils';
 import type { AccordionItem } from '@nuxt/ui'
 import { UBadge, UDropdownMenu, UButton } from '#components';
 import type { TableColumn, TableRow } from '@nuxt/ui';
@@ -25,12 +24,25 @@ const isLoggedIn = computed(() =>
 )
 
 const turnstileToken = ref();
+const turnstileRef = ref<{ reset: () => void } | null>(null);
 
 const congressAbstract = ref<CongressAbstracts | null>(null);
 const submissions = ref<AbstractSubmission[] | null>(null)
 const storeReady = ref(false)
 const categories = ref([]);
 const guideLines = ref<AccordionItem>([]);
+const guidelinesRef = ref<HTMLElement | null>(null);
+const guidelinesOpen = ref<string | undefined>(undefined);
+
+// Used by the consent checkbox's "view submission guidelines" link to jump
+// back up to the accordion above the form and expand it, rather than making
+// the customer scroll up and click it open themselves.
+function openGuidelines(e: Event) {
+    e.preventDefault();
+    
+    guidelinesRef.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    nextTick(() => guidelinesOpen.value = '0');
+}
 
 
 const { data } = await useAsyncData <CongressAbstracts[]>('abstract_submit', async() => {
@@ -38,7 +50,7 @@ const { data } = await useAsyncData <CongressAbstracts[]>('abstract_submit', asy
         'abstracts',
         {   
             limit: 1,
-            fields: ['id', 'categories', 'submission_deadline', 'description', 'submission_limit'],
+            fields: ['id', 'categories', 'submission_deadline', 'description', 'submission_limit', 'declaration_statement'],
             filter: {
             congress: {
                 site:{
@@ -268,22 +280,24 @@ function getRowItems(row: TableRow<Submission>) {
 
 const schema = z.object({
   id: z.any().nullable(),
-  abstract: z.string('Abstract is required').max(250, 'Max 250 Characters'),
-  title: z.string('Title is required').max(150, "Max 150 Characters"),
-  category: z.string('Category is required'),
+  
+  category: z.string({ required_error: 'Category is required' }),
+  title: z.string({ required_error: 'Title is required' }).max(150, "Max 150 Characters"),
+  keywords: z.array(z.string().trim().nonempty("Keyword cannot be empty"))
+    .min(3, "At least 3 keywords are required")
+    .max(5, "Maximum of 5 keywords allowed"),
+  abstract: z.string({ required_error: 'Abstract is required' }).max(250, 'Max 250 Characters'),
   authors: z.array(
     z.object({
-        title: z.string().nonempty("Title is required"),
+        title: z.string().nonempty("Author Title is required"),
         name: z.string().nonempty("Author name is required"),
-        institution: z.string().nonempty("Institution is required")
+        institution: z.string().nonempty("Author Institution is required")
     })
   ).min(1, "At least one author is required").refine(authors =>
     authors.every(a => a.title.trim() !== "" && a.name.trim() !== "" && a.institution.trim() !== ""),
     { message: "All authors must have a title, name, and institution" }
   ),
-  keywords: z.array(z.string().trim().nonempty("Keyword cannot be empty"))
-    .min(3, "At least 3 keywords are required")
-    .max(5, "Maximum of 5 keywords allowed"),
+
   figures: z.array(
     z.object({
       id: z.union([z.string(), z.number()]).optional(),
@@ -295,10 +309,18 @@ const schema = z.object({
     figures.every(f => !!f.file),
     { message: "Each figure must have an image uploaded" }
   ),
+  conflict: z.boolean(),
+  conflictDisclosure: z.string(),
   consent: z.boolean().refine(val => val === true, {
     message: "You must give your consent",
   })
-})
+}).refine(
+  (data) => !data.conflict || data.conflictDisclosure.trim() !== "",
+  {
+    message: "Please describe the conflict of interest",
+    path: ["conflictDisclosure"], // attaches the error to that field, not the whole object
+  }
+)
 
 type Schema = z.output<typeof schema>
 
@@ -314,7 +336,9 @@ const state = reactive<Partial<Schema>>({
   category: undefined,
   keywords: [],
   figures: [],
-  consent: false
+  conflict: false,
+  consent: false,
+  conflictDisclosure: ''
 })
 
 function resetState() {
@@ -325,8 +349,12 @@ function resetState() {
   state.category = undefined;
   state.keywords = [];
   state.figures = [];
+  state.conflict = false;
+  state.conflictDisclosure = '',
   state.consent = false;
-  error.value = null;
+  error.value = [];
+  turnstileToken.value = undefined;
+  turnstileRef.value?.reset();
 }
 
 
@@ -343,19 +371,22 @@ async function revalidateFigures() {
     await formRef.value?.validate({ name: 'figures', silent: true });
 }
 
-const FIGURE_MAX_BYTES = 2 * 1024 * 1024; // 2 MB
+const FIGURE_MAX_BYTES = 5 * 1024 * 1024; // 5 MB
+// Same list enforced again server-side (upload-figure.post.ts) — this is
+// just for immediate feedback without a round trip.
+const FIGURE_ALLOWED_TYPES = ['image/jpeg', 'image/png'];
 
 function onFigureFileChange(e: Event, index: number) {
     const input = e.target as HTMLInputElement;
     const file = input.files?.[0];
     input.value = '';
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-        error.value = 'Figures must be image files.';
+    if (!FIGURE_ALLOWED_TYPES.includes(file.type)) {
+        error.value = ['Figures must be JPEG or PNG images.'];
         return;
     }
     if (file.size > FIGURE_MAX_BYTES) {
-        error.value = 'Figures must be under 2 MB.';
+        error.value = ['Figures must be under 5 MB.'];
         return;
     }
     (state.figures as FigureState[])[index].file = file;
@@ -367,36 +398,71 @@ function figureFileName(figure: FigureState) {
     return figure.existingFilename ?? '';
 }
 
+// Existing figures come back from Directus as just a file id, permission-
+// restricted (read scoped to uploaded_by == $CURRENT_USER — see
+// figure.get.ts), so unlike a plain public asset URL this has to be fetched
+// with the logged-in user's own credentials and turned into a blob URL —
+// same technique support/[...id].vue's openFile() uses for restricted
+// attachments. Cached by file id so each figure is only fetched once.
+const figurePreviewCache = ref<Record<string, string>>({});
+
+async function loadFigurePreview(fileId: string) {
+    if (figurePreviewCache.value[fileId]) return;
+    const { $directusTokenStorage } = useNuxtApp();
+    const accessToken = config.public.isSandbox ? null : ($directusTokenStorage as any).get()?.access_token;
+    try {
+        const response = await fetch(`/api/abstracts/figure?id=${fileId}`, {
+            headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+        });
+        if (!response.ok) return;
+        const blob = await response.blob();
+        figurePreviewCache.value[fileId] = URL.createObjectURL(blob);
+    } catch {
+        // Leave uncached — figureFilePreview falls back to '' and that
+        // figure's preview just won't render, rather than breaking the form.
+    }
+}
+
+watch(
+    () => state.figures,
+    (figures) => {
+        for (const figure of figures ?? []) {
+            if (typeof figure.file === 'string') loadFigurePreview(figure.file);
+        }
+    },
+    { immediate: true, deep: true },
+);
+
 function figureFilePreview(figure: FigureState) {
     if (figure.file instanceof File) return URL.createObjectURL(figure.file);
-    if (typeof figure.file === 'string') return getDirectusAssetURL(figure.file);
+    if (typeof figure.file === 'string') return figurePreviewCache.value[figure.file] ?? '';
     return '';
 }
 
-const error = ref<string | null>(null);
+const error = ref<string[]>([]);
 
 function onFormError(event: FormErrorEvent) {
-    const messages = event.errors?.map(e => e.message).filter(Boolean) ?? [];
-    error.value = messages.length ? messages.join(' ') : 'Please check the highlighted fields and try again.';
+    const messages = event.errors?.map(e => e.message).filter(Boolean) as string[] ?? [];
+    error.value = messages.length ? messages : ['Please check the highlighted fields and try again.'];
 }
 
 const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
-	error.value = null;
+	error.value = [];
 	if (!turnstileToken.value) {
-		error.value = 'Please complete the CAPTCHA before submitting.';
+		error.value = ['Please complete the CAPTCHA before submitting.'];
 		return;
 	}
 
   if(!state.id && (submissions?.value?.length || 0) >= submission_limit) {
-    error.value = 'You have reached your submission limit.';
+    error.value = ['You have reached your submission limit.'];
 		return;
   }
   if(submissionsClosed) {
-    error.value = 'The deadline for abstract submission has passed.';
+    error.value = ['The deadline for abstract submission has passed.'];
 		return;
   }
   if(state.id && submissions.value?.find(s => s.id === state.id)?.status !== 'submitted') {
-    error.value = 'This submission can no longer be edited.';
+    error.value = ['This submission can no longer be edited.'];
 		return;
   }
 	try {
@@ -421,15 +487,23 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
             value,
         });
 
-        // Upload any newly selected figure images before saving the submission.
+        const { $directusTokenStorage } = useNuxtApp();
+        const accessToken = config.public.isSandbox ? null : ($directusTokenStorage as any).get()?.access_token;
+
+        // Upload any newly selected figure images before saving the submission —
+        // via our own server route (upload-figure.post.ts) rather than straight
+        // to Directus, so the size/format checks are actually enforced and not
+        // just a client-side courtesy.
         const figures = await Promise.all((formData.figures ?? []).map(async (figure) => {
             let fileId = typeof figure.file === 'string' ? figure.file : null;
             if (figure.file instanceof File) {
                 const fd = new FormData();
-                fd.append('storage', 's3');
-                fd.append('folder', config.public.abstractFiguresFolder as string);
                 fd.append('file', figure.file, figure.file.name);
-                const uploaded = await $directus.request(uploadFiles(fd)) as { id?: string };
+                const uploaded = await $fetch<{ id: string }>('/api/abstracts/upload-figure', {
+                    method: 'POST',
+                    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+                    body: fd,
+                });
                 if (!uploaded?.id) throw new Error('Figure upload failed');
                 fileId = uploaded.id;
             }
@@ -440,34 +514,30 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
             };
         }));
 
-        const payload = {
-            congress_abstract: congressAbstract.value?.id || null,
-            submitter: isAuthenticated.id,
-            keywords: formData.keywords,
-            figures,
-            submission_values: [
-                sv('category', formData.category),
-                sv('title', formData.title),
-                sv('abstract', formData.abstract),
-                sv('authors', JSON.stringify(formData.authors)),
-            ]
-        }
-
-        if(!state.id) {
-            await $directus.request<AbstractSubmission>(createItem(
-                'abstract_submissions', payload
-            ))
-        } else{
-            await $directus.request<AbstractSubmission>(updateItem(
-                'abstract_submissions', state.id, payload
-            ))
-        }
+        await $fetch('/api/abstracts/submission', {
+            method: 'POST',
+            headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+            body: {
+                id: state.id,
+                turnstileToken: turnstileToken.value,
+                keywords: formData.keywords,
+                figures,
+                submissionValues: [
+                    sv('category', formData.category),
+                    sv('title', formData.title),
+                    sv('abstract', formData.abstract),
+                    sv('authors', JSON.stringify(formData.authors)),
+                ],
+            },
+        });
         await fetchSubmissions();
         resetState();
         openSubmissionForm.value = false;
 	} catch (e) {
-		error.value = 'Failed to submit the form. Please try again later.';
+		error.value = ['Failed to submit the form. Please try again later.'];
         console.log(e);
+        turnstileToken.value = undefined;
+        turnstileRef.value?.reset();
 	} finally{
         storeReady.value = true;
     }
@@ -544,20 +614,23 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                 <template #body>
                     <div >
                         <Headline :headline="state.id ? 'Updating Submission' : 'Abstract Submission Form'"/>
-                        <UAccordion 
-                            :items="guideLines" 
+                        <div ref="guidelinesRef">
+                        <UAccordion
+                            v-model="guidelinesOpen"
+                            :items="guideLines"
                             class="max-w-200"
                             :ui="{
                                 label: 'text-2xl text-accent',
                                 trailingIcon: 'text-2xl text-accent'
                             }">
-        
+
                             <template #content="{item}">
                                 <div v-html="item.content">
 
                                 </div>
                             </template>
                         </UAccordion>
+                        </div>
                         <UForm
                             ref="formRef"
                             @submit="handleSubmit"
@@ -663,7 +736,7 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                                 :ui="{
                                   hint: 'text-sm wrap max-w-150'
                                 }"
-                                hint="Optionally upload up to 3 figures (image files, max 2 MB each), each with a label.">
+                                hint="Optionally upload up to 3 figures (image files, max 5 MB each), each with a label.">
                                 <div v-for="(figure, index) in state.figures" :key="index" class="mb-3 flex flex-col md:flex-row gap-2 md:items-center p-2 rounded-lg border border-default">
                                     <div class="flex items-center gap-3">
                                         <img
@@ -675,7 +748,7 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                                             <input
                                                 :ref="(el) => setFigureInputRef(el, index)"
                                                 type="file"
-                                                accept="image/*"
+                                                accept="image/jpeg,image/png"
                                                 class="hidden"
                                                 @change="(e) => onFigureFileChange(e, index)" />
                                             <UButton
@@ -714,15 +787,53 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                                     class="m-auto"
                                     @click="() => { state.figures!.push({ file: null, label: '' }); revalidateFigures(); }"/>
                             </UFormField>
-                            <UFormField  class="pb-5" name="consent">
-                                <UCheckbox v-model="state.consent" size="lg" variant="card" label="I hereby agree to the terms and conditions of abstract submission." color="accent"/>
+
+                            <UFormField class="py-5 text-bold" size="xl" name="conflict" label="Conflict of Interest Declaration">
+                                <URadioGroup 
+                                  v-model="state.conflict" 
+                                  :items="[
+                                    {
+                                      value: false,
+                                      label: 'I have no conflicts of interest to declare.'
+                                    },
+                                    {
+                                      value: true,
+                                      label: 'I need to declare conflicts of interest.'
+                                    }
+                                  ]"
+                                  variant="card"
+                                  orientation="vertical"
+                                  color="accent"
+                                  /> 
+                            </UFormField>
+                            <UFormField v-if="state.conflict" class="py-5" name="conflictDisclosure" label="">
+                              <UTextarea v-model="state.conflictDisclosure" placeholder="Please provide details of the conflicts of interest." class="w-full lg:w-200" :rows=8 color="secondary" variant="subtle"/>
+                            </UFormField> 
+                            <UFormField  class="py-5" name="consent" label="">
+                                <UCheckbox
+                                  v-model="state.consent"
+                                  size="lg"
+                                  variant="card"
+                                  :label="congressAbstract.declaration_statement || 'I hereby agree to the terms and conditions of abstract submission.'" color="accent">
+                                  <template #label="{ label }">
+                                    <span>{{ label }}</span>
+                                    <a href="#" class="text-accent underline ml-1" @click="openGuidelines">View submission guidelines</a>
+                                  </template>
+                                </UCheckbox>
                             </UFormField>
                             <div>
                             <UFormField  class="py-5 text-center" name="captcha">
-                                <NuxtTurnstile v-model="turnstileToken" />
+                                <NuxtTurnstile ref="turnstileRef" v-model="turnstileToken" />
                             </UFormField>
                             </div>
-                            <UAlert v-if="error" color="error" variant="subtle" :description="error" class="mb-3" />
+                            <UAlert v-if="error.length" color="error" variant="subtle" class="mb-3">
+                                <template #description>
+                                    <p v-if="error.length === 1">{{ error[0] }}</p>
+                                    <ul v-else class="list-disc list-inside space-y-0.5">
+                                        <li v-for="(message, index) in error" :key="index">{{ message }}</li>
+                                    </ul>
+                                </template>
+                            </UAlert>
                             <div class="w-full text-center">
                               <UButton
                                   :label="state.id ? 'Update' : 'Submit'"
@@ -730,7 +841,8 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                                   variant="solid"
                                   size="xl"
                                   class="m-auto"
-                                  type="submit">
+                                  type="submit"
+                                  loading-auto>
                               </UButton>
                             </div>
                         </UForm>

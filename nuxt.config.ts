@@ -3,6 +3,7 @@ import tailwindcss from "@tailwindcss/vite";
 const isSandbox = process.env.NUXT_PUBLIC_IS_SANDBOX !== 'false';
 
 export default defineNuxtConfig({
+	extends: ['./layers/checkout'],
 	components: [
 		{ path: '~/components', pathPrefix: false },
 		{ path: '~/components/block', pathPrefix: false },
@@ -17,15 +18,23 @@ export default defineNuxtConfig({
 	plugins: [
 		'~/plugins/vue3-grid-layout-next.client.ts'
 	],
+	
 	future: {
 		compatibilityVersion: 4,
 	},
 	routeRules: isSandbox ? {
 		'/api/**': { isr: false },
+		// Ticket Tailor's API key is capped at 3000 calls per 30 minutes,
+		// site-wide — this is per-IP defense against a single abusive
+		// client/bot hammering these routes, not a guarantee of staying under
+		// that aggregate cap under genuinely high distributed traffic (that's
+		// what event.get.ts's own response caching protects instead).
+		'/api/checkout/**': { security: { rateLimiter: { tokensPerInterval: 100, interval: 300000 } } },
 		'/**': { isr: false },
 	} : {
 		// Never cache API routes - query params must always hit the server fresh
 		'/api/**': { isr: false },
+		'/api/checkout/**': { security: { rateLimiter: { tokensPerInterval: 100, interval: 300000 } } },
 
 		// Auth pages must always run fresh SSR to read cookies
 		'/login': { isr: false },
@@ -35,7 +44,7 @@ export default defineNuxtConfig({
 		// User-specific pages — nothing to gain from caching
 		'/support/**': { isr: false },
 		'/people/**': { isr: false },
-		
+
 		// Cache all page routes
 		'/**': { isr: 60 },
 	},
@@ -68,14 +77,35 @@ export default defineNuxtConfig({
 		'@nuxt/ui',
 		'@primevue/nuxt-module',
 		'@pinia/nuxt',
+		'pinia-plugin-persistedstate/nuxt',
 		'@nuxtjs/i18n',
 		'@nuxtjs/mdc',
 		'@dargmuesli/nuxt-cookie-control',
 		'@nuxtjs/turnstile'
 	],
-	scripts: {
-		registry: {
-			googleMaps: { trigger: 'onNuxtReady' },
+	// Google Analytics is NOT registered here - loading it unconditionally via
+	// scripts.registry would fire on every page load regardless of cookie
+	// consent. It's instead loaded from app/plugins/analytics-consent.client.ts,
+	// which only calls useScriptGoogleAnalytics() once the "ga" cookie category
+	// has actually been accepted in the cookie-control banner.
+	// Google Maps loaded as a plain head script (async/defer) rather than via
+	// @nuxt/scripts' registry — that module's `onNuxtReady` trigger only
+	// starts fetching the script after Nuxt's app has fully mounted, which is
+	// later than PlacesAutocomplete.vue (see app/components/ui/
+	// PlacesAutocomplete) needs it: vue-use-places-autocomplete does a single
+	// unretried synchronous check for window.google.maps.places on mount, so
+	// the script needs to already be loading well before that point. A head
+	// script starts fetching during the initial HTML parse instead — same
+	// approach the source project this was ported from uses.
+	app: {
+		head: {
+			script: [
+				{
+					src: `https://maps.googleapis.com/maps/api/js?key=${process.env.NUXT_PUBLIC_SCRIPTS_GOOGLE_MAPS_API_KEY}&libraries=places`,
+					async: true,
+					defer: true,
+				},
+			],
 		},
 	},
 	cookieControl: {
@@ -97,35 +127,26 @@ export default defineNuxtConfig({
 				description: {
 					en: 'This cookie enables authentication.'
 				},
-				id: process.env.DIRECTUS_SESSION_TOKEN_NAME as string, // use a short cookie id to save bandwidth and prefixes to separate
-				isPreselected: false, // `true` is not GDPR compliant! This flag does not enable any cookies, it only preselects the cookie's modal toggle. The default is `false`.
+				id: process.env.DIRECTUS_SESSION_TOKEN_NAME as string,
+				isPreselected: false,
 				name: {
-					en: 'Directus Session Token' // you always have to specify a cookie name (in English)
+					en: 'Directus Session Token'
 				},
-				links: {
-					'https://example.com/privacy': 'Privacy Policy',
-					'https://example.com/terms': 'Terms of Service',
-				},
-				src: 'https://example.com/preferences/js?id=<API-KEY>',
-				targetCookieIds: [process.env.DIRECTUS_SESSION_TOKEN_NAME as string],
 				}
 		],
 		optional: [
 			{
 				description: {
-					en: 'This cookie stores preferences.'
+					en: 'Used by Google Analytics to measure site usage.'
 				},
-				id: 'pa', // use a short cookie id to save bandwidth and prefixes to separate
-				isPreselected: false, // `true` is not GDPR compliant! This flag does not enable any cookies, it only preselects the cookie's modal toggle. The default is `false`.
+				id: 'ga',
+				isPreselected: false,
 				name: {
-					en: 'Preferences' // you always have to specify a cookie name (in English)
+					en: 'Analytics'
 				},
-				links: {
-					'https://example.com/privacy': 'Privacy Policy',
-					'https://example.com/terms': 'Terms of Service',
-				},
-				src: 'https://example.com/preferences/js?id=<API-KEY>',
-				targetCookieIds: ['xmpl_a', 'xmpl_b'],
+				// GA4's own cookies - deleted on decline. _ga_<id> is derived from the
+				// measurement id (the part after "G-"), which is how GA4 names it.
+				targetCookieIds: ['_ga', `_ga_${(process.env.NUXT_PUBLIC_SCRIPTS_GOOGLE_ANALYTICS_ID || '').replace(/^G-/, '')}`],
 				}
 		],
 		}
@@ -152,24 +173,39 @@ export default defineNuxtConfig({
 			userAvatarFolder: process.env.NUXT_PUBLIC_USER_AVATAR_FOLDER as string,
 			abstractFiguresFolder: process.env.NUXT_PUBLIC_ABSTRACT_FIGURES_FOLDER as string,
 			requestAccessForm: process.env.NUXT_PUBLIC_REQUEST_ACCESS_FORM as string || '',
-			samlProviderName: process.env.NUXT_PUBLIC_SAML_PROVIDER_NAME as string
-			
+			samlProviderName: process.env.NUXT_PUBLIC_SAML_PROVIDER_NAME as string,
+			checkoutNationalRedirectUrl: process.env.CHECKOUT_NATIONAL_REDIRECT_URL,
+			googleMapsApiKey: process.env.NUXT_PUBLIC_SCRIPTS_GOOGLE_MAPS_API_KEY,
+			googleAnalyticsId: process.env.NUXT_PUBLIC_SCRIPTS_GOOGLE_ANALYTICS_ID,
 		},
 		directusServerToken: process.env.DIRECTUS_SERVER_TOKEN,
 		directusSupportUserToken: process.env.DIRECTUS_SUPPORT_USER_TOKEN,
+		// Privileged token used by every checkout-layer API route that needs
+		// elevated Directus access — either a genuine bot write (no logged-in
+		// user to write as) or a read that would otherwise depend on the
+		// Public role having the right field permissions (see
+		// checkout-congress.ts, congress-ticket-enrichment.ts,
+		// checkout-form.get.ts). Routes that check a specific customer's own
+		// ownership/permissions (checkout-auth.ts, order.get.ts, my-orders.get.ts,
+		// order/[id].get.ts) deliberately keep using that customer's own session
+		// token instead — swapping those to this bot token would bypass the
+		// per-user Directus permissions the ownership check actually relies on.
+		directusOrderBotToken: process.env.DIRECTUS_ORDER_BOT_TOKEN,
 		authExchangeSecret: process.env.AUTH_EXCHANGE_SECRET,
 		anthropicApiKey: process.env.ANTHROPIC_API_KEY,
 		voyageApiKey: process.env.VOYAGE_API_KEY,
 		rebuildIndexSecret: process.env.REBUILD_INDEX_SECRET,
-		duffelApiKey: process.env.DUFFEL_API_KEY,
 		dataRequestFlowId: process.env.DIRECTUS_DATA_REQUEST_FLOW_ID,
+		// Capability-scoped Ticket Tailor keys — each server call uses the
+		// narrowest one that covers what it actually does, rather than one
+		// all-access key everywhere.
+		ticketTailorEventReadKey: process.env.TICKET_TAILOR_EVENT_READ_KEY,
+		ticketTailorOrderReadKey: process.env.TICKET_TAILOR_ORDER_READ_API_KEY,
+		ticketTailorBundleCreateKey: process.env.TICKET_TAILOR_BUNDLE_CREATOR_API_KEY,
+		// The event id itself now comes from Directus (congress.tt_event_id via
+		// getCongressEventId), not an env var — see checkout-locality.ts.
 		sessionTokenName: process.env.DIRECTUS_SESSION_TOKEN_NAME as string || 'directus_session_token',
 		refreshTokenName: process.env.DIRECTUS_REFRESH_TOKEN_NAME as string || 'directus_refresh_token',
-		scripts: {
-			googleMaps: {
-				apiKey: 'AIzaSyAyj3Ebj4qOEGVWx84gkuP7Nq6UQAQ5J78', // NUXT_PUBLIC_SCRIPTS_GOOGLE_MAPS_API_KEY
-			},
-		},
 	},
 	shadcn: {
 		/**
@@ -184,13 +220,57 @@ export default defineNuxtConfig({
 	},
 
 	security: {
-		enabled: process.env.NODE_ENV !== 'production' || !process.env.NUXT_PRERENDER_NODE_ENV ? false : true,
+		// Previously also required NUXT_PRERENDER_NODE_ENV to be set, which
+		// nothing in the real deploy actually sets — confirmed empirically
+		// (curl -I against production showed no CSP/rate-limiter headers at
+		// all) that this left security fully disabled in production.
+		enabled: process.env.NODE_ENV === 'production',
+		// nuxt-security 2.5.0's SSG plugin crashed prerendering on this
+		// project's Nitro version ("element.matchAll is not a function" —
+		// its render:html hook expected html[section] entries to be plain
+		// strings, which didn't hold here). Fixed upstream in 2.6.0 (moved to
+		// render:response, operating on the final response body with a
+		// typeof guard) — package.json bumped accordingly, so ssg stays on
+		// its module defaults (meta/nitroHeaders/hashScripts etc.), which
+		// matters on Vercel specifically: prerendered pages are served
+		// straight from its CDN, bypassing the serverless function, so this
+		// is the only way those routes get CSP/security headers at all.
 		headers: {
+			// nuxt-security defaults this to 'credentialless' in production
+			// (only 'unsafe-none' in dev — which is why this broke on build but
+			// not in dev). credentialless strips cookies from cross-origin
+			// iframes that don't explicitly opt in, and Ticket Tailor's checkout
+			// widget (see CheckoutEmbed.vue) depends entirely on its own
+			// TT_SessionID cookie to function — confirmed empirically ("refused
+			// to connect" only in production builds, and the same URL works
+			// fine loaded standalone, just not framed). We deliberately embed
+			// cookie-dependent third-party content here and don't need COEP's
+			// cross-origin isolation guarantees (e.g. for SharedArrayBuffer),
+			// so it's turned off entirely instead.
+			crossOriginEmbedderPolicy: 'unsafe-none',
 			contentSecurityPolicy: {
-				'img-src': ["'self'", 'data:', '*'],
+				// blob: needed for client-side image previews before upload (e.g.
+				// URL.createObjectURL in abstracts/submission.vue's figure picker) —
+				// same reason data: is listed explicitly, since '*' only covers
+				// network schemes (http/https/ws/wss), not blob:/data:.
+				'img-src': ["'self'", 'data:', 'blob:', '*'],
 				'script-src': ["'self'", "'unsafe-inline'", '*'],
-				'connect-src': ["'self'", process.env.DIRECTUS_URL  || ''],
+				// maps.googleapis.com/maps.gstatic.com: the Google Maps JS API (see
+				// app.head.script) makes its own network calls, including a CSP
+				// self-test ping, independent of the script tag's own src (already
+				// covered by script-src's wildcard).
+				// tickets.apoaonline.com: the box office's custom domain — Ticket
+				// Tailor's own checkout_url (and therefore the embedded widget's
+				// data-url) now resolves here instead of *.tickettailor.com, so both
+				// need to stay allowlisted rather than swapping one for the other.
+				// challenges.cloudflare.com: Turnstile's own XHR calls (see NuxtTurnstile
+				// usage on abstracts submission, forms, and flows).
+				'connect-src': ["'self'", process.env.DIRECTUS_URL  || '', 'https://api.tickettailor.com', 'https://*.tickettailor.com', 'https://tickets.apoaonline.com', 'https://maps.googleapis.com', 'https://maps.gstatic.com', 'https://challenges.cloudflare.com'],
 				'frame-ancestors': ["'self'", process.env.DIRECTUS_URL || ''],
+				// Allows the checkout layer to embed Ticket Tailor's hosted checkout
+				// widget, challenges.cloudflare.com for Turnstile's own challenge iframe,
+				// and www.google.com for the Maps Embed API iframe (GoogleMapEmbed.vue).
+				'frame-src': ["'self'", 'https://*.tickettailor.com', 'https://tickets.apoaonline.com', 'https://challenges.cloudflare.com', 'https://www.google.com'],
 			},
 		},
 	},
@@ -229,6 +309,9 @@ export default defineNuxtConfig({
 		plugins: [
 		tailwindcss(),
 		],
+		server: {
+			allowedHosts: ['matthews-macbook-pro.tailb81239.ts.net']
+		}
 	},
 	sitemap: {
 		sources: ['/api/sitemap'],

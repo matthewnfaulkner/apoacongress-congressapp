@@ -21,14 +21,7 @@ export default defineEventHandler((event) => {
 	const url = getRequestURL(event)
 	if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/_')) return
 
-	const headers = getHeaders(event)
-
-	const country = (
-		headers['cf-ipcountry'] ??
-		headers['x-vercel-ip-country'] ??
-		headers['x-country'] ??
-		'XX'
-	).toUpperCase()
+	const country = getRequestCountry(event)
 
 	// If consent is required for this region, do nothing — let the banner show normally
 	if (CONSENT_REQUIRED_COUNTRIES.has(country)) return

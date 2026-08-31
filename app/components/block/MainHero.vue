@@ -269,7 +269,7 @@ onMounted(() => {
 						<!-- tagline -->
 						<div class="tracking-tighter mt-0 lg:mt-0 transition-opacity duration-500 ease-out"
 							:class="textVisible ? 'opacity-100' : 'opacity-0'">
-							<Text class=" font-sans text-xl sm:text-xl text-right ml-10  text-black"
+							<Text class=" font-heading text-xl sm:text-xl text-right ml-10  text-black"
 							:content="data.tagline"
 							:data-directus="
 									setAttr({
@@ -324,7 +324,7 @@ onMounted(() => {
 						<div class="transition-opacity duration-500 ease-out delay-400"
 							:class="textVisible ? 'opacity-100' : 'opacity-0'">
 							<Text
-								class=" font-heading text-2xl lg:text-4xl font-bold mt-0 lg:mt-4"
+								class=" font-heading text-2xl lg:text-4xl font-bold mt-0 lg:mt-4 text-right"
 								:content="date"
 								:data-directus="
 									setAttr({

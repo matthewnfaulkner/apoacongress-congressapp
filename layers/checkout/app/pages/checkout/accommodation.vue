@@ -1,0 +1,4 @@
+<template>
+  <CheckoutAccommodationStep />
+</template>
+``

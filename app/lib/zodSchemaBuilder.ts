@@ -23,6 +23,18 @@ export const buildZodSchema = (fields: FormField[]) => {
 				fieldSchema = z.string();
 				break;
 
+			case 'address':
+				fieldSchema = z.object({
+					street_number: z.string().min(1, 'Street Number Required'),
+					address_line_1: z.string().min(1, 'Address Line 1 Required'),
+					address_line_2: z.string(),
+					city: z.string().min(1, 'City Required'),
+					country: z.string().min(1, 'Country Required'),
+					state: z.string(),
+					postcode: z.string().min(1, 'Post Code Required'),
+				});
+				break;
+
 			case 'file':
 				if (field.required) {
 					fieldSchema = z.instanceof(File, {

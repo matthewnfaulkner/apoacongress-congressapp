@@ -7,7 +7,7 @@ const dayFields = [
     { congress: ['id', { venue: [{ rooms: ['id', 'title'] }] }] },
     {
         schedules: [
-            'id', 'name', 'status', 'parent', 'user_created',
+            'id', 'name', 'status', 'parent', 'user_created', 'preliminary',
             { breaks: ['id', 'name', 'starttime', 'endtime', { rooms: ['id', 'room'] }] },
             {
                 sessions: [

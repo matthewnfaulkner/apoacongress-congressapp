@@ -11,6 +11,8 @@ import RadioGroupField from './fields/RadioGroupField.vue';
 import SelectField from './fields/SelectField.vue';
 import FileUploadField from './fields/FileUploadField.vue';
 import VoucherField from './fields/VoucherField.vue';
+import AddressField from './fields/AddressField.vue';
+import PhoneField from './fields/PhoneField.vue';
 
 const props = defineProps<{ field: FormField }>();
 const { value, errorMessage } = useField(props.field.name ?? '');
@@ -23,7 +25,9 @@ const componentMap: Record<string, Component> = {
 	radio: RadioGroupField,
 	select: SelectField,
 	file: FileUploadField,
-	voucher: VoucherField
+	voucher: VoucherField,
+	address: AddressField,
+	phone: PhoneField,
 };
 
 const getFieldComponent = () => componentMap[props.field.type ?? ''] || Input;
@@ -58,7 +62,7 @@ const getComponentProps = (field: FormField) => {
 		<FormItem class="pt-2">
 			<FormLabel :for="field.name ?? ''" class="flex items-center justify-between text-base">
 				<span v-if="field.type !== 'checkbox'">{{ field.label ?? '' }}</span>
-				<span v-if="field.required" class="text-sm text-gray-400">*Required</span>
+				<span v-if="field.required" class="text-xs text-gray-400">*Required</span>
 			</FormLabel>
 			<FormControl  class="">
 				<component :is="getFieldComponent()" v-bind="getComponentProps(field)" />

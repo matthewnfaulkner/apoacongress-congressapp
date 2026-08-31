@@ -86,9 +86,11 @@ const config: Config = {
 						},
 						p: {
 							fontFamily: 'Inter',
-							fontSize: 'clamp(1rem, 2vw, 1.25rem)',
+							fontSize: 'clamp(0.9375rem, 1.8vw, 1.125rem)',
 							fontWeight: '400',
 							lineHeight: '1.75',
+							marginTop: '0.25em',
+							marginBottom: '0.25em',
 						},
 						img: {
 							borderRadius: '8px',
@@ -175,6 +177,15 @@ const config: Config = {
 						},
 					},
 				},
+				// Typography's size modifiers (prose-sm/base/lg/xl - see Text.vue's
+				// size prop) each carry their own independent p margins, separate
+				// from DEFAULT above - all four need the same override or the
+				// smaller margin only applies until a responsive prose-base/lg
+				// breakpoint kicks in.
+				sm: { css: { p: { fontSize: '0.8125rem', marginTop: '0.25em', marginBottom: '0.25em' } } },
+				base: { css: { p: { fontSize: '0.9375rem', marginTop: '0.25em', marginBottom: '0.25em' } } },
+				lg: { css: { p: { fontSize: '1rem', marginTop: '0.25em', marginBottom: '0.25em' } } },
+				xl: { css: { p: { fontSize: '1.125rem', marginTop: '0.25em', marginBottom: '0.25em' } } },
 			},
 		},
 	},

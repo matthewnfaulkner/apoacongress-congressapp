@@ -8,7 +8,7 @@
 	--background-color: #ffffff;
 	--foreground-color: #42566e;
 	--background-color-muted: color-mix(in srgb, var(--background-color), var(--foreground-color) 10%);
-	--accent-color: #6644ff;
+	--accent-color: oklch(0.587 0.227 27.41);
 	--background-variant-color: #172940;
 	--accent-color-dark: color-mix(in srgb, var(--accent-color), black 40%);
 	--accent-color-soft: color-mix(in srgb, var(--accent-color), white 20%);

@@ -15,6 +15,7 @@ interface CustomForm {
 	success_redirect_url?: string | null;
 	is_active?: boolean | null;
 	fields: FormField[];
+	bot_protection?: boolean | null;
 }
 
 const { setAttr } = useVisualEditing();

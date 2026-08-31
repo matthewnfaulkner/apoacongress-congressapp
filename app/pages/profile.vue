@@ -36,6 +36,66 @@ const profileMenuItems = ref<DropdownMenuItem[]>([
         to: '/mydatarequests',
     },
 ])
+
+interface QuickLinkCard {
+    to: string
+    title: string
+    description: string
+    icon: string
+    highlight?: boolean
+}
+
+const quickLinkCards: QuickLinkCard[] = [
+    {
+        to: '/program/planner',
+        title: 'View Program',
+        description: 'Browse the congress schedule and plan which sessions to attend.',
+        icon: 'i-lucide-calendar-days',
+    },
+    {
+        to: '/abstracts/submission',
+        title: 'Submit / Manage an Abstract',
+        description: 'Share your research and contribute to the scientific programme.',
+        icon: 'i-lucide-file-text',
+    },
+    {
+        to: '/host/travel',
+        title: 'Travel Advice',
+        description: 'Get information on flights, visas, and getting to the congress.',
+        icon: 'i-lucide-plane',
+    },
+    {
+        to: '/registration/congress',
+        title: 'Register for Congress',
+        description: 'Secure your place at APOA 2026 in Taiwan.',
+        icon: 'i-lucide-calendar-check',
+    },
+    {
+        to: '/checkout/my-orders',
+        title: 'My Orders',
+        description: 'View your registration orders and tickets.',
+        icon: 'i-lucide-receipt',
+    },
+    {
+        to: '/contact-us',
+        title: 'Get Help',
+        description: 'Need assistance? Reach out to the congress team.',
+        icon: 'i-lucide-message-circle-question-mark',
+
+    },
+    {
+        to: '/host/venue',
+        title: 'Venue & Host City',
+        description: 'Discover the congress venue and explore what Taiwan has to offer.',
+        icon: 'i-lucide-map-pin',
+    },
+    {
+        to: '/accommodation',
+        title: 'Book a Hotel',
+        description: 'Browse recommended hotels and book at the congress group rate.',
+        icon: 'i-lucide-bed-double',
+    },
+]
 const ready = ref(false);
 const { copy, copied } = useClipboard();
 
@@ -730,58 +790,18 @@ onMounted(async () => {
                 <Headline headline="What would you like to do?" class="text-center mb-6" />
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <UPageCard
-                        to="/program/planner"
-                        title="View Program"
-                        description="Browse the congress schedule and plan which sessions to attend."
-                        icon="i-lucide-calendar-days"
+                        v-for="card in quickLinkCards"
+                        :key="card.to"
+                        :to="card.to"
+                        :title="card.title"
+                        :description="card.description"
+                        :icon="card.icon"
                         highlight-color="accent"
+                        :highlight="card.highlight"
+                        spotlight
+                        spotlight-color="warning"
                         class="hover:ring-accent/50 transition-all"
-                        :ui="{ leadingIcon: 'text-accent' }"
-                    />
-                    <UPageCard
-                        to="/abstracts/submission"
-                        title="Submit / Manage an Abstract"
-                        description="Share your research and contribute to the scientific programme."
-                        icon="i-lucide-file-text"
-                        highlight-color="accent"
-                        class="hover:ring-accent/50 transition-all"
-                        :ui="{ leadingIcon: 'text-accent' }"
-                    />
-                    <UPageCard
-                        to="/host/travel"
-                        title="Travel Advice"
-                        description="Get information on flights, visas, and getting to the congress."
-                        icon="i-lucide-plane"
-                        highlight-color="accent"
-                        class="hover:ring-accent/50 transition-all"
-                        :ui="{ leadingIcon: 'text-accent' }"
-                    />
-                    <UPageCard
-                        to="/registration/congress"
-                        title="Register for Congress"
-                        description="Secure your place at APOA 2026 in Taiwan."
-                        icon="i-lucide-calendar-check"
-                        highlight-color="accent"
-                        class="hover:ring-accent/50 transition-all"
-                        :ui="{ leadingIcon: 'text-accent' }"
-                    />
-                    <UPageCard
-                        to="/contact-us"
-                        title="Get Help"
-                        description="Need assistance? Reach out to the congress team."
-                        icon="i-lucide-message-circle-question-mark"
-                        highlight-color="accent"
-                        class="hover:ring-accent/50 transition-all"
-                        :ui="{ leadingIcon: 'text-accent' }"
-                    />
-                    <UPageCard
-                        to="/host/venue"
-                        title="Venue & Host City"
-                        description="Discover the congress venue and explore what Taiwan has to offer."
-                        icon="i-lucide-map-pin"
-                        highlight-color="accent"
-                        class="hover:ring-accent/50 transition-all"
-                        :ui="{ leadingIcon: 'text-accent' }"
+                        :ui="{ leadingIcon: 'text-accent', title: 'text-xl' }"
                     />
                 </div>
             </div>

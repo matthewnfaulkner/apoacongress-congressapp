@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { isSafeRedirect } from '~~/shared/utils/redirect';
+
 definePageMeta({
   layout: 'login',
 })
@@ -8,7 +10,10 @@ const { $directus, $directusTokenStorage, $isAuthenticated, $isAuthenticatedWith
 const route = useRoute();
 const user = ref(null);
 const isLoggedIn = ref(false);
-const redirect = route.query.redirect as string;
+// Only a same-origin relative path is trusted as a redirect target - an
+// absolute URL here would let /login?redirect=https://evil.com send an
+// authenticated user (or a completed SSO round-trip) straight off-site.
+const redirect = isSafeRedirect(route.query.redirect) ? route.query.redirect : null;
 
 const runtimeConfig = useRuntimeConfig();
 
