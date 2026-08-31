@@ -11,17 +11,27 @@ const config = useRuntimeConfig();
 // still gets tagged onto the response below (see the outer handler) purely
 // for currency display purposes, independent of which event was fetched.
 async function handler(): Promise<Omit<CheckoutEvent, 'locality'>> {
-	const ticketTailorEventId = await getCongressEventId();
+	try {
+		const ticketTailorEventId = await getCongressEventId();
 
-	if (!ticketTailorEventId) {
-		throw createError({ statusCode: 500, statusMessage: 'Ticket Tailor event id not configured' });
+		if (!ticketTailorEventId) {
+			throw createError({ statusCode: 500, statusMessage: 'Ticket Tailor event id not configured' });
+		}
+
+		const ttEvent = await ticketTailorFetch<TTEvent>(`/events/${ticketTailorEventId}`, 'eventRead');
+		const enrichmentById = await fetchTicketEnrichment(ttEvent.ticket_types.map((ticketType) => ticketType.id));
+		const bypassTicketTypeId = await getCongressBypassTicketId();
+
+		return normalizeCheckoutEvent(ttEvent, enrichmentById, bypassTicketTypeId);
+	} catch (error: any) {
+		// Nothing in this chain (getCongressEventId, ticketTailorFetch,
+		// fetchTicketEnrichment, getCongressBypassTicketId) logged anything of
+		// its own on failure — every prior 500 here left zero trace of which
+		// step actually failed or why. Logged in full now; still a 500 either
+		// way (createError above vs. Directus/Ticket Tailor errors bubbling up).
+		console.error('[checkout/event] Failed to build checkout event:', error?.data ?? error);
+		throw error;
 	}
-
-	const ttEvent = await ticketTailorFetch<TTEvent>(`/events/${ticketTailorEventId}`, 'eventRead');
-	const enrichmentById = await fetchTicketEnrichment(ttEvent.ticket_types.map((ticketType) => ticketType.id));
-	const bypassTicketTypeId = await getCongressBypassTicketId();
-
-	return normalizeCheckoutEvent(ttEvent, enrichmentById, bypassTicketTypeId);
 }
 
 // Deliberately no cookie/event-derived logic inside this cached handler —
