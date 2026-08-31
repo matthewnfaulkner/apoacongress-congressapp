@@ -157,7 +157,7 @@ function confirmClear(close: () => void) {
             <UButton icon="i-lucide-help-circle" size="xs" color="neutral" variant="subtle" square class="rounded-full" aria-label="What is the booking fee?" />
             <template #content>
               <p class="p-3 text-sm text-description max-w-64">
-                All bookings processed are subject to a non-refundable processing fee of 3% + $1.25.
+                A non-refundable processing fee of 3% + $1.25 is applied to each ticket booked.
               </p>
             </template>
           </UPopover>
