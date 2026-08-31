@@ -152,14 +152,16 @@ onUnmounted(() => {
 					>
 						<span v-if="showCaption" class="text-lg text-center">{{ currentItem.caption }}</span>
 						<button
-							class="shrink-0 rounded-full p-1 hover:bg-white/20"
+							class="shrink-0 rounded-full p-1 hover:bg-white/20 z-40"
 							:aria-label="showCaption ? 'Hide caption' : 'Show caption'"
 							@click="showCaption = !showCaption"
 						>
 							<EyeOff v-if="showCaption" class="w-5 h-5" />
 							<template v-else>
-								<Eye class="w-5 h-5 z-40" />
-								<span class="text-sm">Show caption</span>
+								<div class="flex gap-2">
+									<Eye class="w-5 h-5" />
+									<span class="text-sm">Show caption</span>
+								</div>
 							</template>
 						</button>
 					</div>
