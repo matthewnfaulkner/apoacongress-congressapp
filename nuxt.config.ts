@@ -248,6 +248,14 @@ export default defineNuxtConfig({
 			// cross-origin isolation guarantees (e.g. for SharedArrayBuffer),
 			// so it's turned off entirely instead.
 			crossOriginEmbedderPolicy: 'unsafe-none',
+			// nuxt-security defaults every directive here to an empty allowlist,
+			// i.e. fullscreen=() — blocking the Fullscreen API entirely, even for
+			// same-origin content. Same "only breaks in production, module is
+			// dev-disabled" story as crossOriginEmbedderPolicy above — this is
+			// what disabled MainHero.vue's video fullscreen button in prod only.
+			permissionsPolicy: {
+				fullscreen: ['self'],
+			},
 			contentSecurityPolicy: {
 				// blob: needed for client-side image previews before upload (e.g.
 				// URL.createObjectURL in abstracts/submission.vue's figure picker) —
