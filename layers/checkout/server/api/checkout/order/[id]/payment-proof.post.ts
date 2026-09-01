@@ -68,6 +68,7 @@ export default defineEventHandler(async (event: H3Event) => {
 
 	const blob = new Blob([filePart.data], { type: filePart.type });
 	const uploadFormData = new FormData();
+	uploadFormData.append('folder', config.public.paymentProofFolder as string);
 	uploadFormData.append('file', blob, filePart.filename);
 
 	let uploadedFile: { id?: string } | undefined;

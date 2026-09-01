@@ -99,7 +99,7 @@ async function handleFileChange(event: Event) {
       <p class="text-description whitespace-pre-line mb-3">{{ instructions }}</p>
     </template>
 
-    <h3 class="text-sm font-semibold text-foreground mb-1">Upload proof of payment</h3>
+    <h3 class="text-lg font-semibold text-foreground mb-1">Upload proof of payment</h3>
     <p class="text-description mb-2">
       Your payment is still pending. Please upload a receipt or bank transfer confirmation so we can verify it.
     </p>
