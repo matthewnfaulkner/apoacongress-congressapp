@@ -115,7 +115,7 @@ async function requestAccessLink(submitEvent: FormSubmitEvent<EmailSchema>) {
     <div v-else-if="!orders || orders.length === 0" class="text-description">
       <UCard class="lg:w-[50%] m-auto h-full mt-30" variant="ghost">
         <p>We couldn't find any orders.</p>
-        <ULink to="/contact" class="underline text-accent" >Can't find your order? </ULink>
+        <ULink to="/contact-us" class="underline text-accent" >Can't find your order? </ULink>
       </UCard>
     </div>
     
@@ -169,7 +169,7 @@ async function requestAccessLink(submitEvent: FormSubmitEvent<EmailSchema>) {
         </div>
         
       </div>
-      <ULink to="/contact" class="underline text-accent" >Can't find your order? </ULink>
+      <ULink to="/contact-us" class="underline text-accent" >Can't find your order? </ULink>
 
     </div>
     
