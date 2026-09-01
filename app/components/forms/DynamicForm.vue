@@ -68,8 +68,10 @@ const initialValues = computed(() => {
 			const nameNormal = name.replace('-', '_');
 			switch (field.type) {
 				case 'checkbox':
-				case 'policy':
 					defaults[name] = false;
+					break;
+				case 'policy':
+					defaults[name] = true;
 					break;
 				case 'checkbox_group':
 					defaults[name] = [];

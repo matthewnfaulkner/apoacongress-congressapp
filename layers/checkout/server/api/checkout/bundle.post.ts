@@ -110,7 +110,7 @@ export default defineEventHandler(async (event: H3Event): Promise<CreateBundleRe
 				return sum + option.price * line.quantity;
 			}, 0);
 
-	const bookingFee = config.public.isSandbox
+	const bookingFee = true
 		? 0
 		: lines.reduce((sum, line) => {
 				const option = allOptions.find((candidate) => candidate.id === line.ticketTypeId)!;

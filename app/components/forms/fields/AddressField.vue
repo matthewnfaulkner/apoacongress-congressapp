@@ -114,7 +114,7 @@ const fillAddress = (addressComponents: AddressComponent[]) => {
         <UFormField label="State">
                 <Input :model-value="modelValue.state" @update:model-value="emit('update:modelValue', { ...modelValue, state: $event })" name="state" class="w-full"></Input>
         </UFormField>
-        <UFormField label="Country" class="w-full" name="country">
+        <UFormField label="Country" class="w-full" name="country" required>
             <CountrySelectMenu :model-value="modelValue.country" @update:model-value="emit('update:modelValue', { ...modelValue, country: $event })" value-key="code" variant="none" :ui="selectUi" class="w-full"/>
         </UFormField>
         <UFormField label="Postcode" required>

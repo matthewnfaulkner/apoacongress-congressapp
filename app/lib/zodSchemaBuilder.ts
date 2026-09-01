@@ -11,8 +11,11 @@ export const buildZodSchema = (fields: FormField[]) => {
 
 		switch (field.type) {
 			case 'checkbox':
-			case 'policy':
 				fieldSchema = z.boolean().default(false);
+				break;
+
+			case 'policy':
+				fieldSchema = z.boolean().default(true);
 				break;
 
 			case 'checkbox_group':
