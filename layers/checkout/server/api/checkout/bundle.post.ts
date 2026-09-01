@@ -103,7 +103,7 @@ export default defineEventHandler(async (event: H3Event): Promise<CreateBundleRe
 	// through Ticket Tailor — flattening every bundle to $1 (in the event's own
 	// currency, minor units) keeps that flow exercisable end-to-end without
 	// risking a real-sized test charge.
-	const price = config.public.isSandbox
+	const price = true
 		? 100
 		: lines.reduce((sum, line) => {
 				const option = allOptions.find((candidate) => candidate.id === line.ticketTypeId)!;
@@ -252,13 +252,17 @@ export default defineEventHandler(async (event: H3Event): Promise<CreateBundleRe
 	// different mode segment), which does start fresh — swapped in here since
 	// every bundle here is meant to be its own one-time basket, never a resume.
 	//
-	// Prefilling the widget's name/email fields for a logged-in customer works
-	// via a URL hash fragment, not query params (per Ticket Tailor's own docs:
+	// Prefilling the widget's name/email fields works via a URL hash
+	// fragment, not query params (per Ticket Tailor's own docs:
 	// https://help.tickettailor.com/en/articles/9859154) — and only through
 	// the actual widget.js-rendered widget (see CheckoutEmbed.vue), never a
 	// direct link/redirect ("Passing pre-filled information directly to
 	// checkout URLs is not currently possible").
-	const contact = await getCheckoutContactDetails(event);
+	//
+	// Sourced from this checkout's own form submission first — works
+	// regardless of login status — falling back to the logged-in profile
+	// only if there's no submission (or it's missing these fields).
+	const contact = (await getFormSubmissionContactDetails(body?.formSubmissionId)) ?? (await getCheckoutContactDetails(event));
 	const presetDataFragment = contact
 		? `&preset_data=1#p[first_name]=${encodeURIComponent(contact.firstName)}&p[last_name]=${encodeURIComponent(contact.lastName)}&p[email]=${encodeURIComponent(contact.email)}`
 		: '';

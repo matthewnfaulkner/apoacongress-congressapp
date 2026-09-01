@@ -30,6 +30,11 @@ export async function getCheckoutUserId(event: H3Event): Promise<string | null> 
  * Tailor's embedded checkout widget (see bundle.post.ts / CheckoutEmbed.vue)
  * so a returning customer doesn't have to retype their name and email on
  * Ticket Tailor's own hosted checkout form.
+ *
+ * Only ever a fallback for getFormSubmissionContactDetails below — a guest
+ * has no profile to read here at all, but does have whatever they just
+ * typed into this checkout's own form, which is the same information and
+ * doesn't depend on being logged in.
  */
 export async function getCheckoutContactDetails(event: H3Event): Promise<{ firstName: string; lastName: string; email: string } | null> {
 	const config = useRuntimeConfig();
@@ -47,6 +52,45 @@ export async function getCheckoutContactDetails(event: H3Event): Promise<{ first
 		if (!user.email) return null;
 
 		return { firstName: user.first_name ?? '', lastName: user.last_name ?? '', email: user.email };
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * First/last name + email as typed into this checkout's own optional
+ * checkout_form (form_submissions, via the formSubmissionId the client
+ * already sends — see complete.vue/bundle.post.ts) — not the logged-in
+ * Directus profile. Preferred over getCheckoutContactDetails above for
+ * prefilling Ticket Tailor's widget, since it works the same whether or not
+ * the customer is logged in. Field names are form_fields.name (the
+ * lowercase, hyphenated slug — "first-name", "last-name", "email"), same
+ * convention confirmed live for the address/phone/company-name fields read
+ * elsewhere (see the invoice-generation flow's own script). Read via the bot
+ * token: this isn't gated on the caller's own session at all.
+ */
+export async function getFormSubmissionContactDetails(formSubmissionId: string | null | undefined): Promise<{ firstName: string; lastName: string; email: string } | null> {
+	if (!formSubmissionId) return null;
+
+	const config = useRuntimeConfig();
+
+	try {
+		const submission = await directusServer.request<{ values: Array<{ value: string | null; field: { name: string | null } | null }> }>(
+			withToken(
+				config.directusOrderBotToken as string,
+				readItem('form_submissions', formSubmissionId, {
+					fields: [{ values: ['value', { field: ['name'] }] }],
+				}),
+			),
+		);
+
+		const getValue = (fieldName: string) =>
+			submission.values?.find((entry) => entry.field?.name === fieldName)?.value ?? null;
+
+		const email = getValue('email');
+		if (!email) return null;
+
+		return { firstName: getValue('first-name') ?? '', lastName: getValue('last-name') ?? '', email };
 	} catch {
 		return null;
 	}
