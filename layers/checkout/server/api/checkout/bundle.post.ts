@@ -111,14 +111,14 @@ export default defineEventHandler(async (event: H3Event): Promise<CreateBundleRe
 	// through Ticket Tailor — flattening every bundle to $1 (in the event's own
 	// currency, minor units) keeps that flow exercisable end-to-end without
 	// risking a real-sized test charge.
-	const price = true
+	const price = config.public.isSandbox
 		? 100
 		: lines.reduce((sum, line) => {
 				const option = allOptions.find((candidate) => candidate.id === line.ticketTypeId)!;
 				return sum + option.price * line.quantity;
 			}, 0);
 
-	const bookingFee = true
+	const bookingFee = config.public.isSandbox
 		? 0
 		: lines.reduce((sum, line) => {
 				const option = allOptions.find((candidate) => candidate.id === line.ticketTypeId)!;
@@ -140,13 +140,17 @@ export default defineEventHandler(async (event: H3Event): Promise<CreateBundleRe
 	const accessCode = randomBytes(12).toString('hex');
 	// A raw ISO timestamp here read as noisy/unreadable, especially since
 	// Ticket Tailor appends this name to every resulting line item — just the
-	// numeric date (e.g. "19/08/2026") instead of "2026-08-19T14:32:07.123Z".
-	// No longer needs to be parseable for the stale-bundle cleanup flow —
-	// that reads congress_order_owners.date_created instead — so it's free
-	// to just be readable.
-	const formattedDate = new Date().toLocaleDateString('en-GB');
+	// numeric date/time (e.g. "19/08/2026 14:32") instead of
+	// "2026-08-19T14:32:07.123Z". No longer needs to be parseable for the
+	// stale-bundle cleanup flow — that reads congress_order_owners.date_created
+	// instead — so it's free to just be readable. The time is included
+	// alongside the date since multiple bundles can otherwise share the same
+	// date-only name, making them indistinguishable in Ticket Tailor's UI.
+	const now = new Date();
+	const formattedDate = now.toLocaleDateString('en-GB');
+	const formattedTime = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 	const bundleRequest: TTCreateBundleRequest = {
-		name: `Order ${formattedDate}`,
+		name: `Order ${formattedDate} ${formattedTime}`,
 		description,
 		price,
 		booking_fee: bookingFee,

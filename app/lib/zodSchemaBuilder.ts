@@ -24,7 +24,7 @@ export const buildZodSchema = (fields: FormField[]) => {
 				break;
 
 			case 'radio':
-				fieldSchema = z.string();
+				fieldSchema = z.string({ required_error: `${field.label || field.name} is required` });
 				break;
 
 			case 'address':
@@ -55,7 +55,12 @@ export const buildZodSchema = (fields: FormField[]) => {
 				break;
 
 			default:
-				fieldSchema = z.string();
+				// required_error matters specifically for phone: vue-tel-input
+				// (PhoneField.vue) can emit undefined rather than '' for an empty
+				// field, which fails Zod's base type check before ever reaching the
+				// .nonempty() message below — same Zod v3 "Required" fallback fixed
+				// for abstracts in e72883e.
+				fieldSchema = z.string({ required_error: `${field.label || field.name} is required` });
 				break;
 		}
 
