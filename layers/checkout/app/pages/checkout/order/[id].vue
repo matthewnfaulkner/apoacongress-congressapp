@@ -122,7 +122,7 @@ function handleProofUploaded(proof: NonNullable<TTOrder['local_payment_proof']>)
           label="Add to My Booking"
         />
         <UButton
-          :to="{ path: '/contact', query: { issue: `Order #${order.id.slice(3)}: ` } }"
+          :to="{ path: '/contact-us', query: { issue: `Order #${order.id.slice(3)}: ` } }"
           variant="ghost"
           color="neutral"
           size="xl"
