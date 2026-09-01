@@ -275,12 +275,12 @@ export default defineNuxtConfig({
 				// need to stay allowlisted rather than swapping one for the other.
 				// challenges.cloudflare.com: Turnstile's own XHR calls (see NuxtTurnstile
 				// usage on abstracts submission, forms, and flows).
-				'connect-src': ["'self'", process.env.DIRECTUS_URL  || '', 'https://api.tickettailor.com', 'https://*.tickettailor.com', 'https://tickets.apoaonline.com', 'https://maps.googleapis.com', 'https://maps.gstatic.com', 'https://challenges.cloudflare.com'],
+				'connect-src': ["'self'", process.env.DIRECTUS_URL  || '', 'https://registration.apoa2027.org', 'https://api.tickettailor.com', 'https://*.tickettailor.com', 'https://tickets.apoaonline.com', 'https://maps.googleapis.com', 'https://maps.gstatic.com', 'https://challenges.cloudflare.com'],
 				'frame-ancestors': ["'self'", process.env.DIRECTUS_URL || ''],
 				// Allows the checkout layer to embed Ticket Tailor's hosted checkout
 				// widget, challenges.cloudflare.com for Turnstile's own challenge iframe,
 				// and www.google.com for the Maps Embed API iframe (GoogleMapEmbed.vue).
-				'frame-src': ["'self'", 'https://*.tickettailor.com', 'https://tickets.apoaonline.com', 'https://challenges.cloudflare.com', 'https://www.google.com'],
+				'frame-src': ["'self'", 'https://*.tickettailor.com', 'https://registration.apoa2027.org','https://tickets.apoaonline.com', 'https://challenges.cloudflare.com', 'https://www.google.com'],
 			},
 		},
 	},
