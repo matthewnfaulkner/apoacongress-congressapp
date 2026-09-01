@@ -62,6 +62,13 @@ export default defineEventHandler(async (event: H3Event): Promise<CreateBundleRe
 		if (line.quantity > option.quantityRemaining) {
 			throw createError({ statusCode: 409, statusMessage: `Not enough "${option.name}" remaining` });
 		}
+
+		// Re-checked here rather than trusted from the client — complete.vue's
+		// own upload gate is display-only, and this is what actually decides
+		// whether an order is missing required evidence.
+		if (option.requiresEvidence && !body?.evidence?.[line.ticketTypeId]) {
+			throw createError({ statusCode: 400, statusMessage: `Supporting evidence is required for "${option.name}"` });
+		}
 	}
 
 	// Ticket Tailor enforces the registration-ticket dependency itself and
@@ -236,6 +243,11 @@ export default defineEventHandler(async (event: H3Event): Promise<CreateBundleRe
 					// from the initial page load (Site.congress), no need for a second
 					// Directus round-trip for a non-sensitive traceability field.
 					congress: body?.congressId ?? null,
+					// Nested O2M create — Directus creates each congress_order_evidence
+					// row and sets its order_owner to this claim itself. The Flow that
+					// later resolves this claim into a real congress_orders row also
+					// sets each evidence row's own `order` field (see complete.vue).
+					evidence: Object.values(body?.evidence ?? {}).map((fileId) => ({ file: fileId })),
 				}),
 			),
 		);

@@ -115,7 +115,7 @@ const initialValues = computed(() => {
 	);
 });
 
-const { handleSubmit, values } = useForm({
+const { handleSubmit, values, validate, errors } = useForm({
 	validationSchema: schema,
 	// Persisted values (if any) win over the field-type defaults above — read
 	// once here at setup, same as the defaults themselves; useForm's own
@@ -144,6 +144,13 @@ if (props.onValuesChange) {
 // defineExpose below) actually needs to know before treating this form as
 // done.
 const lastSubmitSucceeded = ref(false);
+
+// All current per-field validation messages collected into one list, the
+// same "format errors as a list" treatment abstracts/submission.vue's own
+// UAlert got (see e72883e) — empty until a field has actually been
+// validated (via the submit button, or an external caller's validate()/
+// submit(), e.g. complete.vue), same as each field's own inline message.
+const errorList = computed(() => Object.values(errors.value).filter((message): message is string => !!message));
 
 const onSubmitForm = handleSubmit(
 	async (formValues) => {
@@ -185,6 +192,14 @@ defineExpose({
 		await onSubmitForm();
 		return lastSubmitSucceeded.value;
 	},
+	// Runs vee-validate's own field validation without actually calling
+	// props.onSubmit — lets a caller (complete.vue) confirm the form would
+	// pass before doing other work (e.g. uploading evidence files) ahead of
+	// the real submit. Doesn't account for the CAPTCHA gate inside
+	// onSubmitForm above, since that's not part of vee-validate's own
+	// validity — a still-missing CAPTCHA is only caught by the later
+	// submit() call.
+	validate: async () => (await validate()).valid,
 });
 </script>
 
@@ -210,6 +225,15 @@ defineExpose({
 				<NuxtTurnstile ref="turnstileRef" v-model="turnstileToken" />
 				<p v-if="captchaError" class="text-sm text-red-500">{{ captchaError }}</p>
 			</div>
+
+			<UAlert v-if="errorList.length" color="error" variant="subtle" class="w-full">
+				<template #description>
+					<p v-if="errorList.length === 1">{{ errorList[0] }}</p>
+					<ul v-else class="list-disc list-inside space-y-0.5">
+						<li v-for="(message, index) in errorList" :key="index">{{ message }}</li>
+					</ul>
+				</template>
+			</UAlert>
 
 			<div v-if="showSubmitButton" class="w-full">
 				<div>

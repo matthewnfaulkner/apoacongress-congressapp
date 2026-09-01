@@ -99,6 +99,14 @@ defineExpose({
 		if (!props.form.is_active || isSubmitted.value) return true;
 		return (await dynamicFormRef.value?.submit()) ?? false;
 	},
+	// Checks the form would submit successfully without actually submitting
+	// it yet — see complete.vue, which validates before uploading evidence
+	// files so it doesn't upload anything for a form that's about to fail
+	// its own validation.
+	validate: async (): Promise<boolean> => {
+		if (!props.form.is_active || isSubmitted.value) return true;
+		return (await dynamicFormRef.value?.validate()) ?? false;
+	},
 	lastSubmissionId,
 });
 </script>

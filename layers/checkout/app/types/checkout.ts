@@ -27,6 +27,11 @@ export interface CheckoutTicketOption {
 	availableUntil: string | null;
 	requiresMembership: boolean;
 	isOrderable: boolean;
+	// From congress_charges.requires_evidence/evidence_details — when true,
+	// complete.vue collects a supporting PDF for this ticket type before
+	// checkout can proceed (see CreateBundleRequest.evidence).
+	requiresEvidence: boolean;
+	evidenceDetails: string | null;
 }
 
 export interface CheckoutGroup {
@@ -116,6 +121,12 @@ export interface CreateBundleRequest {
 	// traceability - the client already has this from the site-data store's
 	// Site.congress, so it's passed through rather than re-resolved server-side.
 	congressId?: string | null;
+	// One uploaded evidence file id (see evidence-upload.post.ts) per basket
+	// line whose ticket type has congress_charges.requires_evidence set —
+	// bundle.post.ts re-checks that every such line actually has an entry
+	// here rather than trusting the client sent them all, then creates each
+	// as its own congress_order_evidence row nested under the claim.
+	evidence?: Record<string, string> | null;
 }
 
 export interface CreateBundleResponse {

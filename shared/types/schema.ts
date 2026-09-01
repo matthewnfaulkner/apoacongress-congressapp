@@ -815,6 +815,8 @@ export interface CongressCharge {
 	short_description?: string | null;
 	tickets?: CongressTicket[] | string[];
 	details_page?: Page | string | null;
+	requires_evidence?: boolean | null;
+	evidence_details?: string | null
 }
 
 export interface CongressDay {
@@ -924,6 +926,7 @@ export interface CongressOrderOwner {
 	user?: DirectusUser | string | null;
 	token?: string | null;
 	submission?: FormSubmission | string | null;
+	evidence?: CongressOrderEvidence[] | string[] | null;
 }
 
 export interface CongressOrder {
@@ -945,6 +948,16 @@ export interface CongressOrder {
 	// for orders on a manual/offline payment method — see order/[id].get.ts and
 	// order/[id]/payment-proof.post.ts.
 	payment_proof?: DirectusFile | string | null;
+	evidence?: CongressOrderEvidence[] | string[] | null;
+}
+
+export interface CongressOrderEvidence {
+	/** @primaryKey */
+	id: string;
+	order_owner?: CongressOrderOwner | string | null;
+	file?: DirectusFile | string | null;
+	order?: CongressOrder | string | null;
+
 }
 
 export interface CongressOrderSession {
