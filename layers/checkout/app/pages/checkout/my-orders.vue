@@ -66,7 +66,6 @@ async function requestAccessLink(submitEvent: FormSubmitEvent<EmailSchema>) {
 <template>
 
 <Container class="my-8 max-w-2xl">
-    {{ error }}
     <template v-if="isUnauthenticated">
       <UCard class="lg:w-[50%] m-auto h-full mt-30">
         <h1 class="text-2xl font-semibold text-foreground mb-6 font-heading">My Orders</h1>

@@ -39,8 +39,10 @@ export default defineEventHandler(async (event: H3Event) => {
 				createItem('congress_order_access_tokens' as any, { email, token, expires_at: expiresAt, congress }),
 			),
 		);
-	} catch (error) {
-		console.error('[orders-access/request] Could not create access token:', error);
+	} catch (error: any) {
+		// ofetch's FetchError nests the actual Directus validation detail under
+		// error.data, which the default error toString/stack doesn't surface.
+		console.error('[orders-access/request] Could not create access token:', JSON.stringify(error?.data ?? error));
 	}
 
 	return genericResponse;
