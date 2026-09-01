@@ -58,27 +58,29 @@ const formBuilderRef = ref<InstanceType<typeof FormBuilder> | null>(null)
 
 // One basket line per ticket type whose linked congress_charge has
 // requires_evidence set (see congress-ticket-enrichment.ts) — each gets its
-// own upload field below, keyed by ticket type id.
+// own upload field below, keyed by ticket type id, but that one field needs
+// as many files as tickets on the line (quantity), not just one.
 interface EvidenceEntry {
   ticketTypeId: string
   option: CheckoutTicketOption
+  quantity: number
 }
 
 const evidenceEntries = computed<EvidenceEntry[]>(() => {
   const options = checkoutEventOptions(checkoutEvent.value)
   return store.lines.flatMap((line) => {
     const option = options.find((candidate) => candidate.id === line.ticketTypeId)
-    return option?.requiresEvidence ? [{ ticketTypeId: line.ticketTypeId, option }] : []
+    return option?.requiresEvidence ? [{ ticketTypeId: line.ticketTypeId, option, quantity: line.quantity }] : []
   })
 })
 
 // Not persisted in the basket store — File objects aren't serializable, and
 // there's no server-side draft to restore them from either, unlike
 // checkoutFormValues. Navigating away and back means re-uploading.
-const evidenceFiles = ref<Record<string, File | null>>({})
+const evidenceFiles = ref<Record<string, File[]>>({})
 
 const evidenceMissing = computed(() =>
-  evidenceEntries.value.some((entry) => !evidenceFiles.value[entry.ticketTypeId]),
+  evidenceEntries.value.some((entry) => (evidenceFiles.value[entry.ticketTypeId]?.length ?? 0) !== entry.quantity),
 )
 
 // Only true once "Proceed to Payment" has actually been clicked and found a
@@ -129,19 +131,22 @@ async function proceedToPayment() {
     // files sitting in Directus for a checkout the customer never finishes.
     // Only meaningful the first time (before a bundle exists) — an existing
     // bundle already has its evidence attached from when it was created.
-    let evidence: Record<string, string> | undefined
+    let evidence: Record<string, string[]> | undefined
     if (!store.bundle) {
       evidence = {}
       for (const entry of evidenceEntries.value) {
-        const file = evidenceFiles.value[entry.ticketTypeId]
-        if (!file) continue
-        const uploadFormData = new FormData()
-        uploadFormData.append('file', file)
-        const uploaded = await $fetch<{ id: string }>('/api/checkout/evidence-upload', {
-          method: 'POST',
-          body: uploadFormData,
-        })
-        evidence[entry.ticketTypeId] = uploaded.id
+        const files = evidenceFiles.value[entry.ticketTypeId] ?? []
+        const fileIds: string[] = []
+        for (const file of files) {
+          const uploadFormData = new FormData()
+          uploadFormData.append('file', file)
+          const uploaded = await $fetch<{ id: string }>('/api/checkout/evidence-upload', {
+            method: 'POST',
+            body: uploadFormData,
+          })
+          fileIds.push(uploaded.id)
+        }
+        evidence[entry.ticketTypeId] = fileIds
       }
     }
 
@@ -232,6 +237,7 @@ async function proceedToPayment() {
               v-model="evidenceFiles[entry.ticketTypeId]"
               :ticket-name="entry.option.name"
               :instructions="entry.option.evidenceDetails"
+              :count="entry.quantity"
               :invalid="evidenceSubmitAttempted"
             />
           </div>

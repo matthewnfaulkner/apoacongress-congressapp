@@ -65,9 +65,10 @@ export default defineEventHandler(async (event: H3Event): Promise<CreateBundleRe
 
 		// Re-checked here rather than trusted from the client — complete.vue's
 		// own upload gate is display-only, and this is what actually decides
-		// whether an order is missing required evidence.
-		if (option.requiresEvidence && !body?.evidence?.[line.ticketTypeId]) {
-			throw createError({ statusCode: 400, statusMessage: `Supporting evidence is required for "${option.name}"` });
+		// whether an order is missing required evidence. One file per ticket
+		// on the line, not just one per line — quantity 3 needs 3 files.
+		if (option.requiresEvidence && (body?.evidence?.[line.ticketTypeId]?.length ?? 0) !== line.quantity) {
+			throw createError({ statusCode: 400, statusMessage: `Supporting evidence is required for each "${option.name}" ticket` });
 		}
 	}
 
@@ -247,7 +248,11 @@ export default defineEventHandler(async (event: H3Event): Promise<CreateBundleRe
 					// row and sets its order_owner to this claim itself. The Flow that
 					// later resolves this claim into a real congress_orders row also
 					// sets each evidence row's own `order` field (see complete.vue).
-					evidence: Object.values(body?.evidence ?? {}).map((fileId) => ({ file: fileId })),
+					// ticket_type_id is carried over from the map's own key so each row
+					// records which ticket it's evidence for, not just which claim.
+					evidence: Object.entries(body?.evidence ?? {}).flatMap(([ticketTypeId, fileIds]) =>
+						fileIds.map((fileId) => ({ file: fileId, ticket_type_id: ticketTypeId })),
+					),
 				}),
 			),
 		);

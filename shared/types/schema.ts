@@ -957,7 +957,7 @@ export interface CongressOrderEvidence {
 	order_owner?: CongressOrderOwner | string | null;
 	file?: DirectusFile | string | null;
 	order?: CongressOrder | string | null;
-
+	ticket_type_id?: string | null;
 }
 
 export interface CongressOrderSession {

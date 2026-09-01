@@ -2,64 +2,60 @@
 const props = defineProps<{
   ticketName: string
   instructions?: string | null
+  // How many evidence files this line needs — one per ticket purchased (see
+  // complete.vue's evidenceEntries), not just one per ticket type.
+  count: number
   // Set by complete.vue once a "Proceed to Payment" click has been rejected
-  // for a missing file here specifically — distinct from validationError
-  // below (a bad file that was actually selected) so the "required" message
-  // only shows up after an actual attempt, not just because the field starts
-  // out empty.
+  // for this field specifically — distinct from the type/size/count checks
+  // below (which apply as soon as files are picked) so the "required"
+  // message only shows up after an actual attempt, not just because the
+  // field starts out empty.
   invalid?: boolean
 }>()
 
-const file = defineModel<File | null>({ default: null })
-
-const validationError = ref<string | null>(null)
-const displayError = computed(() => validationError.value ?? (props.invalid && !file.value ? 'This file is required.' : null))
+const files = defineModel<File[]>({ default: () => [] })
 
 // Re-enforced server-side (evidence-upload.post.ts) — this is just for
-// immediate feedback without a round trip.
+// immediate feedback without a round trip. Bad files are left in the list
+// (UFileUpload's own multi-file view already has a per-file delete button)
+// rather than silently stripped, so the customer can see exactly which one
+// needs removing.
 const MAX_BYTES = 5 * 1024 * 1024
 const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png']
 
-// UFileUpload's own `accept` only filters the file picker dialog — drag-and-
-// drop can still hand it anything, so the size/type check still happens here.
-// Setting file.value back to null re-triggers this watcher; suppressReset
-// skips clearing the error message we just set on that re-entrant call.
-let suppressReset = false
-
-watch(file, (selected) => {
-  if (!selected) {
-    if (suppressReset) {
-      suppressReset = false
-      return
-    }
-    validationError.value = null
-    return
-  }
-
-  if (selected.size > MAX_BYTES) {
-    validationError.value = 'File must be 5MB or smaller.'
-    suppressReset = true
-    file.value = null
-  } else if (!ALLOWED_TYPES.includes(selected.type)) {
-    validationError.value = 'File must be a PDF, JPEG, or PNG.'
-    suppressReset = true
-    file.value = null
-  } else {
-    validationError.value = null
-  }
+const typeSizeError = computed(() => {
+  const bad = files.value.find((file) => file.size > MAX_BYTES || !ALLOWED_TYPES.includes(file.type))
+  if (!bad) return null
+  return bad.size > MAX_BYTES ? 'Each file must be 5MB or smaller.' : 'Each file must be a PDF, JPEG, or PNG.'
 })
+
+const countError = computed(() => {
+  if (!files.value.length || typeSizeError.value) return null
+  if (files.value.length !== props.count) {
+    return `Please upload exactly ${props.count} file${props.count === 1 ? '' : 's'} (one per ticket) — ${files.value.length} selected.`
+  }
+  return null
+})
+
+const requiredError = computed(() =>
+  props.invalid && files.value.length === 0 ? `${props.count} file${props.count === 1 ? '' : 's'} required.` : null,
+)
+
+const displayError = computed(() => typeSizeError.value ?? countError.value ?? requiredError.value)
 </script>
 
 <template>
   <div class="border rounded-lg p-3" :class="displayError ? 'border-error' : 'border-secondary'">
-    <h3 class="text-lg font-semibold text-foreground mb-1">Evidence required for {{ ticketName }}</h3>
+    <h3 class="text-lg font-semibold text-foreground mb-1">Evidence required for each {{ ticketName }}</h3>
     <p v-if="instructions" class="text-description whitespace-pre-line mb-3 bg-background border rounded-md p-3">{{ instructions }}</p>
+    <p class="text-description text-sm mb-2">Upload {{ count }} file{{ count === 1 ? '' : 's' }} — one per ticket.</p>
 
     <UFileUpload
-      v-model="file"
+      v-model="files"
+      multiple
       accept="application/pdf,image/jpeg,image/png"
-      label="Drop your file here, or click to browse"
-      description="PDF, JPEG, or PNG, up to 5MB"
+      label="Drop your files here, or click to browse"
+      description="PDF, JPEG, or PNG, up to 5MB each"
       icon="i-lucide-upload"
       :highlight="!!displayError"
       :color="displayError ? 'error' : undefined"
