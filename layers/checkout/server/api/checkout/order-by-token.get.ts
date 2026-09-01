@@ -24,26 +24,43 @@ export default defineEventHandler(async (event: H3Event): Promise<TTOrder> => {
 		throw createError({ statusCode: 400, statusMessage: 'tt_order_id and token are required' });
 	}
 
-	let storedToken: string | null;
+	let congressOrder: { token: string | null; invoices?: Array<{ directus_files_id: string | null }> } | null;
 	try {
-		// `congress_orders.token` doesn't exist in the generated schema yet —
-		// cast until it's created in Directus and `npm run generate:types` picks
-		// it up.
-		const congressOrder = await directusServer.request<{ token: string | null }>(
+		// `congress_orders` doesn't exist in the generated schema yet — cast
+		// until it's created in Directus and `npm run generate:types` picks it up.
+		congressOrder = await directusServer.request(
 			withToken(
 				config.directusOrderBotToken as string,
-				readItem('congress_orders' as any, orderId, { fields: ['token'] }),
+				readItem('congress_orders' as any, orderId, { fields: ['token', 'invoices.directus_files_id'] }),
 			),
 		);
-		storedToken = congressOrder.token;
 	} catch {
 		throw createError({ statusCode: 404, statusMessage: 'Order not found' });
 	}
 
-	if (!storedToken || storedToken !== token) {
+	if (!congressOrder?.token || congressOrder.token !== token) {
 		throw createError({ statusCode: 403, statusMessage: 'Invalid order token' });
 	}
 
+	// Same reasoning as order/[id].get.ts's own invoices lookup — the file id
+	// is readable off congress_orders itself with the bot token, but
+	// filename/date need a separate directus_files read.
+	const invoiceIds: string[] = (congressOrder.invoices ?? [])
+		.map((row) => row.directus_files_id)
+		.filter((id): id is string => Boolean(id))
+		.reverse();
+
+	const invoices = invoiceIds.length
+		? await directusServer
+				.request<Array<{ id: string; filename_download: string; uploaded_on: string }>>(
+					withToken(
+						config.directusOrderBotToken as string,
+						readFiles({ filter: { id: { _in: invoiceIds } } as any, fields: ['id', 'filename_download', 'uploaded_on'] }),
+					),
+				)
+				.then((files) => invoiceIds.map((id) => files.find((file) => file.id === id)).filter((file): file is { id: string; filename_download: string; uploaded_on: string } => Boolean(file)))
+		: [];
+
 	const order = await ticketTailorFetch<TTOrder>(`/orders/${orderId}`, 'orderRead');
-	return await omitBypassTicket(order);
+	return await omitBypassTicket({ ...order, local_invoices: invoices });
 });

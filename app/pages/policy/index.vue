@@ -27,7 +27,7 @@ const { data: agreements, refresh } = await useAsyncData<UserPolicyAgreement[]>(
 							'active',
 							'date_created',
 							'date_updated',
-							{ policy: ['id', 'name', 'type', 'notification', 'required'] },
+							{ policy: ['id', 'name', 'type', 'notification', 'required', 'key'] },
 						],
 					},
 				],
@@ -80,8 +80,8 @@ const withdrawConsent = async (agreement: UserPolicyAgreement) => {
 
 const policyName = (agreement: UserPolicyAgreement) =>
 	(typeof agreement.policy === 'object' ? agreement.policy?.name : null) || 'Policy';
-const policyType = (agreement: UserPolicyAgreement) =>
-	typeof agreement.policy === 'object' ? agreement.policy?.type : null;
+const policyKey = (agreement: UserPolicyAgreement) =>
+	typeof agreement.policy === 'object' ? agreement.policy?.key : null;
 const policyNotification = (agreement: UserPolicyAgreement) =>
 	typeof agreement.policy === 'object' ? agreement.policy?.notification : null;
 const policyRequired = (agreement: UserPolicyAgreement) =>
@@ -151,8 +151,8 @@ useSeoMeta({
 								</p>
 							</div>
 							<NuxtLink
-								v-if="policyType(agreement)"
-								:to="`/policies/${policyType(agreement)}`"
+								v-if="policyKey(agreement)"
+								:to="`/policy/${policyKey(agreement)}`"
 								target="_blank"
 								class="text-accent underline text-sm inline-block mt-2"
 							>

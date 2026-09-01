@@ -12,11 +12,23 @@ import { randomBytes } from 'crypto';
  * Always returns the same generic response regardless of whether the email
  * matched anything real — a different response here would let this be used
  * to check which emails have ever placed an order.
+ *
+ * Turnstile-gated (unlike the email-enumeration concern above, this rejects
+ * outright on failure) — with no CAPTCHA, this was an open mail-bombing
+ * vector: unlimited magic-link emails to any address for free.
  */
 export default defineEventHandler(async (event: H3Event) => {
 	const config = useRuntimeConfig();
-	const body = await readBody<{ email?: string; congress?: string }>(event);
+	const body = await readBody<{ email?: string; congress?: string; turnstileToken?: string }>(event);
 	const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
+
+	if (!body?.turnstileToken) {
+		throw createError({ statusCode: 400, statusMessage: 'Missing CAPTCHA token.' });
+	}
+	const captcha = await verifyTurnstileToken(body.turnstileToken, event);
+	if (!captcha.success) {
+		throw createError({ statusCode: 403, statusMessage: 'CAPTCHA verification failed.' });
+	}
 	// The checkout page already knows which congress it's for — passed
 	// straight through rather than looked up again here — so the Flow that
 	// sends the email (triggered on this create) can pull in congress-
@@ -39,8 +51,10 @@ export default defineEventHandler(async (event: H3Event) => {
 				createItem('congress_order_access_tokens' as any, { email, token, expires_at: expiresAt, congress }),
 			),
 		);
-	} catch (error) {
-		console.error('[orders-access/request] Could not create access token:', error);
+	} catch (error: any) {
+		// ofetch's FetchError nests the actual Directus validation detail under
+		// error.data, which the default error toString/stack doesn't surface.
+		console.error('[orders-access/request] Could not create access token:', JSON.stringify(error?.data ?? error));
 	}
 
 	return genericResponse;

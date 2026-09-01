@@ -13,6 +13,7 @@ import FileUploadField from './fields/FileUploadField.vue';
 import VoucherField from './fields/VoucherField.vue';
 import AddressField from './fields/AddressField.vue';
 import PhoneField from './fields/PhoneField.vue';
+import PolicyField from './fields/PolicyField.vue';
 
 const props = defineProps<{ field: FormField }>();
 const { value, errorMessage } = useField(props.field.name ?? '');
@@ -28,6 +29,7 @@ const componentMap: Record<string, Component> = {
 	voucher: VoucherField,
 	address: AddressField,
 	phone: PhoneField,
+	policy: PolicyField,
 };
 
 const getFieldComponent = () => componentMap[props.field.type ?? ''] || Input;
@@ -49,6 +51,10 @@ const getComponentProps = (field: FormField) => {
 		return { ...baseProps, label: field.label ?? '' };
 	}
 
+	if (field.type === 'policy') {
+		return { ...baseProps, policy: field.policy };
+	}
+
 	if (field.type === 'text') {
 		return { ...baseProps, enableCopy: field.copy ?? false, readonly: field.readonly ?? false };
 	}
@@ -61,7 +67,7 @@ const getComponentProps = (field: FormField) => {
 	<div v-if="props.field.type !== 'hidden'" :class="`field-width-${field.width ?? '100'}`">
 		<FormItem class="pt-2">
 			<FormLabel :for="field.name ?? ''" class="flex items-center justify-between text-base">
-				<span v-if="field.type !== 'checkbox'">{{ field.label ?? '' }}</span>
+				<span v-if="!['checkbox', 'policy'].includes(field.type ?? '')">{{ field.label ?? '' }}</span>
 				<span v-if="field.required" class="text-xs text-gray-400">*Required</span>
 			</FormLabel>
 			<FormControl  class="">

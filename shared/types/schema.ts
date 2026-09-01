@@ -815,6 +815,8 @@ export interface CongressCharge {
 	short_description?: string | null;
 	tickets?: CongressTicket[] | string[];
 	details_page?: Page | string | null;
+	requires_evidence?: boolean | null;
+	evidence_details?: string | null
 }
 
 export interface CongressDay {
@@ -924,6 +926,7 @@ export interface CongressOrderOwner {
 	user?: DirectusUser | string | null;
 	token?: string | null;
 	submission?: FormSubmission | string | null;
+	evidence?: CongressOrderEvidence[] | string[] | null;
 }
 
 export interface CongressOrder {
@@ -945,6 +948,16 @@ export interface CongressOrder {
 	// for orders on a manual/offline payment method — see order/[id].get.ts and
 	// order/[id]/payment-proof.post.ts.
 	payment_proof?: DirectusFile | string | null;
+	evidence?: CongressOrderEvidence[] | string[] | null;
+}
+
+export interface CongressOrderEvidence {
+	/** @primaryKey */
+	id: string;
+	order_owner?: CongressOrderOwner | string | null;
+	file?: DirectusFile | string | null;
+	order?: CongressOrder | string | null;
+	ticket_type_id?: string | null;
 }
 
 export interface CongressOrderSession {
@@ -1189,7 +1202,7 @@ export interface FormField {
 	/** @description Unique field identifier, not shown to users (lowercase, hyphenated) */
 	name?: string | null;
 	/** @description Input type for the field */
-	type?: 'text' | 'textarea' | 'checkbox' | 'checkbox_group' | 'checkbox_group_alt' | 'radio' | 'file' | 'select' | 'hidden' | 'address' | 'phone' | null;
+	type?: 'text' | 'textarea' | 'checkbox' | 'checkbox_group' | 'checkbox_group_alt' | 'radio' | 'file' | 'select' | 'hidden' | 'address' | 'phone' | 'policy' | null;
 	/** @description Text label shown to form users. */
 	label?: string | null;
 	/** @description Default text shown in empty input. */
@@ -1213,6 +1226,7 @@ export interface FormField {
 	user_updated?: DirectusUser | string | null;
 	/** @description Prepopulate field with logged in user data. Field name must match a field in directus user collection. */
 	use_user_data?: boolean | null;
+	policy?: Policy | null;
 }
 
 export interface FormFlowField {
@@ -1734,12 +1748,15 @@ export interface Policy {
 	date_updated?: string | null;
 	type?: 'privacy' | 'terms_of_service' | null;
 	name?: string | null;
+	/** @description Unique slug used to look up this policy's own page (see policies/[...key].vue). */
+	key?: string | null;
 	/** @description Short text displayed in privacy policy consent message. */
 	notification?: string | null;
 	content?: string | null;
 	required?: boolean | null;
 	default?: boolean | null;
 	sites?: SitesPolicy[] | string[];
+	show_on_login?: boolean | null;
 }
 
 export interface Post {
@@ -1997,6 +2014,7 @@ export interface UserPolicyAgreement {
 	date_updated?: string | null;
 	consent?: boolean | null;
 	user?: DirectusUser | string | null;
+	email?: string | null;
 	policy?: Policy | string | null;
 	active?: boolean | null;
 	version?: DirectusVersion | string | null;

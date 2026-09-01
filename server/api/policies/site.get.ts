@@ -12,7 +12,7 @@ async function handler(event: H3Event) {
 		fields: [{
 			user_policies: [
 				'id',
-				{ policy: ['id', 'name', 'type', 'notification', 'content', 'date_updated', 'required', 'default'] },
+				{ policy: ['id', 'key', 'name', 'type', 'notification', 'content', 'date_updated', 'required', 'default', 'show_on_login'] },
 			],
 		}],
 	} as any;

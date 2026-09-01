@@ -18,7 +18,7 @@ const currentIndex = ref(0);
 const consentValues = ref<Record<number, boolean>>({});
 
 const route = useRoute();
-const isOnPolicyPage = computed(() => route.path.startsWith('/policies/'));
+const isOnPolicyPage = computed(() => route.path.startsWith('/policy/'));
 
 const isLoggedIn = computed(
 	() => authStore.isAuthenticated && typeof authStore.isAuthenticated === 'object',
@@ -60,8 +60,11 @@ const checkConsent = async () => {
 				.map((a: any) => a.policy?.id),
 		);
 
+		// required always shows regardless of show_on_login — that flag only
+		// controls whether a non-required policy gets requested immediately at
+		// login versus later via a form instead.
 		pendingPolicies.value = sitePolicies.value.filter(
-			(sp) => !activePolicyIds.has(sp.policy.id),
+			(sp) => !activePolicyIds.has(sp.policy.id) && (sp.policy.required || sp.policy.show_on_login),
 		);
 
 		if (pendingPolicies.value.length) {
@@ -135,8 +138,8 @@ watch(isOnPolicyPage, (onPolicy) => {
 					{{ currentPolicy.policy.notification }}
 				</p>
 				<NuxtLink
-					v-if="currentPolicy.policy.type"
-					:to="`/policies/${currentPolicy.policy.type}`"
+					v-if="currentPolicy.policy.key"
+					:to="`/policy/${currentPolicy.policy.key}`"
 					target="_blank"
 					class="text-accent underline text-sm block mb-6"
 				>

@@ -68,9 +68,24 @@ export default defineEventHandler(async (event: H3Event) => {
 
 	const blob = new Blob([filePart.data], { type: filePart.type });
 	const uploadFormData = new FormData();
+	uploadFormData.append('folder', config.public.paymentProofFolder as string);
 	uploadFormData.append('file', blob, filePart.filename);
 
-	const uploadedFile = await directusServer.request<{ id: string }>(withToken(TOKEN, uploadFiles(uploadFormData)));
+	let uploadedFile: { id?: string } | undefined;
+	try {
+		uploadedFile = await directusServer.request<{ id: string }>(withToken(TOKEN, uploadFiles(uploadFormData)));
+	} catch (error: any) {
+		// See server/api/abstracts/upload-figure.post.ts — ofetch throws its own
+		// FetchError on non-2xx with the real Directus validation detail nested
+		// under error.data, which was previously going unlogged/unhandled.
+		console.error('[payment-proof] Directus upload failed:', JSON.stringify(error?.data ?? error));
+		throw createError({ statusCode: 502, statusMessage: 'Could not upload the file. Please try again.' });
+	}
+
+	if (!uploadedFile?.id) {
+		console.error('[payment-proof] Directus upload returned no file id:', uploadedFile);
+		throw createError({ statusCode: 502, statusMessage: 'Could not upload the file. Please try again.' });
+	}
 
 	await directusServer.request(withToken(TOKEN, updateItem('congress_orders' as any, orderId, { payment_proof: uploadedFile.id })));
 

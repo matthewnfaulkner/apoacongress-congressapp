@@ -62,6 +62,14 @@ export default defineEventHandler(async (event: H3Event): Promise<CreateBundleRe
 		if (line.quantity > option.quantityRemaining) {
 			throw createError({ statusCode: 409, statusMessage: `Not enough "${option.name}" remaining` });
 		}
+
+		// Re-checked here rather than trusted from the client — complete.vue's
+		// own upload gate is display-only, and this is what actually decides
+		// whether an order is missing required evidence. One file per ticket
+		// on the line, not just one per line — quantity 3 needs 3 files.
+		if (option.requiresEvidence && (body?.evidence?.[line.ticketTypeId]?.length ?? 0) !== line.quantity) {
+			throw createError({ statusCode: 400, statusMessage: `Supporting evidence is required for each "${option.name}" ticket` });
+		}
 	}
 
 	// Ticket Tailor enforces the registration-ticket dependency itself and
@@ -132,13 +140,17 @@ export default defineEventHandler(async (event: H3Event): Promise<CreateBundleRe
 	const accessCode = randomBytes(12).toString('hex');
 	// A raw ISO timestamp here read as noisy/unreadable, especially since
 	// Ticket Tailor appends this name to every resulting line item — just the
-	// numeric date (e.g. "19/08/2026") instead of "2026-08-19T14:32:07.123Z".
-	// No longer needs to be parseable for the stale-bundle cleanup flow —
-	// that reads congress_order_owners.date_created instead — so it's free
-	// to just be readable.
-	const formattedDate = new Date().toLocaleDateString('en-GB');
+	// numeric date/time (e.g. "19/08/2026 14:32") instead of
+	// "2026-08-19T14:32:07.123Z". No longer needs to be parseable for the
+	// stale-bundle cleanup flow — that reads congress_order_owners.date_created
+	// instead — so it's free to just be readable. The time is included
+	// alongside the date since multiple bundles can otherwise share the same
+	// date-only name, making them indistinguishable in Ticket Tailor's UI.
+	const now = new Date();
+	const formattedDate = now.toLocaleDateString('en-GB');
+	const formattedTime = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 	const bundleRequest: TTCreateBundleRequest = {
-		name: `Order ${formattedDate}`,
+		name: `Order ${formattedDate} ${formattedTime}`,
 		description,
 		price,
 		booking_fee: bookingFee,
@@ -236,6 +248,15 @@ export default defineEventHandler(async (event: H3Event): Promise<CreateBundleRe
 					// from the initial page load (Site.congress), no need for a second
 					// Directus round-trip for a non-sensitive traceability field.
 					congress: body?.congressId ?? null,
+					// Nested O2M create — Directus creates each congress_order_evidence
+					// row and sets its order_owner to this claim itself. The Flow that
+					// later resolves this claim into a real congress_orders row also
+					// sets each evidence row's own `order` field (see complete.vue).
+					// ticket_type_id is carried over from the map's own key so each row
+					// records which ticket it's evidence for, not just which claim.
+					evidence: Object.entries(body?.evidence ?? {}).flatMap(([ticketTypeId, fileIds]) =>
+						fileIds.map((fileId) => ({ file: fileId, ticket_type_id: ticketTypeId })),
+					),
 				}),
 			),
 		);
@@ -252,13 +273,17 @@ export default defineEventHandler(async (event: H3Event): Promise<CreateBundleRe
 	// different mode segment), which does start fresh — swapped in here since
 	// every bundle here is meant to be its own one-time basket, never a resume.
 	//
-	// Prefilling the widget's name/email fields for a logged-in customer works
-	// via a URL hash fragment, not query params (per Ticket Tailor's own docs:
+	// Prefilling the widget's name/email fields works via a URL hash
+	// fragment, not query params (per Ticket Tailor's own docs:
 	// https://help.tickettailor.com/en/articles/9859154) — and only through
 	// the actual widget.js-rendered widget (see CheckoutEmbed.vue), never a
 	// direct link/redirect ("Passing pre-filled information directly to
 	// checkout URLs is not currently possible").
-	const contact = await getCheckoutContactDetails(event);
+	//
+	// Sourced from this checkout's own form submission first — works
+	// regardless of login status — falling back to the logged-in profile
+	// only if there's no submission (or it's missing these fields).
+	const contact = (await getFormSubmissionContactDetails(body?.formSubmissionId)) ?? (await getCheckoutContactDetails(event));
 	const presetDataFragment = contact
 		? `&preset_data=1#p[first_name]=${encodeURIComponent(contact.firstName)}&p[last_name]=${encodeURIComponent(contact.lastName)}&p[email]=${encodeURIComponent(contact.email)}`
 		: '';

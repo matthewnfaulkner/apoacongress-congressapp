@@ -11,6 +11,8 @@ export interface TicketEnrichment {
 	checkIn: string | null;
 	checkOut: string | null;
 	membersOnly: boolean;
+	requiresEvidence: boolean;
+	evidenceDetails: string | null;
 }
 
 interface CongressTicketRow {
@@ -18,7 +20,7 @@ interface CongressTicketRow {
 	charge:
 		| (Pick<
 				CongressCharge,
-				'id' | 'description' | 'category' | 'sub_category' | 'details' | 'members_only' | 'tagline' | 'short_description'
+				'id' | 'description' | 'category' | 'sub_category' | 'details' | 'members_only' | 'tagline' | 'short_description' | 'requires_evidence' | 'evidence_details'
 		  > & {
 				hotel:
 					| (Pick<Hotel, 'id' | 'name' | 'star_rating' | 'image'> & { congresses: Array<{ tagline: string | null }> })
@@ -59,7 +61,7 @@ export async function fetchTicketEnrichment(ticketTypeIds: string[]): Promise<Ma
 						'id',
 						{
 							charge: [
-								'id', 'description', 'category', 'sub_category', 'details', 'members_only', 'tagline', 'short_description',
+								'id', 'description', 'category', 'sub_category', 'details', 'members_only', 'tagline', 'short_description', 'requires_evidence', 'evidence_details',
 								{ hotel: ['id', 'name', 'star_rating', 'image', { congresses: ['tagline'] }] },
 								{ details_page: ['permalink'] },
 							],
@@ -107,6 +109,8 @@ export async function fetchTicketEnrichment(ticketTypeIds: string[]): Promise<Ma
 			checkIn: stayDetail?.check_in ?? null,
 			checkOut: stayDetail?.check_out ?? null,
 			membersOnly: charge.members_only ?? false,
+			requiresEvidence: charge.requires_evidence ?? false,
+			evidenceDetails: charge.evidence_details ?? null,
 		});
 	}
 

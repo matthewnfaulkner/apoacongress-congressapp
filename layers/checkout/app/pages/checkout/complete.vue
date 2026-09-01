@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import type { Form, FormField, Site } from '#shared/types/schema'
-import type { CreateBundleResponse } from '../../types/checkout'
+import type { CreateBundleResponse, CheckoutTicketOption } from '../../types/checkout'
 import type FormBuilder from '~/components/forms/FormBuilder.vue'
+import { checkoutEventOptions } from '../../utils/checkout-options'
+import EvidenceUploadField  from '../../components/checkout/EvidenceUploadField.vue'
 
 const { data: checkoutEvent } = useCheckoutEvent()
 const { store, isEmpty } = useCheckoutBasket()
@@ -54,6 +56,39 @@ const creating = ref(false)
 const createError = ref<string | null>(null)
 const formBuilderRef = ref<InstanceType<typeof FormBuilder> | null>(null)
 
+// One basket line per ticket type whose linked congress_charge has
+// requires_evidence set (see congress-ticket-enrichment.ts) — each gets its
+// own upload field below, keyed by ticket type id, but that one field needs
+// as many files as tickets on the line (quantity), not just one.
+interface EvidenceEntry {
+  ticketTypeId: string
+  option: CheckoutTicketOption
+  quantity: number
+}
+
+const evidenceEntries = computed<EvidenceEntry[]>(() => {
+  const options = checkoutEventOptions(checkoutEvent.value)
+  return store.lines.flatMap((line) => {
+    const option = options.find((candidate) => candidate.id === line.ticketTypeId)
+    return option?.requiresEvidence ? [{ ticketTypeId: line.ticketTypeId, option, quantity: line.quantity }] : []
+  })
+})
+
+// Not persisted in the basket store — File objects aren't serializable, and
+// there's no server-side draft to restore them from either, unlike
+// checkoutFormValues. Navigating away and back means re-uploading.
+const evidenceFiles = ref<Record<string, File[]>>({})
+
+const evidenceMissing = computed(() =>
+  evidenceEntries.value.some((entry) => (evidenceFiles.value[entry.ticketTypeId]?.length ?? 0) !== entry.quantity),
+)
+
+// Only true once "Proceed to Payment" has actually been clicked and found a
+// missing file — drives each EvidenceUploadField's own :invalid prop, so the
+// "required" message shows up attached to the specific empty field instead
+// of only as a disconnected banner elsewhere on the page.
+const evidenceSubmitAttempted = ref(false)
+
 // Polled (cached server-side, see checkTicketTailorHealth) so a Ticket
 // Tailor outage shows up here — before the customer fills out the whole
 // form — rather than only surfacing once proceedToPayment's own bundle.post.ts
@@ -71,14 +106,54 @@ const checkoutUnavailable = computed(() => health.value?.available === false || 
 async function proceedToPayment() {
   if (checkoutUnavailable.value) return
 
+  if (evidenceMissing.value) {
+    evidenceSubmitAttempted.value = true
+    createError.value = 'Please upload the required evidence for each ticket before continuing.'
+    return
+  }
+
   creating.value = true
   createError.value = null
 
   try {
+    // Checked (but not yet actually submitted) before evidence is uploaded —
+    // no point uploading files to Directus for a form that's about to fail
+    // its own validation anyway.
+    if (checkoutForm.value) {
+      const formIsValid = await formBuilderRef.value?.validate()
+      if (!formIsValid) {
+        creating.value = false
+        return
+      }
+    }
+
+    // Uploaded here rather than as each file is picked — no point leaving
+    // files sitting in Directus for a checkout the customer never finishes.
+    // Only meaningful the first time (before a bundle exists) — an existing
+    // bundle already has its evidence attached from when it was created.
+    let evidence: Record<string, string[]> | undefined
+    if (!store.bundle) {
+      evidence = {}
+      for (const entry of evidenceEntries.value) {
+        const files = evidenceFiles.value[entry.ticketTypeId] ?? []
+        const fileIds: string[] = []
+        for (const file of files) {
+          const uploadFormData = new FormData()
+          uploadFormData.append('file', file)
+          const uploaded = await $fetch<{ id: string }>('/api/checkout/evidence-upload', {
+            method: 'POST',
+            body: uploadFormData,
+          })
+          fileIds.push(uploaded.id)
+        }
+        evidence[entry.ticketTypeId] = fileIds
+      }
+    }
+
     // One button doing double duty: submits the optional checkout_form
     // (its own submit button is hidden — see :show-submit-button below)
-    // before creating the bundle. A failed/invalid form submission stops
-    // here — FormBuilder already shows the validation/error state itself.
+    // before creating the bundle. A failed submission stops here —
+    // FormBuilder already shows the validation/error state itself.
     if (checkoutForm.value) {
       const submitted = await formBuilderRef.value?.submit()
       if (!submitted) {
@@ -103,6 +178,7 @@ async function proceedToPayment() {
           orderId: orderId.value,
           formSubmissionId: formBuilderRef.value?.lastSubmissionId ?? null,
           congressId: congressId.value,
+          evidence,
         },
       })
       store.setBundle(bundle)
@@ -127,7 +203,7 @@ async function proceedToPayment() {
     <div v-if="isEmpty" class="text-description">
       Your basket is empty. <NuxtLink :to="checkoutStepLink('/checkout', orderId)" class="text-accent underline">Start your registration</NuxtLink>.
     </div>
-
+    
     <template v-else>
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto items-start">
         <div>
@@ -148,12 +224,23 @@ async function proceedToPayment() {
             <UCheckbox v-model="saveDetails" label="Save my details for next time" color="neutral" size="xl" :ui="{base: ' ring-neutral'}"/>
 
           </div>
+         
         </div>
         
 
         <div class="text-center">
           <CheckoutBasketSummary :checkout-event="checkoutEvent" />
-
+           <div v-if="evidenceEntries.length" class="mt-5 space-y-3">
+            <EvidenceUploadField
+              v-for="entry in evidenceEntries"
+              :key="entry.ticketTypeId"
+              v-model="evidenceFiles[entry.ticketTypeId]"
+              :ticket-name="entry.option.name"
+              :instructions="entry.option.evidenceDetails"
+              :count="entry.quantity"
+              :invalid="evidenceSubmitAttempted"
+            />
+          </div>
           <p v-if="checkoutUnavailable" class="text-error text-sm mb-3">Checkout is temporarily unavailable. Please try again shortly.</p>
           <p v-else-if="createError" class="text-error text-sm mb-3">{{ createError }}</p>
 

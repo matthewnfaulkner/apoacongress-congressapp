@@ -96,10 +96,12 @@ async function handleFileChange(event: Event) {
   <div class="bg-warning/10 border border-warning rounded-lg p-3">
     <template v-if="instructions">
       <h1 class="text-2xl font-semibold text-foreground mb-1">Payment instructions</h1>
-      <p class="text-description whitespace-pre-line mb-3">{{ instructions }}</p>
+      <p class="text-left text-description whitespace-pre-line mb-3 bg-background border border-warning/30 rounded-md p-3 lg:max-w-[50%] mx-auto">
+        {{ instructions }}
+      </p>
     </template>
 
-    <h3 class="text-sm font-semibold text-foreground mb-1">Upload proof of payment</h3>
+    <h3 class="text-lg font-semibold text-foreground mb-1">Upload proof of payment</h3>
     <p class="text-description mb-2">
       Your payment is still pending. Please upload a receipt or bank transfer confirmation so we can verify it.
     </p>

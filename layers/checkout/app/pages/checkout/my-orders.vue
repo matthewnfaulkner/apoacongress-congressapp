@@ -49,14 +49,29 @@ const emailState = reactive<Partial<EmailSchema>>({ email: undefined })
 const requesting = ref(false)
 const requestSent = ref(false)
 
+const turnstileToken = ref<string>()
+const turnstileRef = ref<{ reset: () => void } | null>(null)
+const captchaError = ref<string | null>(null)
+
 async function requestAccessLink(submitEvent: FormSubmitEvent<EmailSchema>) {
+  if (!turnstileToken.value) {
+    captchaError.value = 'Please complete the CAPTCHA before submitting.'
+    return
+  }
+  captchaError.value = null
+
   requesting.value = true
   try {
     await $fetch('/api/checkout/orders-access/request', {
       method: 'POST',
-      body: { email: submitEvent.data.email, congress: congressId },
+      body: { email: submitEvent.data.email, congress: congressId, turnstileToken: turnstileToken.value },
     })
     requestSent.value = true
+  } catch {
+    // A Turnstile token is single-use, so a failed attempt needs a fresh one
+    // — same handling as DynamicForm.vue's own onSubmitForm.
+    turnstileToken.value = undefined
+    turnstileRef.value?.reset()
   } finally {
     requesting.value = false
   }
@@ -66,7 +81,6 @@ async function requestAccessLink(submitEvent: FormSubmitEvent<EmailSchema>) {
 <template>
 
 <Container class="my-8 max-w-2xl">
-    {{ error }}
     <template v-if="isUnauthenticated">
       <UCard class="lg:w-[50%] m-auto h-full mt-30">
         <h1 class="text-2xl font-semibold text-foreground mb-6 font-heading">My Orders</h1>
@@ -79,6 +93,10 @@ async function requestAccessLink(submitEvent: FormSubmitEvent<EmailSchema>) {
             <UFormField label="Email" name="email" description="Enter the email you used at checkout to receive a link to your orders." size="xl">
               <UInput v-model="emailState.email" class="w-80" />
             </UFormField>
+            <div class="flex flex-col items-start gap-2">
+              <NuxtTurnstile ref="turnstileRef" v-model="turnstileToken" />
+              <p v-if="captchaError" class="text-sm text-red-500">{{ captchaError }}</p>
+            </div>
             <UButton color="accent" size="xl" type="submit" :loading="requesting" label="Send me a link" />
           </UForm>
 

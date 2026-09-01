@@ -28,7 +28,7 @@ const profileMenuItems = ref<DropdownMenuItem[]>([
     {
         label: 'Policy Agreements',
         icon: 'i-lucide-shield-check',
-        to: '/policies',
+        to: '/policy',
     },
     {
         label: 'Request My Data',
@@ -646,7 +646,6 @@ onMounted(async () => {
 
 </script>
 <template>
-    
     <UError
       v-if="!isLoggedIn"
       redirect="/login"

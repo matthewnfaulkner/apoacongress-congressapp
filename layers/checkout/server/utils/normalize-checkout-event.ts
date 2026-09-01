@@ -66,6 +66,8 @@ function normalizeTicketType(
 		availableUntil,
 		requiresMembership,
 		isOrderable,
+		requiresEvidence: enrichment?.requiresEvidence ?? false,
+		evidenceDetails: enrichment?.evidenceDetails ?? null,
 	};
 }
 
