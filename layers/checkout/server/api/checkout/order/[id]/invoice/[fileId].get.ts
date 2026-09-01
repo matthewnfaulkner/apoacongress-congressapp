@@ -12,6 +12,11 @@ import type { H3Event } from 'h3';
  * to in the first place (see getCheckoutEmailSession). Ownership is instead
  * checked here the same way order.get.ts does, then the file is fetched
  * with the bot token and proxied straight through.
+ *
+ * Also accepts the checkout-time guest token (?token=, see
+ * CreateBundleResponse.guestToken) as a third path, same as
+ * payment-proof.post.ts — a guest landing on confirmation.vue right after
+ * checkout has neither a session nor an email session yet.
  */
 export default defineEventHandler(async (event: H3Event) => {
 	const config = useRuntimeConfig();
@@ -22,7 +27,23 @@ export default defineEventHandler(async (event: H3Event) => {
 		throw createError({ statusCode: 400, statusMessage: 'orderId and fileId are required' });
 	}
 
-	if (!(await verifyOrderOwnership(event, orderId))) {
+	let verified = await verifyOrderOwnership(event, orderId);
+
+	if (!verified) {
+		const guestToken = typeof getQuery(event).token === 'string' ? (getQuery(event).token as string) : null;
+		if (guestToken) {
+			try {
+				const congressOrder = await directusServer.request<{ token: string | null }>(
+					withToken(config.directusOrderBotToken as string, readItem('congress_orders' as any, orderId, { fields: ['token'] })),
+				);
+				verified = !!congressOrder.token && congressOrder.token === guestToken;
+			} catch {
+				verified = false;
+			}
+		}
+	}
+
+	if (!verified) {
 		throw createError({ statusCode: 404, statusMessage: 'Not found' });
 	}
 

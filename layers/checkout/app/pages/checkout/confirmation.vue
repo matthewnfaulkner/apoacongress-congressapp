@@ -57,6 +57,15 @@ function handleProofUploaded(proof: NonNullable<TTOrder['local_payment_proof']>)
   if (order.value) order.value.local_payment_proof = proof
 }
 
+// A logged-in customer's session already authorizes the download
+// (verifyOrderOwnership); a guest right after checkout has neither a
+// session nor an email session yet, so the checkout-time token has to ride
+// along in the URL instead (see order/[id]/invoice/[fileId].get.ts).
+function invoiceUrl(invoiceId: string) {
+  const base = `/api/checkout/order/${orderId}/invoice/${invoiceId}`
+  return guestOrderToken ? `${base}?token=${guestOrderToken}` : base
+}
+
 const heading = computed(() => {
   if (!order.value) return 'Processing your order'
   if (order.value.status === 'completed') return 'Order confirmed'
@@ -194,6 +203,28 @@ onMounted(() => {
             <span>{{ formatMoney(order.total, order.currency.code) }}</span>
           </div>
         </div>
+
+        <template v-if="order.local_invoices?.length">
+          <h3 class="font-semibold text-foreground mt-6 mb-3">Invoices</h3>
+          <ul>
+            <template v-for="(invoice, index) in order.local_invoices" :key="invoice.id">
+              <USeparator v-if="index > 0" />
+              <li class="flex items-center gap-2 py-2">
+                <span class="text-sm text-description">{{ new Date(invoice.uploaded_on).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) }} -</span>
+
+                <UButton
+                  :to="invoiceUrl(invoice.id)"
+                  target="_blank"
+                  variant="ghost"
+                  color="neutral"
+                  size="xl"
+                  icon="i-lucide-download"
+                  :label="invoice.filename_download"
+                />
+              </li>
+            </template>
+          </ul>
+        </template>
       </div>
 
       <div v-else class="flex flex-col items-center gap-4 text-center text-description">
@@ -216,6 +247,30 @@ onMounted(() => {
         If anything looks wrong or you don't receive a confirmation shortly, please
         <NuxtLink  :to="{ path: '/contact', query: { issue: `Order #${orderId.slice(3)}: ` } }" class="text-accent underline">contact support</NuxtLink>.
       </p>
+
+      <UAlert
+        color="info"
+        variant="subtle"
+        icon="i-lucide-bed"
+        title="Don't forget your accommodation"
+        class="mt-6"
+        :ui="{
+            title:'text-xl',
+            description: 'text-md'
+        }"
+      >
+        <template #description>
+          Thank you for registering for the congress!
+          <br> 
+          Now's the perfect time to book your accommodation.
+          <br>
+          You can get exclusive rates as a congress attendee. 
+          <br>
+          <NuxtLink to="/accommodation" class="text-accent underline">
+            Find Out More ->
+          </NuxtLink>
+        </template>
+      </UAlert>
     </div>
   </Container>
 </template>

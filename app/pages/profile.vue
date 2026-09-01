@@ -646,7 +646,6 @@ onMounted(async () => {
 
 </script>
 <template>
-    
     <UError
       v-if="!isLoggedIn"
       redirect="/login"
