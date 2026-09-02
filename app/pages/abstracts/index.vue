@@ -56,8 +56,7 @@ useSeoMeta({
 		<PageBuilder v-if="pageBlocks" :sections="pageBlocks" />
         <section>
             <div  class="text-center">
-                <UButton v-if="isLoggedIn" :to="localePath('/abstracts/submission')" label="Go to Abstract Submission" variant="solid" color="accent" size="xl"/>
-                <UButton v-else to="/login"  label="Please Log in to submit" variant="solid" color="accent" size="xl"/>
+                <UButton :to="localePath('/abstracts/submission')" label="Go to Abstract Submission" variant="solid" color="accent" size="xl"/>
             </div>
         </section>
         
