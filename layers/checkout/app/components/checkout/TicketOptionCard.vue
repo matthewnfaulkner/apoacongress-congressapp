@@ -42,7 +42,7 @@ const showDetails = ref(false)
       <!-- shortDescription (congress_charges.short_description) is the card's
            own preview text — the fuller richDescription/description live in
            the "View details" modal instead of being truncated here. -->
-      <div v-if="option.shortDescription" v-html="option.shortDescription" class="text-description text-md mt-0.5 mb-4 line-clamp-1">
+      <div v-if="option.shortDescription" v-html="option.shortDescription" class="text-description mt-0.5 mb-4">
       </div>
       <UButton
         v-if="option.richDescription || option.detailsPermalink"
