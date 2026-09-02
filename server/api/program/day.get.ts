@@ -59,6 +59,12 @@ async function handler(event: H3Event) {
                     deep: {
                         timeslots: { _sort: 'starttime' },
                         schedules: {
+                            // Should be exactly one published schedule per day, but if a
+                            // content mistake leaves two marked published at once, this
+                            // caps it to just the most recently touched one instead of
+                            // fetching (and rendering) every session twice.
+                            _limit: 1,
+                            _sort: '-date_updated',
                             sessions: {
                                 events: { children: { _sort: 'relative_start' }, _sort: 'relative_start' },
                                 _sort: 'starttime',
