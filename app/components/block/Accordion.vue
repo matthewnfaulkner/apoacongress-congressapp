@@ -29,7 +29,7 @@ const props = defineProps<AccordionProps>();
 	<Headline :headline="data.headline" class="pt-5"/>
 
     <UAccordion type="multiple" :items="data.items"
-        class="w-200 m-auto"
+        class="max-w-200 m-auto"
         :ui="{
             content: 'h-fit',
             label: 'text-xl',

@@ -9,7 +9,7 @@ const { as = 'div', className = '', role } = defineProps<ContainerProps>();
 </script>
 
 <template>
-	<component :is="as" :class="['max-w-7xl mx-auto px-4 sm:px-6 lg:px-16 w-full', className]" :role="role">
+	<component :is="as" :class="['max-w-7xl mx-auto px-4 sm:px-6 lg:px-16 w-full container', className]" :role="role">
 		<slot />
 	</component>
 </template>
