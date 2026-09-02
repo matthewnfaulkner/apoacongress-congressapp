@@ -159,6 +159,7 @@ async function requestAccessLink(submitEvent: FormSubmitEvent<EmailSchema>) {
             label="View Details"
           />
           <UButton
+          v-if="order.status === 'completed'"
           :to="`/checkout?orderId=${order.id}`"
           variant="outline"
           color="accent"
