@@ -3,7 +3,7 @@ import { withLeadingSlash, withoutTrailingSlash } from 'ufo';
 import * as z from 'zod'
 import type { FormSubmitEvent, FormErrorEvent } from '@nuxt/ui'
 import { readItems, deleteItem } from '@directus/sdk';
-import type { AbstractSubmission, AbstractSubmissionValue, AbstractSubmissionFile, CongressAbstracts } from '~~/shared/types/schema';
+import type { AbstractSubmission, AbstractSubmissionValue, AbstractSubmissionFigure, Abstract } from '~~/shared/types/schema';
 import type { AccordionItem } from '@nuxt/ui'
 import { UBadge, UDropdownMenu, UButton } from '#components';
 import type { TableColumn, TableRow } from '@nuxt/ui';
@@ -26,10 +26,10 @@ const isLoggedIn = computed(() =>
 const turnstileToken = ref();
 const turnstileRef = ref<{ reset: () => void } | null>(null);
 
-const congressAbstract = ref<CongressAbstracts | null>(null);
+const congressAbstract = ref<Abstract | null>(null);
 const submissions = ref<AbstractSubmission[] | null>(null)
 const storeReady = ref(false)
-const categories = ref([]);
+const categories = ref<string[]>([]);
 const guideLines = ref<AccordionItem>([]);
 const guidelinesRef = ref<HTMLElement | null>(null);
 const guidelinesOpen = ref<string | undefined>(undefined);
@@ -45,8 +45,8 @@ function openGuidelines(e: Event) {
 }
 
 
-const { data } = await useAsyncData <CongressAbstracts[]>('abstract_submit', async() => {
-      return await $directus.request<CongressAbstracts[]>(readItems(
+const { data } = await useAsyncData <Abstract[]>('abstract_submit', async() => {
+      return await $directus.request<Abstract[]>(readItems(
         'abstracts',
         {   
             limit: 1,
@@ -65,11 +65,11 @@ if(!data.value) {
     throw new Error('No Congress Abstract');
 }
 
-data.value = data.value as CongressAbstracts[];
+data.value = data.value as Abstract[];
 
 congressAbstract.value = data.value[0] || null;
 const submission_limit = congressAbstract.value?.submission_limit || 100;
-categories.value = congressAbstract?.value?.categories; 
+categories.value = congressAbstract?.value?.categories ?? [];
 guideLines.value = [
     {
         label: 'Submission Guidelines',
@@ -162,7 +162,7 @@ const submissionsTable = computed<Submission[]>(() => {
       status: submission.status,
       submitted: submission.date_created,
       keywords: submission.keywords ?? [],
-      figures: (submission.figures as AbstractSubmissionFile[]) ?? [],
+      figures: (submission.figures as AbstractSubmissionFigure[]) ?? [],
       ...valuesObj
     } as unknown as Submission;
   });
@@ -579,12 +579,12 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
         size: 'xl',
         trailingIcon: 'i-lucide-arrow-right',
         class: 'rounded-full',
-        label: 'Log In',
+        label: 'Sign In',
       }"
       :error="{
         statusCode: 404,
         statusMessage: 'Sign In Required',
-        message: 'You need to sign in to access this page.'
+        message: 'You need to sign in to submit an abstract'
       }"
     />
 	<div  v-else class="relative my-5">
@@ -814,7 +814,7 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                                   v-model="state.consent"
                                   size="lg"
                                   variant="card"
-                                  :label="congressAbstract.declaration_statement || 'I hereby agree to the terms and conditions of abstract submission.'" color="accent">
+                                  :label="congressAbstract?.declaration_statement || 'I hereby agree to the terms and conditions of abstract submission.'" color="accent">
                                   <template #label="{ label }">
                                     <span>{{ label }}</span>
                                     <a href="#" class="text-accent underline ml-1" @click="openGuidelines">View submission guidelines</a>
