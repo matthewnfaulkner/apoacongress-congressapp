@@ -40,7 +40,10 @@ const showNationalRedirect = computed(
 // letting a Taiwan visitor register through the international checkout (or
 // showing nothing), tell them outright so they don't complete a
 // registration that isn't meant for them.
-const showUnavailableWarning = computed(() => !nationalRedirectUrl && isTaiwanVisitor.value)
+const unavailableWarningDismissed = ref(false)
+const showUnavailableWarning = computed(
+  () => !nationalRedirectUrl && isTaiwanVisitor.value && !unavailableWarningDismissed.value,
+)
 
 function cancelRedirect() {
   redirectCancelled.value = true
@@ -107,7 +110,9 @@ onUnmounted(() => {
         variant="subtle"
         icon="i-lucide-triangle-alert"
         title="Registration unavailable"
+        close
         class="mb-6"
+        @update:open="unavailableWarningDismissed = true"
       >
         <template #description>
           It looks like you're registering from Taiwan. Registration through this site is not currently available for
