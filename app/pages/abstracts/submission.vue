@@ -573,7 +573,7 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
 <template>
     <UError
       v-if="!isLoggedIn"
-      redirect="/login"
+      redirect="/login?redirect=/abstracts/submission"
       :clear="{
         color: 'neutral',
         size: 'xl',
