@@ -20,6 +20,7 @@ export interface FooterProps {
 		items: NavigationItem[];
 	};
 	site: {
+		title?: string | null;
 		logo?: DirectusFile | string | null;
 		logo_dark_mode?: DirectusFile | string | null;
 		description?: string | null;
@@ -116,7 +117,7 @@ const darkLogoUrl = computed(() => getDirectusAssetURL(props.site.logo_dark_mode
 			<Container class="text-white" v-if="props.organiser">
 				<div class="flex flex-col md:flex-row justify-between items-start gap-8 pt-8">
 					<div class="flex flex-col items-start flex-1">
-						<Tagline tagline="Conference Scretariat" class="text-white"> </Tagline>
+						<Tagline tagline="Conference Secretariat" class="text-white"> </Tagline>
 						<NuxtLink :to="`/organisations/${props.organiser.id}`" class="inline-block transition-opacity hover:opacity-70">
 							<img
 								v-if="OrgLogoUrl"
@@ -132,6 +133,11 @@ const darkLogoUrl = computed(() => getDirectusAssetURL(props.site.logo_dark_mode
 					</div>
 				</div>
 			</Container>
+		</template>
+		<template #bottom>
+			<p class="text-center text-sm text-white/70">
+				&copy; {{ new Date().getFullYear() }} {{ props.site.title }}. All rights reserved.
+			</p>
 		</template>
 	</UFooter>
 </template>
