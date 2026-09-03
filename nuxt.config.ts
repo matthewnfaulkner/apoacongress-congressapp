@@ -317,7 +317,7 @@ export default defineNuxtConfig({
 	},
 	vite: {
 		plugins: [
-		tailwindcss(),
+			tailwindcss(),
 		],
 		server: {
 			allowedHosts: ['matthews-macbook-pro.tailb81239.ts.net']

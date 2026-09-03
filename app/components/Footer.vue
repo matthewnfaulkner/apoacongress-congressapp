@@ -53,6 +53,7 @@ const darkLogoUrl = computed(() => getDirectusAssetURL(props.site.logo_dark_mode
 <template>
 	<UFooter v-if="site" ref="footerRef" class="bg-secondary py-16" :ui="{ center: 'justify-start'}">
 		<template #left>
+			
 			<div class="flex-1 text-white px-4 pt-4">
 					<NuxtLink to="/" class="inline-block transition-opacity hover:opacity-70">
 						<img

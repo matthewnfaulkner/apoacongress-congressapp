@@ -11,8 +11,9 @@ const nationalRedirectUrl = config.public.checkoutNationalRedirectUrl as string 
 
 const loginPromptDismissed = ref(false)
 
-// Only fetched at all when there's actually somewhere to redirect to — no
-// point resolving geo-IP for a redirect that can't happen. Explicit geo
+// Needed regardless of whether a national redirect URL is configured —
+// either drives the countdown redirect below, or (when no redirect URL
+// exists at all) the "registration unavailable" warning. Explicit geo
 // headers forwarded here matter for SSR: Nitro's same-origin internal fetch
 // doesn't automatically carry over the original inbound request's headers,
 // so without this the server-rendered pass would never see the visitor's
@@ -21,9 +22,10 @@ const loginPromptDismissed = ref(false)
 // edge just like the original page load was.
 const { data: localityData } = await useFetch<{ locality: 'national' | 'international' }>('/api/checkout/locality', {
   key: 'checkout-locality',
-  immediate: !!nationalRedirectUrl,
   headers: useRequestHeaders(['cf-ipcountry', 'x-vercel-ip-country', 'x-country']),
 })
+
+const isTaiwanVisitor = computed(() => localityData.value?.locality === 'national')
 
 const REDIRECT_SECONDS = 8
 const redirectSecondsLeft = ref(REDIRECT_SECONDS)
@@ -31,8 +33,14 @@ const redirectCancelled = ref(false)
 let redirectInterval: ReturnType<typeof setInterval> | null = null
 
 const showNationalRedirect = computed(
-  () => !!nationalRedirectUrl && localityData.value?.locality === 'national' && !redirectCancelled.value,
+  () => !!nationalRedirectUrl && isTaiwanVisitor.value && !redirectCancelled.value,
 )
+
+// No national site configured to send them to at all — rather than silently
+// letting a Taiwan visitor register through the international checkout (or
+// showing nothing), tell them outright so they don't complete a
+// registration that isn't meant for them.
+const showUnavailableWarning = computed(() => !nationalRedirectUrl && isTaiwanVisitor.value)
 
 function cancelRedirect() {
   redirectCancelled.value = true
@@ -91,6 +99,20 @@ onUnmounted(() => {
           {{ redirectSecondsLeft }} second{{ redirectSecondsLeft === 1 ? '' : 's' }}…
           <NuxtLink :to="nationalRedirectUrl!" class="text-accent underline">Go now</NuxtLink>, or
           <button type="button" class="text-accent underline" @click="cancelRedirect">stay on this page</button>.
+        </template>
+      </UAlert>
+      <UAlert
+        v-if="showUnavailableWarning"
+        color="warning"
+        variant="subtle"
+        icon="i-lucide-triangle-alert"
+        title="Registration unavailable"
+        class="mb-6"
+      >
+        <template #description>
+          It looks like you're registering from Taiwan. Registration through this site is not currently available for
+          Taiwan-based visitors. Please
+          <NuxtLink to="/contact-us" class="text-accent underline">contact us</NuxtLink> for assistance.
         </template>
       </UAlert>
     </template>
