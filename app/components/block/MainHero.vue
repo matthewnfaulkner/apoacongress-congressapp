@@ -388,6 +388,7 @@ onMounted(() => {
 									<template #trailing><p class="text-xs">Seconds</p></template>
 								</UBadge>
 							</vue-countdown>
+							
 						</ClientOnly>
 					</div>
 					
@@ -410,6 +411,7 @@ onMounted(() => {
 										fields: 'partners',
 										mode: 'modal' })
 								">
+								
 							<div 
 								v-for="partner in data.partners" 
 								:key="partner.id" class="flex flex-col items-center gap-0.5 group shrink-0"
