@@ -74,7 +74,7 @@ const { data: tickets, pending } = useAsyncData<SupportCase[]>(
 <template>
     <UError
         v-if="!isLoggedIn"
-        redirect="/login"
+        redirect="/login?redirect=/support/mytickets"
         :clear="{
             color: 'neutral',
             size: 'xl',

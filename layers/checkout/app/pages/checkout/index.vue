@@ -75,7 +75,7 @@ onUnmounted(() => {
       >
         <template #description>
           We recommend signing in to your APOA 2027 account. It will make managing your congress experience much easier.
-          <NuxtLink to="/login" class="text-accent underline">Click to Sign In</NuxtLink>.
+          <NuxtLink to="/login?redirect=/checkout" class="text-accent underline">Click to Sign In</NuxtLink>.
         </template>
       </UAlert>
       <UAlert

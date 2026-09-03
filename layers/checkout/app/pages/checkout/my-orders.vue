@@ -101,7 +101,7 @@ async function requestAccessLink(submitEvent: FormSubmitEvent<EmailSchema>) {
           </UForm>
 
           <p class="text-description text-sm">
-            Have an account? <NuxtLink to="/login" class="text-accent underline">Log in</NuxtLink> instead.
+            Have an account? <NuxtLink to="/login?redirect=/checkout/my-orders" class="text-accent underline">Log in</NuxtLink> instead.
           </p>
         </div>
       </UCard>

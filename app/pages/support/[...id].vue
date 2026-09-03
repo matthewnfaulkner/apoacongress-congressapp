@@ -151,7 +151,7 @@ const openFile = async (fileId: string) => {
 <template>
     <UError
         v-if="!isLoggedIn"
-        redirect="/login"
+        :redirect="`/login?redirect=/support/${ticketId}`"
         :clear="{
             color: 'neutral',
             size: 'xl',
