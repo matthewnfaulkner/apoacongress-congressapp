@@ -11,7 +11,7 @@ interface PricingCard {
 		title: string;
 		description?: string;
 		price?: string;
-		badge?: Array<{label: string, link?: string}> | null;
+		badge?: Array<{label: string, link?: string, target?: 'blank' | 'self' | null}> | null;
 		features?: string[] | Feature[];
 		category?: 'registration' | 'accommodation';
 		congress_charges?: Array<{
@@ -159,6 +159,8 @@ watchEffect(() => {
 					color= "secondary"
 					class="text-xs font-medium uppercase"
 					:to="badge.link"
+					:target="badge.target === 'blank' ? '_blank' : undefined"
+					:rel="badge.target === 'blank' ? 'noopener noreferrer' : undefined"
 					:data-directus="
 						
 						setAttr({

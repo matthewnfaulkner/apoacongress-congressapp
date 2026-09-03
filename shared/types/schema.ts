@@ -607,7 +607,7 @@ export interface BlockPricingCard {
 	/** @description Enabling this changes how the pricing card data is configured. Unchecked - completely manual. Checked - you can select from congress charges to populate the card data. */
 	use_congress_charges?: boolean;
 	category?: 'accommodation' | 'registration' | null;
-	badge?: Array<{ label: string; link: string }> | null;
+	badge?: Array<{ label: string; link: string; target?: 'blank' | 'self' | null }> | null;
 	button_group?: BlockButtonGroup | string | null;
 	congress_charges?: BlockPricingCardsCongressCharge[] | string[];
 }

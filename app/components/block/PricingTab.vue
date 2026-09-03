@@ -10,7 +10,7 @@ interface PricingTabProps {
 			label: string;
 			description?: string;
 			price?: string;
-			badge?: Array<{ label: string; link?: string }> | null;
+			badge?: Array<{ label: string; link?: string; target?: 'blank' | 'self' | null }> | null;
 			features?: string[];
 			sort?: number;
 			button_group?: {
