@@ -11,12 +11,6 @@ const localePath = useLocalePath();
 
 const permalink = '/abstracts'
 
-const auth = await useAuthStore();
-
-const isLoggedIn = computed(() =>
-  auth.isAuthenticated !== false
-)
-
 // Handle Live Preview adding version=main which is not required when fetching the main version.
 const version = route.query.version === 'main' ? undefined : (route.query.version as string);
 
