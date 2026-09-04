@@ -3,6 +3,7 @@ import { randomBytes } from 'crypto';
 import type { TTBundle, TTCreateBundleRequest, TTEvent } from '../../../app/types/ticket-tailor';
 import type { BasketLine, CreateBundleRequest, CreateBundleResponse } from '../../../app/types/checkout';
 import { checkoutEventOptions, checkoutEventGroups } from '../../../app/utils/checkout-options';
+import { getCongressConfig } from '../../utils/checkout-congress';
 
 export default defineEventHandler(async (event: H3Event): Promise<CreateBundleResponse> => {
 	const config = useRuntimeConfig();
@@ -36,7 +37,7 @@ export default defineEventHandler(async (event: H3Event): Promise<CreateBundleRe
 	// normalizeCheckoutEvent can also exclude it from allOptions — it must
 	// never be a normal, customer-selectable, $0 option regardless of its own
 	// Ticket Tailor status (see normalizeCheckoutEvent's docstring).
-	const bypassTicketTypeId = await getCongressBypassTicketId();
+	const { tt_bypass_id: bypassTicketTypeId } = await getCongressConfig();
 	const checkoutEvent = applyMembership(normalizeCheckoutEvent(ttEvent, enrichmentById, bypassTicketTypeId), isMember);
 
 	const allOptions = checkoutEventOptions(checkoutEvent);

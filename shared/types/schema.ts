@@ -933,7 +933,7 @@ export interface CongressOrderOwner {
 export interface CongressOrder {
 	/** @primaryKey */
 	id: string;
-	status?: 'published' | 'draft' | 'archived';
+	status?: 'completed' | 'pending' | 'cancelled';
 	user_created?: DirectusUser | string | null;
 	date_created?: string | null;
 	user_updated?: DirectusUser | string | null;
