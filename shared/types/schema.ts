@@ -91,6 +91,7 @@ export interface Abstract {
 	congress?: Congress | string | null;
 	submission_deadline?: string | null;
 	description?: string | null;
+	word_limit?: number | null;
 	submission_limit?: number | null;
 	acceptance_limit?: number | null;
 	required_reviewers?: number | null;
