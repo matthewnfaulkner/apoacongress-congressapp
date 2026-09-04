@@ -2,7 +2,7 @@
 import { withLeadingSlash, withoutTrailingSlash } from 'ufo';
 import * as z from 'zod'
 import type { FormSubmitEvent, FormErrorEvent } from '@nuxt/ui'
-import { readItems, deleteItem } from '@directus/sdk';
+import { readItems, deleteItem, deleteFiles } from '@directus/sdk';
 import type { AbstractSubmission, AbstractSubmissionValue, AbstractSubmissionFigure, Abstract } from '~~/shared/types/schema';
 import type { AccordionItem } from '@nuxt/ui'
 import { UBadge, UDropdownMenu, UButton } from '#components';
@@ -179,7 +179,9 @@ const submissionsTable = computed<Submission[]>(() => {
 const columns: TableColumn<Submission>[] = [
 {
     accessorKey: 'title',
-    header: 'Title'
+    header: 'Title',
+    meta: { class: { td: 'max-w-40 text-wrap whitespace-normal' } },
+
   },
   {
     accessorKey: 'submitted',
@@ -566,6 +568,14 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
 const handleDelete = async() => {
     try {
         if(!toBeDeleted.value) return;
+
+        const filesToDelete = toBeDeleted.value.figures?.map(
+          f => f.file ? typeof f.file === 'string' ? f.file : f.file.id : null
+        ).filter((f): f is string => !!f) 
+          ?? [];
+        if (filesToDelete.length > 0) {
+            await $directus.request(deleteFiles(filesToDelete));
+        }
         await $directus.request(deleteItem('abstract_submissions', toBeDeleted.value.id));
         submissions.value = submissions.value?.filter(s => s.id !== toBeDeleted.value?.id) ?? null;
         openConfirmation.value = false;
