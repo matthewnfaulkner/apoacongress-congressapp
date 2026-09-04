@@ -2,20 +2,23 @@
 import { readMe } from '@directus/sdk';
 import type { VenueVisaInfo, CountryTravelInfo, Site } from '#shared/types/schema';
 
-const travelPageUrl = useRequestURL();
-useSeoMeta({
-	title: 'Travel & Visa Information',
-	description: 'Visa requirements, travel information and entry guidance for APOA 2027 Taiwan.',
-	ogTitle: 'Travel & Visa Information',
-	ogDescription: 'Visa requirements, travel information and entry guidance for APOA 2027 Taiwan.',
-	ogUrl: travelPageUrl.toString(),
-});
-
 const { $directus } = useNuxtApp();
 const auth = useAuthStore();
 const siteDataStore = useSiteDataStore();
 const siteData = siteDataStore.getSiteData() as any;
 const venueId = siteData?.congress?.[0]?.venue?.id as string | undefined;
+
+const congressTitle = computed(() => (siteDataStore.siteData as Site).title ?? 'The congress');
+const congressInfo = computed(() => siteDataStore.congressInfo);
+
+const travelPageUrl = useRequestURL();
+useSeoMeta({
+	title: `Travel & Visa Information | ${congressInfo.value.title || congressTitle.value}`,
+	description: `Visa requirements, travel information and entry guidance for ${congressTitle.value} at the ${congressInfo.value.venue || 'congress venue'}.`,
+	ogTitle: `Travel & Visa Information | ${congressInfo.value.title || congressTitle.value}`,
+	ogDescription: `Visa requirements, travel information and entry guidance for ${congressTitle.value} at the ${congressInfo.value.venue || 'congress venue'}.`,
+	ogUrl: travelPageUrl.toString(),
+});
 
 const isLoggedIn = computed(() => auth.isAuthenticated !== false);
 

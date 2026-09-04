@@ -4,7 +4,7 @@ import AddModal from '@/components/grid/AddModal.vue';
 import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { type scheduleGridItem, GridItemTypes } from '../../types/grid-types';
 import { minutesBetween, toMinutes, removeSeconds } from "@/utils/time-utils";
-import type { CongressDay, CongressSchedule, CongressSessionRoom, VenueRoom } from '#shared/types/schema';
+import type { CongressDay, CongressSchedule, CongressSessionRoom, VenueRoom, Site } from '#shared/types/schema';
 
 
 const route = useRoute();
@@ -32,6 +32,18 @@ const days = computed(() => (congress.value?.days as CongressDay[]) || []);
 const isPreliminary = computed(() =>
 	days.value.some((day) => ((day.schedules as CongressSchedule[]) ?? []).some((schedule) => !!schedule.preliminary)),
 );
+
+const congressTitle = computed(() => (siteDataStore.siteData as Site).title ?? 'The congress');
+const congressInfo = computed(() => siteDataStore.congressInfo);
+
+const plannerUrl = useRequestURL();
+useSeoMeta({
+	title: `Program Planner | ${congressInfo.value.title || congressTitle.value}`,
+	description: `Build your own personal schedule for ${congressTitle.value}${congressInfo.value.tagline ? ` ${congressInfo.value.tagline}` : ''}.`,
+	ogTitle: `Program Planner | ${congressInfo.value.title || congressTitle.value}`,
+	ogDescription: `Build your own personal schedule for ${congressTitle.value}${congressInfo.value.tagline ? ` ${congressInfo.value.tagline}` : ''}.`,
+	ogUrl: plannerUrl.toString(),
+});
 
 function buildSessionGridItems(schedule: CongressSchedule | undefined, day: CongressDay, dayRooms: VenueRoom[]) {
   if (!schedule) return []

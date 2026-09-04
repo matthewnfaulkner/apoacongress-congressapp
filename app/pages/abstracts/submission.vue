@@ -153,6 +153,8 @@ type Submission = {
   category: string,
   authors: string[] | { name: string; title: string; institution: string }[],
   keywords?: string[],
+  conflict?: boolean,
+  conflictDisclosure?: string,
   figures?: { id: string; label: string; file: string | { id: string; filename_download?: string } | null }[],
 }
 
@@ -269,6 +271,8 @@ function getRowItems(row: TableRow<Submission>) {
               existingFilename: typeof figure.file === 'string' ? undefined : figure.file?.filename_download,
             }))
           : [];
+        state.conflict = row.original.conflict ? 'true' : 'false';
+        state.conflictDisclosure = row.original.conflictDisclosure ?? '';
         state.consent = true;
       }
     });
@@ -320,7 +324,9 @@ const schema = z.object({
     figures.every(f => !!f.file),
     { message: "Each figure must have an image uploaded" }
   ),
-  conflict: z.boolean(),
+  conflict: z.string().refine(val => val === 'true' || val === 'false', {
+    message: "Conflict of interest selection is required",
+  }),
   conflictDisclosure: z.string(),
   consent: z.boolean().refine(val => val === true, {
     message: "You must give your consent",
@@ -347,7 +353,7 @@ const state = reactive<Partial<Schema>>({
   category: undefined,
   keywords: [],
   figures: [],
-  conflict: false,
+  conflict: 'false',
   consent: false,
   conflictDisclosure: ''
 })
@@ -360,7 +366,7 @@ function resetState() {
   state.category = undefined;
   state.keywords = [];
   state.figures = [];
-  state.conflict = false;
+  state.conflict = 'false';
   state.conflictDisclosure = '',
   state.consent = false;
   error.value = [];
@@ -538,6 +544,8 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
                     sv('title', formData.title),
                     sv('abstract', formData.abstract),
                     sv('authors', JSON.stringify(formData.authors)),
+                    sv('conflict', formData.conflict.toString()),
+                    sv('conflictDisclosure', formData.conflictDisclosure),
                 ],
             },
         });
@@ -805,15 +813,16 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                             </UFormField>
 
                             <UFormField class="py-5 text-bold" size="xl" name="conflict" label="Conflict of Interest Declaration">
-                                <URadioGroup 
+                              <URadioGroup 
                                   v-model="state.conflict" 
+
                                   :items="[
                                     {
-                                      value: false,
+                                      value: 'false',
                                       label: 'I have no conflicts of interest to declare.'
                                     },
                                     {
-                                      value: true,
+                                      value: 'true',
                                       label: 'I need to declare conflicts of interest.'
                                     }
                                   ]"
@@ -822,7 +831,7 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                                   color="accent"
                                   /> 
                             </UFormField>
-                            <UFormField v-if="state.conflict" class="py-5" name="conflictDisclosure" label="">
+                            <UFormField v-if="state.conflict === 'true'" class="py-5" name="conflictDisclosure" label="">
                               <UTextarea 
                                 v-model="state.conflictDisclosure" 
                                 placeholder="Please provide details of the conflicts of interest." 

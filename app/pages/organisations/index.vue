@@ -1,5 +1,9 @@
 <script setup lang="ts">
-import type { Organisation } from '#shared/types/schema';
+import type { Organisation, Site } from '#shared/types/schema';
+
+const siteDataStore = useSiteDataStore();
+const congressTitle = computed(() => (siteDataStore.siteData as Site).title ?? 'The congress');
+const congressInfo = computed(() => siteDataStore.congressInfo);
 
 const { data, error } = await useFetch<Organisation[]>('/api/organisation', {
 	key: 'organisations',
@@ -45,10 +49,10 @@ const grouped = computed(() => {
 
 const pageUrl = useRequestURL();
 useSeoMeta({
-	title: 'Organisations',
-	description: 'Organisations involved with APOA 2027 Taiwan.',
-	ogTitle: 'Organisations',
-	ogDescription: 'Organisations involved with APOA 2027 Taiwan.',
+	title: `Organisations | ${congressInfo.value.title || congressTitle.value}`,
+	description: `Organisations involved with ${congressTitle.value}${congressInfo.value.tagline ? ` ${congressInfo.value.tagline}` : ''}.`,
+	ogTitle: `Organisations | ${congressInfo.value.title || congressTitle.value}`,
+	ogDescription: `Organisations involved with ${congressTitle.value}${congressInfo.value.tagline ? ` ${congressInfo.value.tagline}` : ''}.`,
 	ogUrl: pageUrl.toString(),
 });
 </script>

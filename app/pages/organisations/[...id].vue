@@ -1,8 +1,12 @@
 <script setup lang="ts">
-import type { Organisation } from '#shared/types/schema';
+import type { Organisation, Site } from '#shared/types/schema';
 import { OrganisationTypeDetails } from '#components';
 const route = useRoute();
 const id = (route.params.id as string[])[0];
+
+const siteDataStore = useSiteDataStore();
+const congressTitle = computed(() => (siteDataStore.siteData as Site).title ?? 'The congress');
+const congressInfo = computed(() => siteDataStore.congressInfo);
 
 const previousRoute = useState<string | null>('previousRoute');
 const breadcrumbs = computed(() => {
@@ -43,10 +47,10 @@ const typeColor: Record<string, BadgeColor> = {
 const orgUrl = useRequestURL();
 const stripHtml = (s: string) => s.replace(/<[^>]*>/g, '').trim();
 useSeoMeta({
-	title: org.value.name ?? '',
-	description: org.value.description ? stripHtml(org.value.description) : '',
-	ogTitle: org.value.name ?? '',
-	ogDescription: org.value.description ? stripHtml(org.value.description) : '',
+	title: `${org.value.name ?? 'Organisation'} | ${congressInfo.value.title || congressTitle.value}`,
+	description: org.value.description ? stripHtml(org.value.description) : `${org.value.name ?? 'Organisation'} involved with ${congressTitle.value}.`,
+	ogTitle: `${org.value.name ?? 'Organisation'} | ${congressInfo.value.title || congressTitle.value}`,
+	ogDescription: org.value.description ? stripHtml(org.value.description) : `${org.value.name ?? 'Organisation'} involved with ${congressTitle.value}.`,
 	ogUrl: orgUrl.toString(),
 });
 </script>

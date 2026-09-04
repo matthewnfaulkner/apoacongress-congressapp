@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Assignment, CongressDay, Organisation } from '#shared/types/schema';
+import type { Assignment, CongressDay, Organisation, Site } from '#shared/types/schema';
 import type { TabsItem } from '@nuxt/ui'
 import { h, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
@@ -45,6 +45,17 @@ if (!data.value || error.value) {
 
 const day = computed(() => data.value);
 const isPreliminary = computed(() => (day.value?.schedules ?? []).some((schedule) => typeof schedule !== 'string' && !!schedule.preliminary));
+
+const congressTitle = computed(() => (siteDataStore.siteData as Site).title ?? 'The congress');
+const congressInfo = computed(() => siteDataStore.congressInfo);
+
+useSeoMeta({
+	title: `${day.value?.title ?? 'Program'} | ${congressInfo.value.title || congressTitle.value}`,
+	description: `Session schedule for ${day.value?.title ?? 'this day'} of ${congressTitle.value}${congressInfo.value.tagline ? ` ${congressInfo.value.tagline}` : ''}.`,
+	ogTitle: `${day.value?.title ?? 'Program'} | ${congressInfo.value.title || congressTitle.value}`,
+	ogDescription: `Session schedule for ${day.value?.title ?? 'this day'} of ${congressTitle.value}${congressInfo.value.tagline ? ` ${congressInfo.value.tagline}` : ''}.`,
+	ogUrl: personUrl.toString(),
+});
 
 const rooms = day?.value?.congress?.venue?.rooms || [];
 
