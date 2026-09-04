@@ -286,7 +286,10 @@ const schema = z.object({
   keywords: z.array(z.string().trim().nonempty("Keyword cannot be empty"))
     .min(3, "At least 3 keywords are required")
     .max(5, "Maximum of 5 keywords allowed"),
-  abstract: z.string({ required_error: 'Abstract is required' }).max(250, 'Max 250 Characters'),
+  abstract: z.string({ required_error: 'Abstract is required' }).refine(
+    (val) => val.trim().split(/\s+/).filter(Boolean).length <= 250,
+    { message: 'Max 250 Words' },
+  ),
   authors: z.array(
     z.object({
         title: z.string().nonempty("Author Title is required"),
