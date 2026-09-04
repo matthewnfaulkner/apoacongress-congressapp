@@ -137,7 +137,7 @@ function buildAccommodationHotels(
  * data (see congress-ticket-enrichment.ts) and is membership-agnostic and
  * safe to cache, same as the rest of this response.
  *
- * `bypassTicketTypeId` (congress.tt_bypass_id — see getCongressBypassTicketId)
+ * `bypassTicketTypeId` (congress.tt_bypass_id — see getCongressConfig)
  * is always excluded regardless of its own Ticket Tailor status: it has to be
  * *not* `locked` for Ticket Tailor's bundle-creation API to accept it (see
  * bundle.post.ts), which would otherwise make it a normal, orderable,

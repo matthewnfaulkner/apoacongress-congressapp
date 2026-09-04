@@ -332,7 +332,7 @@ const schema = z.object({
     message: "You must give your consent",
   })
 }).refine(
-  (data) => !data.conflict || data.conflictDisclosure.trim() !== "",
+  (data) => data.conflict === 'false' || data.conflictDisclosure.trim() !== "",
   {
     message: "Please describe the conflict of interest",
     path: ["conflictDisclosure"], // attaches the error to that field, not the whole object

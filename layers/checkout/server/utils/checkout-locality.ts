@@ -1,4 +1,5 @@
 import type { H3Event } from 'h3'
+import { getCongressConfig } from './checkout-congress';
 
 export type CheckoutLocality = 'national' | 'international'
 
@@ -19,11 +20,11 @@ export function resolveCheckoutLocality(event: H3Event, override?: string | null
 }
 
 // One Ticket Tailor event now (see congress.tt_event_id, via
-// getCongressEventId) rather than a separate national/international event
+// getCongressConfig) rather than a separate national/international event
 // picked by locality — the old TICKET_TAILOR_EVENT_ID / _INTL env vars this
 // replaced only ever had one working event behind them anyway.
 export async function resolveCheckoutEventId(): Promise<string> {
-	const eventId = await getCongressEventId()
+	const { tt_event_id: eventId } = await getCongressConfig()
 
 	if (!eventId) {
 		throw createError({ statusCode: 500, statusMessage: 'Ticket Tailor event id not configured' })

@@ -1,10 +1,10 @@
 import type { H3Event } from 'h3';
 import type { TTEvent } from '../../../app/types/ticket-tailor';
 import type { CheckoutEvent } from '../../../app/types/checkout';
-
+import { getCongressConfig } from '../../utils/checkout-congress';
 const config = useRuntimeConfig();
 
-// One Ticket Tailor event now (see getCongressEventId/congress.tt_event_id)
+// One Ticket Tailor event now (see getCongressConfig/congress.tt_event_id)
 // rather than a separate event per locality — the old TICKET_TAILOR_EVENT_ID
 // / _INTL env vars this replaced only ever had one working event behind
 // them anyway, so there's nothing left to pick between here. `locality`
@@ -12,7 +12,7 @@ const config = useRuntimeConfig();
 // for currency display purposes, independent of which event was fetched.
 async function handler(): Promise<Omit<CheckoutEvent, 'locality'>> {
 	try {
-		const ticketTailorEventId = await getCongressEventId();
+		const { tt_event_id: ticketTailorEventId, tt_bypass_id: bypassTicketTypeId } = await getCongressConfig();
 
 		if (!ticketTailorEventId) {
 			throw createError({ statusCode: 500, statusMessage: 'Ticket Tailor event id not configured' });
@@ -20,15 +20,14 @@ async function handler(): Promise<Omit<CheckoutEvent, 'locality'>> {
 
 		const ttEvent = await ticketTailorFetch<TTEvent>(`/events/${ticketTailorEventId}`, 'eventRead');
 		const enrichmentById = await fetchTicketEnrichment(ttEvent.ticket_types.map((ticketType) => ticketType.id));
-		const bypassTicketTypeId = await getCongressBypassTicketId();
 
 		return normalizeCheckoutEvent(ttEvent, enrichmentById, bypassTicketTypeId);
 	} catch (error: any) {
-		// Nothing in this chain (getCongressEventId, ticketTailorFetch,
-		// fetchTicketEnrichment, getCongressBypassTicketId) logged anything of
-		// its own on failure — every prior 500 here left zero trace of which
-		// step actually failed or why. Logged in full now; still a 500 either
-		// way (createError above vs. Directus/Ticket Tailor errors bubbling up).
+		// Nothing in this chain (getCongressConfig, ticketTailorFetch,
+		// fetchTicketEnrichment) logged anything of its own on failure — every
+		// prior 500 here left zero trace of which step actually failed or why.
+		// Logged in full now; still a 500 either way (createError above vs.
+		// Directus/Ticket Tailor errors bubbling up).
 		console.error('[checkout/event] Failed to build checkout event:', error?.data ?? error);
 		throw error;
 	}
