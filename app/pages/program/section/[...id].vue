@@ -57,12 +57,14 @@ const isPreliminary = computed(() =>
 
 const section = congressOrganisers.find((o) => (o?.organisation as Organisation).id == id)?.organisation as Organisation;
 
+const congressTitle = computed(() => site.title ?? 'The congress');
+const congressInfo = computed(() => siteDataStore.congressInfo);
 
 useSeoMeta({
-	title: section.short_name + ' Schedule',
-	description:  '',
-	ogTitle: section.short_name + ' Schedule - ' + site.title,
-	ogDescription: '',
+	title: `${section.short_name ?? section.name ?? 'Section'} Schedule | ${congressInfo.value.title || congressTitle.value}`,
+	description: `Schedule for ${section.name ?? section.short_name ?? 'this section'} at ${congressTitle.value}${congressInfo.value.tagline ? ` ${congressInfo.value.tagline}` : ''}.`,
+	ogTitle: `${section.short_name ?? section.name ?? 'Section'} Schedule | ${congressInfo.value.title || congressTitle.value}`,
+	ogDescription: `Schedule for ${section.name ?? section.short_name ?? 'this section'} at ${congressTitle.value}${congressInfo.value.tagline ? ` ${congressInfo.value.tagline}` : ''}.`,
 	ogUrl: pageUrl.toString(),
 });
 

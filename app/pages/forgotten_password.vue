@@ -8,12 +8,15 @@ import type { FormSubmitEvent } from '@nuxt/ui'
 import { passwordRequest, passwordReset } from '@directus/sdk';
 import PersonSelectMenu from '~/components/ui/dynamic-select-menus/PersonSelectMenu.vue';
 import RoleSelectMenu from '~/components/ui/dynamic-select-menus/RoleSelectMenu.vue';
+import type { Site } from '#shared/types/schema';
 
 const { $directus } = useNuxtApp();
 const loading = ref(false)
 
 const siteDataStore = useSiteDataStore();
 const siteData = siteDataStore.siteData;
+const congressTitle = computed(() => (siteData as Site).title ?? 'The congress');
+const congressInfo = computed(() => siteDataStore.congressInfo);
 const config = useRuntimeConfig();
 
 const schema = z.object({
@@ -43,7 +46,11 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
     }
 }
 
-useSeoMeta({ title: 'Forgot Password', ogTitle: 'Forgot Password', robots: 'noindex' });
+useSeoMeta({
+	title: `Forgot Password | ${congressInfo.value.title || congressTitle.value}`,
+	ogTitle: `Forgot Password | ${congressInfo.value.title || congressTitle.value}`,
+	robots: 'noindex',
+});
 </script>
 
 <template>

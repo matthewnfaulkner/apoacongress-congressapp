@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Person, DirectusUser } from '#shared/types/schema';
+import type { Person, DirectusUser, Site } from '#shared/types/schema';
 import { removeSeconds } from '@/utils/time-utils';
 import BaseEventType from '~/components/eventTypes/BaseEventType.vue';
 import type { TableColumn, TableRow, DropdownMenuItem } from '@nuxt/ui'
@@ -20,6 +20,9 @@ const { t } = useI18n();
 const previousRoute = useState<string | null>('previousRoute')
 const { $directus } = useNuxtApp();
 const config = useRuntimeConfig();
+const siteDataStore = useSiteDataStore();
+const congressTitle = computed(() => (siteDataStore.siteData as Site).title ?? 'The congress');
+const congressInfo = computed(() => siteDataStore.congressInfo);
 
 const overlay = useOverlay()
 const confirmationModal = overlay.create(ConfirmationModal);
@@ -468,7 +471,11 @@ onMounted(() => {
 	});
 });
 
-useSeoMeta({ title: 'My Profile', ogTitle: 'My Profile', robots: 'noindex' });
+useSeoMeta({
+	title: `My Profile | ${congressInfo.value.title || congressTitle.value}`,
+	ogTitle: `My Profile | ${congressInfo.value.title || congressTitle.value}`,
+	robots: 'noindex',
+});
 
 type EventEntry = {
   id: string

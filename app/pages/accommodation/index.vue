@@ -4,6 +4,8 @@ import type { CongressHotel, Hotel, Site } from '#shared/types/schema';
 const siteDataStore = useSiteDataStore();
 const congressTitle = computed(() => (siteDataStore.siteData as Site).title ?? 'The congress');
 
+const congressInfo = computed(() => siteDataStore.congressInfo);
+
 const { data, error } = await useFetch<CongressHotel[]>('/api/hotel', {
 	key: 'hotels',
 	headers: useRequestHeaders(['cookie']),
@@ -20,10 +22,10 @@ const hotels = computed(() => (data.value ?? []).filter((row) => row.hotel && ty
 
 const pageUrl = useRequestURL();
 useSeoMeta({
-	title: 'Hotels',
-	description: 'Recommended hotels for APOA 2027 Taiwan.',
-	ogTitle: 'Hotels',
-	ogDescription: 'Recommended hotels for APOA 2027 Taiwan.',
+	title: `Congress Hotels | ${congressInfo.value.title || congressTitle.value}`,
+	description: `Browse recommended hotels near the ${congressInfo.value.venue || 'congress venue'} for ${congressTitle.value} ${congressInfo.value.tagline} ${congressInfo.value.formattedStartDate}–${congressInfo.value.formattedEndDate}.`,
+	ogTitle: `Congress Hotels | ${congressInfo.value.title || congressTitle.value}`,
+	ogDescription: `Recommended hotels near the ${congressInfo.value.venue || 'congress venue'} for ${congressTitle.value} ${congressInfo.value.tagline} ${congressInfo.value.formattedStartDate}–${congressInfo.value.formattedEndDate}.`,
 	ogUrl: pageUrl.toString(),
 });
 </script>
