@@ -125,8 +125,10 @@ export default defineEventHandler(async (event) => {
 		}
 
 		return await directusServer.request(withToken(sessionToken, createItem('abstract_submissions', payload as any)));
-	} catch (e) {
-		console.error('Abstract submission failed:', e);
+	} catch (e: any) {
+		// ofetch's FetchError nests the actual Directus validation detail under
+		// e.data, which the default error toString/stack doesn't surface.
+		console.error('Abstract submission failed:', JSON.stringify(e?.data ?? e));
 		throw createError({ statusCode: 403, statusMessage: 'Failed to save submission.' });
 	}
 });

@@ -33,6 +33,10 @@ const categories = ref<string[]>([]);
 const guideLines = ref<AccordionItem>([]);
 const guidelinesRef = ref<HTMLElement | null>(null);
 const guidelinesOpen = ref<string | undefined>(undefined);
+const abstractWordCount = computed(() => {
+  if (!state.abstract) return 0;
+  return state.abstract.trim().split(/\s+/).filter(Boolean).length;
+});
 
 // Used by the consent checkbox's "view submission guidelines" link to jump
 // back up to the accordion above the form and expand it, rather than making
@@ -50,7 +54,7 @@ const { data } = await useAsyncData <Abstract[]>('abstract_submit', async() => {
         'abstracts',
         {   
             limit: 1,
-            fields: ['id', 'categories', 'submission_deadline', 'description', 'submission_limit', 'declaration_statement'],
+            fields: ['id', 'categories', 'submission_deadline', 'description', 'submission_limit', 'declaration_statement', 'word_limit'],
             filter: {
             congress: {
                 site:{
@@ -69,6 +73,8 @@ data.value = data.value as Abstract[];
 
 congressAbstract.value = data.value[0] || null;
 const submission_limit = congressAbstract.value?.submission_limit || 100;
+const word_limit = congressAbstract.value?.word_limit || 250;
+
 categories.value = congressAbstract?.value?.categories ?? [];
 guideLines.value = [
     {
@@ -266,15 +272,16 @@ function getRowItems(row: TableRow<Submission>) {
         state.consent = true;
       }
     });
+  
+    items.push({
+      label: 'Delete',
+      icon: 'i-lucide-trash',
+      onSelect() {
+        openConfirmation.value = true
+        toBeDeleted.value = row.original
+      }
+    });
   }
-  items.push({
-    label: 'Delete',
-    icon: 'i-lucide-trash',
-    onSelect() {
-      openConfirmation.value = true
-      toBeDeleted.value = row.original
-    }
-  });
   return items;
 }
 
@@ -287,8 +294,9 @@ const schema = z.object({
     .min(3, "At least 3 keywords are required")
     .max(5, "Maximum of 5 keywords allowed"),
   abstract: z.string({ required_error: 'Abstract is required' }).refine(
-    (val) => val.trim().split(/\s+/).filter(Boolean).length <= 250,
-    { message: 'Max 250 Words' },
+    (val) => val.trim().split(/\s+/).filter(Boolean).length <= word_limit,
+    { message: `Abstract must be ${word_limit ?? 250} words or fewer` },
+
   ),
   authors: z.array(
     z.object({
@@ -669,8 +677,13 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                                     color="secondary"
                                     variant="subtle" />
                             </UFormField>
-                            <UFormField required label="Abstract" name="abstracr"  size="xl"  class="pb-5">
-                                <UTextarea v-model="state.abstract" class="w-full lg:w-200" :rows=15 color="secondary" variant="subtle"/>
+                            <UFormField required label="Abstract" name="abstract"  size="xl"  class="pb-5" :description="`Max ${word_limit} Words (${abstractWordCount} / ${word_limit})`">
+                                <UTextarea v-model="state.abstract" 
+                                  autoresize
+                                  class="w-full lg:w-200" 
+                                  :rows=15 color="secondary" 
+                                  variant="subtle"
+                                />
                             </UFormField>
                             <UFormField 
                                 required 
@@ -810,7 +823,11 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                                   /> 
                             </UFormField>
                             <UFormField v-if="state.conflict" class="py-5" name="conflictDisclosure" label="">
-                              <UTextarea v-model="state.conflictDisclosure" placeholder="Please provide details of the conflicts of interest." class="w-full lg:w-200" :rows=8 color="secondary" variant="subtle"/>
+                              <UTextarea 
+                                v-model="state.conflictDisclosure" 
+                                placeholder="Please provide details of the conflicts of interest." 
+                                class="w-full lg:w-200" :rows=8 color="secondary" 
+                                variant="subtle"/>
                             </UFormField> 
                             <UFormField  class="py-5" name="consent" label="">
                                 <UCheckbox
