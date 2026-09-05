@@ -48,7 +48,7 @@ watch(assetId, () => {
 		:width="width"
 		:height="height"
 		format="webp"
-		:quality="80"
+		:quality="70"
 		@error="transformFailed = true"
 	/>
 </template>

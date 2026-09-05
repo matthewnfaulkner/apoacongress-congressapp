@@ -164,6 +164,7 @@ useSeoMeta({
 					v-if="hotel.image"
 					:uuid="hotel.image"
 					:alt="hotel.name ?? ''"
+					:width="900"
 					class="rounded-lg object-cover h-64 w-full"
 					loading="lazy"
 				/>
