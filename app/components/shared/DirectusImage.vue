@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { getDirectusAssetURL } from '@@/server/utils/directus-utils';
+
 interface DirectusImageProps {
 	uuid: DirectusFile | string | null | undefined;
 	alt: string;
@@ -17,10 +19,29 @@ const assetId = computed(() => {
 	if (!uuid) return '';
 	return typeof uuid === 'string' ? uuid : uuid.id;
 });
+
+// Directus refuses to transform (format/quality/resize) source images above
+// its own internal safety threshold — a plain camera-original that's, say,
+// 40+ megapixels 400s on `?format=webp` instead of serving anything. Rather
+// than showing a broken image for those, fall back to the untransformed
+// original on load failure.
+const transformFailed = ref(false);
+
+watch(assetId, () => {
+	transformFailed.value = false;
+});
 </script>
 
 <template>
+	<img
+		v-if="transformFailed"
+		:src="getDirectusAssetURL(uuid)"
+		:alt="alt"
+		:width="width"
+		:height="height"
+	/>
 	<NuxtImg
+		v-else
 		provider="directus"
 		:src="assetId"
 		:alt="alt"
@@ -28,5 +49,6 @@ const assetId = computed(() => {
 		:height="height"
 		format="webp"
 		:quality="80"
+		@error="transformFailed = true"
 	/>
 </template>
