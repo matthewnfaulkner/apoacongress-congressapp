@@ -100,5 +100,4 @@ export default config.public.isSandbox
 	: cachedEventHandler(handler, {
 		maxAge: 3600,
 		getKey: (event) => `organisation-${getQuery(event).id}`,
-		shouldBypassCache: () => true,
 	});

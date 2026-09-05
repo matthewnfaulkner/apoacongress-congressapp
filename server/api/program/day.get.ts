@@ -37,7 +37,7 @@ const config = useRuntimeConfig();
 
 async function handler(event: H3Event) {
     const query = getQuery(event);
-    const { preview, token: rawToken, key, all } = query;
+    const { preview, token: rawToken, key } = query;
     const token = preview === 'true' && rawToken ? String(rawToken) : null;
 
     const cookies = parseCookies(event);
@@ -54,7 +54,7 @@ async function handler(event: H3Event) {
                     filter: {
                         key: { _eq: key as string },
                         congress: { site: { _eq: config.public.siteId } },
-                        ...(all !== 'true' && { schedules: { status: { _eq: 'published' } } }),
+                        schedules: { status: { _eq: 'published' } },
                     },
                     deep: {
                         timeslots: { _sort: 'starttime' },
@@ -88,7 +88,6 @@ async function handler(event: H3Event) {
 export default config.public.isSandbox
     ? eventHandler(handler)
     : cachedEventHandler(handler, {
-        maxAge: 60,
+        maxAge: 3600,
         getKey: (event) => `day-${getQuery(event).key}`,
-        shouldBypassCache: () => true,
     });

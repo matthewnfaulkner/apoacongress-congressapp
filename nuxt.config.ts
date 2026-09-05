@@ -46,7 +46,7 @@ export default defineNuxtConfig({
 		'/people/**': { isr: false },
 
 		// Cache all page routes
-		'/**': { isr: 60 },
+		'/**': { isr: 3600 },
 	},
 	ui: {
 		colorMode: false,

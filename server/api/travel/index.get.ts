@@ -53,5 +53,4 @@ export default config.public.isSandbox
 	: cachedEventHandler(handler, {
 		maxAge: 3600,
 		getKey: (event) => `travel-${getQuery(event).venueId}`,
-		shouldBypassCache: () => true,
 	});

@@ -335,6 +335,11 @@ const pageFields = [
  */
 const config = useRuntimeConfig();
 
+// Browsers/crawlers request these well-known paths on every origin regardless of
+// whether the site defines them. None of them are ever real Directus pages, so we
+// short-circuit before running the (expensive) pageFields query against Directus.
+const NON_PAGE_PERMALINKS = new Set(['/sw.js', '/favicon.ico', '/robots.txt']);
+
 async function handler(event: H3Event) {
 
 	const query = getQuery(event);
@@ -344,9 +349,13 @@ async function handler(event: H3Event) {
 	const permalink = withoutTrailingSlash(withLeadingSlash(String(rawPermalink)));
 	const token = preview === 'true' && rawToken ? String(rawToken) : null;
 
+	if (NON_PAGE_PERMALINKS.has(permalink)) {
+		throw createError({ statusCode: 404, statusMessage: 'Page not found' });
+	}
+
 	const cookies = parseCookies(event);
 	const sessionToken = cookies[config.sessionTokenName];
-	
+
 	try {
 		let page: Page;
 		let pageId = id as string;
@@ -489,5 +498,12 @@ export default config.public.isSandbox
 			const { permalink } = getQuery(event);
 			return `pages-${permalink}`;
 		},
-		shouldBypassCache: () => true,
+		// Only cache plain, public, published-content lookups. Preview/version
+		// requests carry draft content scoped to a specific editor — a plain
+		// session cookie with neither doesn't change anything: the filter
+		// above still forces status:published either way.
+		shouldBypassCache: (event) => {
+			const { preview, version } = getQuery(event);
+			return Boolean(preview) || Boolean(version);
+		},
 	});
