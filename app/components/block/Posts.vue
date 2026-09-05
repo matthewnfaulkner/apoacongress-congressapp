@@ -102,8 +102,8 @@ const { setAttr } = useVisualEditing();
 							v-if="post.image"
 							:uuid="post.image"
 							:alt="post.title"
+							:width="600"
 							class="w-full h-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-110"
-							sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
 						/>
 					</div>
 					<div class="p-4">

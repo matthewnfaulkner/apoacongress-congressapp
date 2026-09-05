@@ -1,7 +1,4 @@
 <script setup lang="ts">
-import { getDirectusAssetURL } from '@@/server/utils/directus-utils';
-import { watch, ref } from 'vue';
-
 interface DirectusImageProps {
 	uuid: DirectusFile | string | null | undefined;
 	alt: string;
@@ -15,16 +12,21 @@ const props = withDefaults(defineProps<DirectusImageProps>(), {
 	height: undefined,
 });
 
-const src = ref(getDirectusAssetURL(props.uuid));
-
-watch(
-	() => props.uuid,
-	(newUuid) => {
-		src.value = getDirectusAssetURL(newUuid);
-	},
-);
+const assetId = computed(() => {
+	const { uuid } = props;
+	if (!uuid) return '';
+	return typeof uuid === 'string' ? uuid : uuid.id;
+});
 </script>
 
 <template>
-	<img :src="src" v-bind="{ ...props, uuid: undefined }" />
+	<NuxtImg
+		provider="directus"
+		:src="assetId"
+		:alt="alt"
+		:width="width"
+		:height="height"
+		format="webp"
+		:quality="80"
+	/>
 </template>

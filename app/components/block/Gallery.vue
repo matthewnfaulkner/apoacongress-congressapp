@@ -115,8 +115,7 @@ onUnmounted(() => {
 				<DirectusImage
 					:uuid="item.directus_file"
 					:alt="`Gallery item ${item.id}`"
-					fill
-					sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+					:width="600"
 					class="w-full h-full object-cover rounded-lg"
 				/>
 				
@@ -144,6 +143,7 @@ onUnmounted(() => {
 						v-if="currentItem"
 						:uuid="currentItem.directus_file"
 						:alt="`Gallery item ${currentItem.id}`"
+						:width="2000"
 						class="size-full object-contain"
 					/>
 					<div
