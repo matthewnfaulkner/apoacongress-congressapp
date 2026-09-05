@@ -12,8 +12,6 @@ const props = defineProps<ProfileImageProps>();
     <DirectusImage
         class="rounded-edge"
         :uuid="image"
-        :width="300"
-        :height="400"
         ><slot />
     </DirectusImage>
 </template>
