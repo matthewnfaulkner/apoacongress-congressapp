@@ -97,7 +97,6 @@ async function handler(event: H3Event) {
 export default config.public.isSandbox
 	? eventHandler(handler)
 	: cachedEventHandler(handler, {
-		maxAge: 60,
+		maxAge: 3600,
 		getKey: () => 'schedule',
-		shouldBypassCache: () => true,
 	});

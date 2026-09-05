@@ -39,5 +39,4 @@ export default config.public.isSandbox
 	: cachedEventHandler(handler, {
 		maxAge: 3600,
 		getKey: () => 'policies-site',
-		shouldBypassCache: () => true,
 	});

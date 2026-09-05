@@ -499,13 +499,11 @@ export default config.public.isSandbox
 			return `pages-${permalink}`;
 		},
 		// Only cache plain, public, published-content lookups. Preview/version
-		// requests carry draft content scoped to a specific editor, and
-		// authenticated requests (session cookie present) may see non-published
-		// content — none of that is safe to share across visitors via the cache.
+		// requests carry draft content scoped to a specific editor — a plain
+		// session cookie with neither doesn't change anything: the filter
+		// above still forces status:published either way.
 		shouldBypassCache: (event) => {
-			const { preview, token, version } = getQuery(event);
-			const cookies = parseCookies(event);
-			const sessionToken = cookies[config.sessionTokenName];
-			return Boolean(preview) || Boolean(token) || Boolean(version) || Boolean(sessionToken);
+			const { preview, version } = getQuery(event);
+			return Boolean(preview) || Boolean(version);
 		},
 	});

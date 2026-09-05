@@ -11,12 +11,20 @@ onMounted(async() => {setTimeout(() => {pageReady.value = true}, 100)})
 // Total visibility logic
 const showContent = computed(() =>  pageReady.value && !isLoading.value)
 
+const config = useRuntimeConfig();
+
 const {
 	data: siteData,
 	error: siteError,
 	refresh,
 } = await useFetch('/api/site-data', {
 	key: 'site-data',
+	// Switching to/from the login layout unmounts this component, which evicts
+	// Nuxt's payload cache for this key — fall back to the static/prerendered
+	// payload instead of re-fetching from the server.
+	...(!config.public.isSandbox
+		? { getCachedData: (key: string, nuxtApp: any) => nuxtApp.payload.data[key] ?? nuxtApp.static.data[key] }
+		: {}),
 });
 
 if (siteError.value) {

@@ -49,10 +49,14 @@ function openGuidelines(e: Event) {
 }
 
 
-const { data } = await useAsyncData <Abstract[]>('abstract_submit', async() => {
+// Unauthenticated visitors only ever see the "Sign In Required" prompt (see
+// template below), so there's nothing to show them here — skip the Directus
+// round trip entirely rather than fetching data that'll never be rendered.
+const { data } = await useAsyncData<Abstract[] | null>('abstract_submit', async () => {
+      if (!isLoggedIn.value) return null;
       return await $directus.request<Abstract[]>(readItems(
         'abstracts',
-        {   
+        {
             limit: 1,
             fields: ['id', 'categories', 'submission_deadline', 'description', 'submission_limit', 'declaration_statement', 'word_limit'],
             filter: {
@@ -65,13 +69,11 @@ const { data } = await useAsyncData <Abstract[]>('abstract_submit', async() => {
         }
     ))})
 
-if(!data.value) {
+if(isLoggedIn.value && !data.value) {
     throw new Error('No Congress Abstract');
 }
 
-data.value = data.value as Abstract[];
-
-congressAbstract.value = data.value[0] || null;
+congressAbstract.value = data.value?.[0] || null;
 const submission_limit = congressAbstract.value?.submission_limit || 100;
 const word_limit = congressAbstract.value?.word_limit || 250;
 
