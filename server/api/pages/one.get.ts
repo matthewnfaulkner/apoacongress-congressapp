@@ -335,6 +335,11 @@ const pageFields = [
  */
 const config = useRuntimeConfig();
 
+// Browsers/crawlers request these well-known paths on every origin regardless of
+// whether the site defines them. None of them are ever real Directus pages, so we
+// short-circuit before running the (expensive) pageFields query against Directus.
+const NON_PAGE_PERMALINKS = new Set(['/sw.js', '/favicon.ico', '/robots.txt']);
+
 async function handler(event: H3Event) {
 
 	const query = getQuery(event);
@@ -344,9 +349,13 @@ async function handler(event: H3Event) {
 	const permalink = withoutTrailingSlash(withLeadingSlash(String(rawPermalink)));
 	const token = preview === 'true' && rawToken ? String(rawToken) : null;
 
+	if (NON_PAGE_PERMALINKS.has(permalink)) {
+		throw createError({ statusCode: 404, statusMessage: 'Page not found' });
+	}
+
 	const cookies = parseCookies(event);
 	const sessionToken = cookies[config.sessionTokenName];
-	
+
 	try {
 		let page: Page;
 		let pageId = id as string;
@@ -489,5 +498,14 @@ export default config.public.isSandbox
 			const { permalink } = getQuery(event);
 			return `pages-${permalink}`;
 		},
-		shouldBypassCache: () => true,
+		// Only cache plain, public, published-content lookups. Preview/version
+		// requests carry draft content scoped to a specific editor, and
+		// authenticated requests (session cookie present) may see non-published
+		// content — none of that is safe to share across visitors via the cache.
+		shouldBypassCache: (event) => {
+			const { preview, token, version } = getQuery(event);
+			const cookies = parseCookies(event);
+			const sessionToken = cookies[config.sessionTokenName];
+			return Boolean(preview) || Boolean(token) || Boolean(version) || Boolean(sessionToken);
+		},
 	});
