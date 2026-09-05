@@ -275,7 +275,11 @@ export default defineNuxtConfig({
 				// need to stay allowlisted rather than swapping one for the other.
 				// challenges.cloudflare.com: Turnstile's own XHR calls (see NuxtTurnstile
 				// usage on abstracts submission, forms, and flows).
-				'connect-src': ["'self'", process.env.DIRECTUS_URL  || '', 'https://registration.apoa2027.org', 'https://api.tickettailor.com', 'https://*.tickettailor.com', 'https://tickets.apoaonline.com', 'https://maps.googleapis.com', 'https://maps.gstatic.com', 'https://challenges.cloudflare.com'],
+				// www.google.com / *.google-analytics.com / *.analytics.google.com:
+				// gtag.js's own pageview beacons (see analytics-consent.client.ts) —
+				// script-src's wildcard only covers loading gtag.js itself, not the
+				// fetch() calls it makes to report events.
+				'connect-src': ["'self'", process.env.DIRECTUS_URL  || '', 'https://registration.apoa2027.org', 'https://api.tickettailor.com', 'https://*.tickettailor.com', 'https://tickets.apoaonline.com', 'https://maps.googleapis.com', 'https://maps.gstatic.com', 'https://challenges.cloudflare.com', 'https://www.google.com', 'https://*.google-analytics.com', 'https://*.analytics.google.com'],
 				'frame-ancestors': ["'self'", process.env.DIRECTUS_URL || ''],
 				// Allows the checkout layer to embed Ticket Tailor's hosted checkout
 				// widget, challenges.cloudflare.com for Turnstile's own challenge iframe,
