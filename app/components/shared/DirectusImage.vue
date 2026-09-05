@@ -17,7 +17,12 @@ const props = withDefaults(defineProps<DirectusImageProps>(), {
 const assetId = computed(() => {
 	const { uuid } = props;
 	if (!uuid) return '';
-	return typeof uuid === 'string' ? uuid : uuid.id;
+	const id = typeof uuid === 'string' ? uuid : uuid.id;
+	// Directus ignores the path extension in favor of the format= query param
+	// below, but an extensionless URL isn't recognized as a cacheable static
+	// asset by Cloudflare's default rules — it was serving every request as
+	// DYNAMIC (no edge caching at all) instead of caching after the first hit.
+	return `${id}.webp`;
 });
 
 // Directus refuses to transform (format/quality/resize) source images above
