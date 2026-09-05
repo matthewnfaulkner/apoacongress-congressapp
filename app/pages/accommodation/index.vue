@@ -61,6 +61,7 @@ useSeoMeta({
 						v-if="(row.hotel as Hotel).image"
 						:uuid="(row.hotel as Hotel).image"
 						:alt="(row.hotel as Hotel).name ?? ''"
+						:width="500"
 						class="rounded-lg object-cover h-40 w-full "
 						loading="lazy"
 					/>

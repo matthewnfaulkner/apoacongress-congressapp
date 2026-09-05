@@ -80,6 +80,8 @@ const uniquePersons = computed(() => {
 						<DirectusImage
 							class="h-50"
 							:uuid="person.persons_id.image"
+							:width="300"
+							:height="400"
 						/>
 					</template>
 				</UPageCard>

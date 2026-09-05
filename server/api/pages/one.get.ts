@@ -486,6 +486,12 @@ async function handler(event: H3Event) {
 		return page;
 	} catch (error) {
 		console.log(error)
+		// Preserve intentional statuses (e.g. the 404s thrown above) instead of
+		// masking them all as a 500 — only genuine unexpected failures should
+		// become one.
+		if (error && typeof error === 'object' && 'statusCode' in error) {
+			throw error;
+		}
 		throw createError({ statusCode: 500, statusMessage: 'Page not found' });
 	}
 }

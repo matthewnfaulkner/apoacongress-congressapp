@@ -194,7 +194,7 @@ onMounted(() => {
 					<div v-for="person in message.people" class="text-center float-left mr-2 mb-4  w-1/2"
 						>
 							<div class="relative overflow-hidden ink-reveal" :class="{ 'is-active': visible }" style="--ink-duration: 3s">
-							<ProfileImage class="mx-auto" :image="person.person.image" :ui="{ item: 'basis-1/2' }"
+							<ProfileImage class="w-full max-w-80 aspect-3/4 object-cover mx-auto" :image="person.person.image" :ui="{ item: 'basis-1/2' }"
 								:data-directus="
 									setAttr({
 										collection: 'block_messages_message',
@@ -204,12 +204,12 @@ onMounted(() => {
 									})" />
 							<div class="ink-overlay" />
 						</div>
-							<h2 class="font-heading text-lg sm:text-2xl transition-all duration-700 ease-out delay-150"
+							<h2 class="font-heading text-xl sm:text-2xl transition-all duration-700 ease-out delay-150 mb-1"
 								:class="visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'">
 								{{ person.person.first_name }} {{ person.person.last_name }}
 							</h2>
 							<p
-								class="font-heading text-sm sm:text-lg text-accent transition-all duration-700 ease-out delay-250"
+								class="font-heading text-lg sm:text-xl text-accent transition-all duration-700 ease-out delay-250"
 								:class="visible ? 'opacity-100' : 'opacity-0'"
 								:data-directus="
 										setAttr({

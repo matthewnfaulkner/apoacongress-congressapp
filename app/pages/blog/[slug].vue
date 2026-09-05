@@ -68,8 +68,7 @@ useSeoMeta({
 						:uuid="post.image"
 						:alt="post.title || 'post header image'"
 						class="object-cover w-full h-full"
-						sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 1200px"
-						fill
+						:width="1200"
 					/>
 				</div>
 			</div>
@@ -140,9 +139,8 @@ useSeoMeta({
 									<DirectusImage
 										:uuid="relatedPost.image"
 										:alt="relatedPost.title || 'related post image'"
-										class="object-cover transition-transform duration-300 group-hover:scale-110"
-										fill
-										sizes="(max-width: 768px) 100px, (max-width: 1024px) 150px, 150px"
+										class="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+										:width="300"
 									/>
 								</div>
 								<span class="font-heading">{{ relatedPost.title }}</span>

@@ -22,9 +22,16 @@ const props = defineProps<GalleryProps>();
 const isLightboxOpen = ref(false);
 const currentIndex = ref(0);
 const showCaption = ref(true);
+const isCurrentImageLoading = ref(true);
 
 watch(isLightboxOpen, (open) => {
 	if (open) showCaption.value = true;
+});
+
+// Each image swap (opening the lightbox, or navigating prev/next) requests a
+// fresh full-size (2000px) load — show the spinner again until it lands.
+watch(currentIndex, () => {
+	isCurrentImageLoading.value = true;
 });
 
 const sortedItems = computed(() => {
@@ -115,8 +122,7 @@ onUnmounted(() => {
 				<DirectusImage
 					:uuid="item.directus_file"
 					:alt="`Gallery item ${item.id}`"
-					fill
-					sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+					:width="600"
 					class="w-full h-full object-cover rounded-lg"
 				/>
 				
@@ -140,11 +146,21 @@ onUnmounted(() => {
 				<DialogHeader />
 
 				<div class="relative w-[90vw] h-[90vh] flex items-center justify-center">
+					<UIcon
+						v-if="isCurrentImageLoading"
+						name="i-lucide-loader-circle"
+						size="48"
+						class="absolute text-white animate-spin"
+					/>
 					<DirectusImage
 						v-if="currentItem"
 						:uuid="currentItem.directus_file"
 						:alt="`Gallery item ${currentItem.id}`"
+						:width="2000"
 						class="size-full object-contain"
+						:class="{ 'opacity-0': isCurrentImageLoading }"
+						@load="isCurrentImageLoading = false"
+						@error="isCurrentImageLoading = false"
 					/>
 					<div
 						v-if="currentItem?.caption"

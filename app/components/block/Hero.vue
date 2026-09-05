@@ -83,8 +83,7 @@ defineProps<HeroProps>();
 			<DirectusImage
 				:uuid="data.image"
 				:alt="data.tagline || data.headline || 'Hero Image'"
-				:fill="true"
-				:sizes="data.layout === 'image_center' ? '100vw' : '(max-width: 768px) 100vw, 50vw'"
+				:width="1200"
 				class="object-contain"
 				:data-directus="
 					setAttr({ collection: 'block_hero', item: data.id, fields: ['image', 'layout'], mode: 'modal' })
