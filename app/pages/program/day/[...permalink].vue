@@ -334,5 +334,7 @@ function model(event) {
 		</UTabs>
 		</Container>
 	</div>
-	<div v-else class="flex text-center text-xl justify-center align-middle ">{{ day?.title }} Program Coming Soon</div>
+	<div v-else class="h-lvh">
+		<div  class="flex text-center text-xl justify-center items-center h-full">{{ day?.title }} Program Coming Soon</div>
+	</div>
 </template>
