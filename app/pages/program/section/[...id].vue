@@ -38,11 +38,6 @@ const { data, error, refresh } = await useFetch<CongressSession[]>(() => `/api/p
 	},
 });
 
-if (!data.value || error.value) {
-	throw createError({ statusCode: 404, statusMessage: 'Section not found', fatal: true });
-}
-
-
 
 const sectionSessions = computed(() => data.value);
 
@@ -301,7 +296,7 @@ function getRowStyle(row) {
 	</div>
 	<div v-else>
 		<div class="text-center text-xl mt-[20%] w-full text-center">
-			<p class="text-center m-2">Schedule Coming Soon</p>
+			<p class="text-center m-2">{{ section?.short_name }} Schedule Coming Soon</p>
 			<UButton class="m-auto p-2" label="Get Notifed" color="accent" variant="solid" to="/register-interest" />
 		</div>
 	</div>

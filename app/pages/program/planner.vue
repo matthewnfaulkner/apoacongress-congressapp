@@ -333,7 +333,7 @@ function initialView() {
       >
         <template #content="{ item, index }">
         
-          <VueZoomable
+          <VueZoomable v-if="item.published"
             class="h-full"
             v-model:zoom="zoomStates[index]"
             :minZoom=".3"
@@ -402,9 +402,12 @@ function initialView() {
                 </grid-item>
               </grid-layout>
 
-              <h3 v-if="!item.published">Schedule Coming Soon</h3>
             </div>
           </VueZoomable>
+          <section class="flex flex-col items-center justify-center h-lvh align-middle" v-else>
+             <h3 v-if="!item.published" class="m-auto">Program Coming Soon</h3>
+          </section>
+
         </template>
       </UTabs>
     </div>
