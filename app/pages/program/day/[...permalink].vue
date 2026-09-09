@@ -39,10 +39,6 @@ const { data, error, refresh } = await useFetch<CongressDay>(() => `/api/program
 });
 
 
-if (!data.value || error.value) {
-	throw createError({ statusCode: 404, statusMessage: 'Day not found', fatal: true });
-}
-
 const day = computed(() => data.value);
 const isPreliminary = computed(() => (day.value?.schedules ?? []).some((schedule) => typeof schedule !== 'string' && !!schedule.preliminary));
 
@@ -338,5 +334,5 @@ function model(event) {
 		</UTabs>
 		</Container>
 	</div>
-	<div v-else class="text-center text-xl mt-[20%]">Schedule Unavailable</div>
+	<div v-else class="text-center text-xl mt-[20%]">{{ day?.title }} Schedule Unavailable</div>
 </template>
