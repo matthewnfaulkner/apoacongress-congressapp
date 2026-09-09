@@ -334,5 +334,5 @@ function model(event) {
 		</UTabs>
 		</Container>
 	</div>
-	<div v-else class="text-center text-xl mt-[20%]">{{ day?.title }} Schedule Unavailable</div>
+	<div v-else class="flex text-center text-xl justify-center align-middle ">{{ day?.title }} Program Coming Soon</div>
 </template>
