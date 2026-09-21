@@ -38,10 +38,13 @@ export default defineEventHandler(async (event) => {
 	}
 
 	// Same checks as onFigureFileChange in submission.vue — enforced again
-	// here since that client-side check is bypassable.
-	const MAX_BYTES = 5 * 1024 * 1024;
+	// here since that client-side check is bypassable. Kept below Vercel's
+	// ~4.5MB serverless function request body limit - a larger file gets
+	// rejected at the platform level before this handler (or Directus) ever
+	// sees it, which used to fail silently with no log on either side.
+	const MAX_BYTES = 4 * 1024 * 1024;
 	if (filePart.data.length > MAX_BYTES) {
-		throw createError({ statusCode: 400, statusMessage: 'File must be 5MB or smaller.' });
+		throw createError({ statusCode: 400, statusMessage: 'File must be 4MB or smaller.' });
 	}
 
 	const ALLOWED_TYPES = ['image/jpeg', 'image/png'];

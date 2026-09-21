@@ -41,10 +41,6 @@ const { data, error, refresh } = await useFetch<CongressSession[]>(() => `/api/p
 
 const sectionSessions = computed(() => data.value);
 
-if (!sectionSessions.value || error.value) {
-	throw createError({ statusCode: 404, statusMessage: 'Section not found', fatal: true });
-}
-
 const isPreliminary = computed(() =>
 	(sectionSessions.value ?? []).some((session) => typeof session.schedule !== 'string' && !!session.schedule?.preliminary),
 );
