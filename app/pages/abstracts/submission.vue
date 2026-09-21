@@ -52,7 +52,7 @@ function openGuidelines(e: Event) {
 // Unauthenticated visitors only ever see the "Sign In Required" prompt (see
 // template below), so there's nothing to show them here — skip the Directus
 // round trip entirely rather than fetching data that'll never be rendered.
-const { data } = await useAsyncData<Abstract[] | null>('abstract_submit', async () => {
+const { data, error: abstractConfigError } = await useAsyncData<Abstract[] | null>('abstract_submit', async () => {
       if (!isLoggedIn.value) return null;
       return await $directus.request<Abstract[]>(readItems(
         'abstracts',
@@ -69,11 +69,14 @@ const { data } = await useAsyncData<Abstract[] | null>('abstract_submit', async 
         }
     ))})
 
-if(isLoggedIn.value && !data.value) {
-    throw new Error('No Congress Abstract');
-}
-
 congressAbstract.value = data.value?.[0] || null;
+
+// A transient fetch failure (network blip, Directus cold start) used to
+// throw a raw Error here, which Nuxt turns into a fatal 500 "Unable to
+// reach the server" page on refresh - even though the failure is usually
+// momentary. Show an inline retry state instead (see template), the same
+// pattern used for missing program day/section schedules.
+const abstractsUnavailable = computed(() => isLoggedIn.value && (!!abstractConfigError.value || !congressAbstract.value));
 const submission_limit = congressAbstract.value?.submission_limit || 100;
 const word_limit = congressAbstract.value?.word_limit || 250;
 
@@ -269,6 +272,7 @@ function getRowItems(row: TableRow<Submission>) {
         state.keywords = row.original.keywords ? [...row.original.keywords] : [];
         state.figures = row.original.figures?.length
           ? row.original.figures.map(figure => ({
+              clientKey: generateLocalId(),
               id: figure.id,
               label: figure.label ?? '',
               file: typeof figure.file === 'string' ? figure.file : (figure.file?.id ?? null),
@@ -319,6 +323,7 @@ const schema = z.object({
 
   figures: z.array(
     z.object({
+      clientKey: z.string(),
       id: z.union([z.string(), z.number()]).optional(),
       file: z.any().nullable(),
       label: z.string().nonempty("Figure label is required"),
@@ -376,26 +381,95 @@ function resetState() {
   error.value = [];
   turnstileToken.value = undefined;
   turnstileRef.value?.reset();
+  pendingFigureFiles.clear();
+  figureInputRefs.value = {};
+  figureRefCallbacks.clear();
+  for (const url of Object.values(figurePreviewCache.value)) URL.revokeObjectURL(url);
+  figurePreviewCache.value = {};
 }
 
 
-type FigureState = { id?: string | number; file?: File | string | null; label: string; existingFilename?: string };
+// crypto.randomUUID() is gated behind secure contexts (HTTPS or localhost)
+// and throws "not a function" on a plain-HTTP LAN address (e.g. testing over
+// --host from a phone). These ids are only ever used as local Vue keys /
+// Map keys, never anything security-sensitive, so a non-crypto fallback is
+// fine and avoids that gate entirely.
+function generateLocalId() {
+    return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+}
+
+// clientKey is a purely local, stable per-row identity - separate from the
+// Directus `id` (only present once a figure has actually been saved) - used
+// so this row's :key and file-input ref stay attached to the same row even
+// if another row above it is added/removed, instead of the array index
+// (which shifts) or the Directus id (which a brand new row doesn't have yet).
+type FigureState = { clientKey: string; id?: string | number; file?: string | null; label: string; existingFilename?: string };
 
 const formRef = ref();
-const figureInputRefs = ref<(HTMLInputElement | null)[]>([]);
+const figureInputRefs = ref<Record<string, HTMLInputElement | null>>({});
 
-function setFigureInputRef(el: any, index: number) {
-    figureInputRefs.value[index] = el as HTMLInputElement | null;
+// Memoized per clientKey so the :ref callback passed to each file input has
+// a stable identity across re-renders, rather than the inline arrow
+// function Vue would otherwise see as "new" on every render (which causes
+// Vue to unbind and rebind the ref each time).
+const figureRefCallbacks = new Map<string, (el: unknown) => void>();
+function getFigureInputRefCallback(clientKey: string) {
+    let callback = figureRefCallbacks.get(clientKey);
+    if (!callback) {
+        callback = (el) => { figureInputRefs.value[clientKey] = el as HTMLInputElement | null; };
+        figureRefCallbacks.set(clientKey, callback);
+    }
+    return callback;
 }
 
 async function revalidateFigures() {
     await formRef.value?.validate({ name: 'figures', silent: true });
 }
 
-const FIGURE_MAX_BYTES = 5 * 1024 * 1024; // 5 MB
+// Below Vercel's ~4.5MB serverless function request body limit, with some
+// headroom for multipart overhead - a figure between 4.5-5MB used to be
+// rejected at the platform level before it ever reached this app's code or
+// Directus, so nothing showed up in either's logs.
+const FIGURE_MAX_BYTES = 4 * 1024 * 1024; // 4 MB
 // Same list enforced again server-side (upload-figure.post.ts) — this is
 // just for immediate feedback without a round trip.
 const FIGURE_ALLOWED_TYPES = ['image/jpeg', 'image/png'];
+
+// A freshly-picked File never enters `state`/`figure.*` at all - it's kept
+// here, in a plain (non-reactive) Map keyed by a locally-generated id, and
+// `figure.file` just holds that key as a string until upload. This isn't
+// about Vue wrapping the File in a Proxy - reactive() already leaves File
+// objects alone (its targetTypeMap only proxies plain Object/Array/Map/Set,
+// see @vue/reactivity's getTargetType, so a File nested in `state` is never
+// proxied in the first place). The actual, still-unconfirmed mechanism is
+// something about this File sitting inside `state.figures`, which is bound
+// to UForm and deep-watched below - editing a sibling label reliably
+// triggers a net::ERR_UPLOAD_FILE_CHANGED on this same File at upload time.
+// Keeping the File out of that tree entirely sidesteps the question of
+// exactly why, rather than relying on a specific (and unverifiable) theory
+// of the cause.
+const pendingFigureFiles = new Map<string, File>();
+
+function addFigure() {
+    state.figures!.push({ clientKey: generateLocalId(), file: null, label: '' });
+    revalidateFigures();
+}
+
+function removeFigure(index: number) {
+    const figure = (state.figures as FigureState[])[index];
+    if (figure) {
+        if (typeof figure.file === 'string') {
+            pendingFigureFiles.delete(figure.file);
+            const url = figurePreviewCache.value[figure.file];
+            if (url) URL.revokeObjectURL(url);
+            delete figurePreviewCache.value[figure.file];
+        }
+        delete figureInputRefs.value[figure.clientKey];
+        figureRefCallbacks.delete(figure.clientKey);
+    }
+    state.figures!.splice(index, 1);
+    revalidateFigures();
+}
 
 function onFigureFileChange(e: Event, index: number) {
     const input = e.target as HTMLInputElement;
@@ -407,15 +481,34 @@ function onFigureFileChange(e: Event, index: number) {
         return;
     }
     if (file.size > FIGURE_MAX_BYTES) {
-        error.value = ['Figures must be under 5 MB.'];
+        error.value = ['Figures must be under 4 MB.'];
         return;
     }
-    (state.figures as FigureState[])[index].file = file;
+    const figure = (state.figures as FigureState[])[index];
+    if (!figure) return;
+
+    const previousPendingKey = typeof figure.file === 'string' && pendingFigureFiles.has(figure.file) ? figure.file : null;
+    const pendingKey = generateLocalId();
+    pendingFigureFiles.set(pendingKey, file);
+    // Created once, here, and cached - figureFilePreview only ever reads
+    // from the cache. It used to call URL.createObjectURL() inline on every
+    // render, which with a form this reactive means dozens of fresh,
+    // never-revoked object URLs against the same File within seconds of
+    // typing - worse with every extra figure, since each render re-creates
+    // one for every figure present, not just the one being edited.
+    figurePreviewCache.value[pendingKey] = URL.createObjectURL(file);
+    figure.file = pendingKey;
+    figure.existingFilename = file.name;
+    if (previousPendingKey) {
+        pendingFigureFiles.delete(previousPendingKey);
+        const previousUrl = figurePreviewCache.value[previousPendingKey];
+        if (previousUrl) URL.revokeObjectURL(previousUrl);
+        delete figurePreviewCache.value[previousPendingKey];
+    }
     revalidateFigures();
 }
 
 function figureFileName(figure: FigureState) {
-    if (figure.file instanceof File) return figure.file.name;
     return figure.existingFilename ?? '';
 }
 
@@ -448,19 +541,23 @@ watch(
     () => state.figures,
     (figures) => {
         for (const figure of figures ?? []) {
-            if (typeof figure.file === 'string') loadFigurePreview(figure.file);
+            if (typeof figure.file === 'string' && !pendingFigureFiles.has(figure.file)) loadFigurePreview(figure.file);
         }
     },
     { immediate: true, deep: true },
 );
 
 function figureFilePreview(figure: FigureState) {
-    if (figure.file instanceof File) return URL.createObjectURL(figure.file);
-    if (typeof figure.file === 'string') return figurePreviewCache.value[figure.file] ?? '';
-    return '';
+    if (typeof figure.file !== 'string') return '';
+    return figurePreviewCache.value[figure.file] ?? '';
 }
 
 const error = ref<string[]>([]);
+
+// Distinguishes a figure-upload failure (message already tells the user
+// exactly what to do) from any other submit failure, so the catch block
+// below doesn't overwrite it with the generic "Failed to submit" message.
+class FigureUploadError extends Error {}
 
 function onFormError(event: FormErrorEvent) {
     const messages = event.errors?.map(e => e.message).filter(Boolean) as string[] ?? [];
@@ -514,25 +611,66 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
         // Upload any newly selected figure images before saving the submission —
         // via our own server route (upload-figure.post.ts) rather than straight
         // to Directus, so the size/format checks are actually enforced and not
-        // just a client-side courtesy.
-        const figures = await Promise.all((formData.figures ?? []).map(async (figure) => {
-            let fileId = typeof figure.file === 'string' ? figure.file : null;
-            if (figure.file instanceof File) {
-                const fd = new FormData();
-                fd.append('file', figure.file, figure.file.name);
-                const uploaded = await $fetch<{ id: string }>('/api/abstracts/upload-figure', {
-                    method: 'POST',
-                    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
-                    body: fd,
-                });
-                if (!uploaded?.id) throw new Error('Figure upload failed');
-                fileId = uploaded.id;
+        // just a client-side courtesy. Only happens here, after the CAPTCHA and
+        // submission-limit/deadline checks above have passed.
+        //
+        // allSettled rather than Promise.all so one failed upload (e.g. the
+        // net::ERR_UPLOAD_FILE_CHANGED case) doesn't lose track of the others
+        // that already succeeded — each settled result is written straight
+        // back into state.figures below, so a failed figure is cleared back
+        // to "no image chosen" (prompting the user to reselect just that
+        // one) while successful ones are recorded as their Directus file id,
+        // so retrying the submit won't re-upload — and therefore
+        // re-orphan — them.
+        const uploadResults = await Promise.allSettled((formData.figures ?? []).map(async (figure) => {
+            if (typeof figure.file !== 'string') throw new Error('Missing figure file');
+            const pendingFile = pendingFigureFiles.get(figure.file);
+            if (!pendingFile) return figure.file; // already-uploaded Directus file id
+            const fd = new FormData();
+            fd.append('file', pendingFile, pendingFile.name);
+            const uploaded = await $fetch<{ id: string }>('/api/abstracts/upload-figure', {
+                method: 'POST',
+                headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+                body: fd,
+            });
+            if (!uploaded?.id) throw new Error('Figure upload failed');
+            return uploaded.id;
+        }));
+
+        const failedFigureLabels: string[] = [];
+        uploadResults.forEach((result, index) => {
+            const target = (state.figures as FigureState[])[index];
+            const previousKey = target?.file;
+            // Whether it succeeded or failed, the pending local file (if any)
+            // for this figure is done being useful - on success it's now a
+            // real Directus id, on failure the figure is cleared below and
+            // the user has to reselect (which generates a fresh pending key).
+            if (typeof previousKey === 'string') pendingFigureFiles.delete(previousKey);
+            if (result.status === 'fulfilled') {
+                if (target) target.file = result.value;
+            } else {
+                if (target) target.file = null;
+                // Discarding the pending file - release its cached preview
+                // URL too, rather than leaving it to linger unrevoked.
+                if (typeof previousKey === 'string' && figurePreviewCache.value[previousKey]) {
+                    URL.revokeObjectURL(figurePreviewCache.value[previousKey]);
+                    delete figurePreviewCache.value[previousKey];
+                }
+                failedFigureLabels.push(formData.figures?.[index]?.label || `Figure ${index + 1}`);
             }
-            return {
-                ...(figure.id ? { id: figure.id } : {}),
-                file: fileId,
-                label: figure.label,
-            };
+        });
+
+        if (failedFigureLabels.length > 0) {
+            await revalidateFigures();
+            throw new FigureUploadError(
+                `Couldn't upload ${failedFigureLabels.length > 1 ? 'figures' : 'figure'} ${failedFigureLabels.map(l => `"${l}"`).join(', ')}. Please reselect ${failedFigureLabels.length > 1 ? 'them' : 'it'} and submit again.`
+            );
+        }
+
+        const figures = uploadResults.map((result, index) => ({
+            ...(formData.figures?.[index]?.id ? { id: formData.figures[index]!.id } : {}),
+            file: result.status === 'fulfilled' ? result.value : null,
+            label: formData.figures?.[index]?.label ?? '',
         }));
 
         await $fetch('/api/abstracts/submission', {
@@ -557,7 +695,7 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
         resetState();
         openSubmissionForm.value = false;
 	} catch (e) {
-		error.value = ['Failed to submit the form. Please try again later.'];
+		error.value = [e instanceof FigureUploadError ? e.message : 'Failed to submit the form. Please try again later.'];
         console.log(e);
         turnstileToken.value = undefined;
         turnstileRef.value?.reset();
@@ -618,6 +756,12 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
         message: 'You need to sign in to submit an abstract'
       }"
     />
+    <div v-else-if="abstractsUnavailable" class="flex flex-col items-center justify-center gap-4 h-lvh p-6 text-center">
+        <UIcon name="i-lucide-server-crash" class="size-14 text-error" />
+        <Headline headline="Unable to load abstract submission" as="h1" />
+        <Text as="p" size="lg" class="mx-auto max-w-md text-muted" content="We couldn't load the abstract submission form. Please try again shortly." />
+        <UButton label="Try again" icon="i-lucide-refresh-cw" color="accent" @click="() => reloadNuxtApp()" />
+    </div>
 	<div  v-else class="relative my-5">
         <ClientOnly>
             <UModal v-model:open="openConfirmation" title="Confirm Delete?">
@@ -772,8 +916,8 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                                 :ui="{
                                   hint: 'text-sm wrap max-w-150'
                                 }"
-                                hint="Optionally upload up to 3 figures (image files, max 5 MB each), each with a label.">
-                                <div v-for="(figure, index) in state.figures" :key="index" class="mb-3 flex flex-col md:flex-row gap-2 md:items-center p-2 rounded-lg border border-default">
+                                hint="Optionally upload up to 3 figures (image files, max 4 MB each), each with a label.">
+                                <div v-for="(figure, index) in state.figures" :key="figure.clientKey" class="mb-3 flex flex-col md:flex-row gap-2 md:items-center p-2 rounded-lg border border-default">
                                     <div class="flex items-center gap-3">
                                         <img
                                             v-if="figureFilePreview(figure)"
@@ -782,7 +926,7 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                                             class="w-16 h-16 object-cover rounded" />
                                         <div class="flex flex-col gap-1">
                                             <input
-                                                :ref="(el) => setFigureInputRef(el, index)"
+                                                :ref="getFigureInputRefCallback(figure.clientKey)"
                                                 type="file"
                                                 accept="image/jpeg,image/png"
                                                 class="hidden"
@@ -793,7 +937,7 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                                                 color="secondary"
                                                 icon="i-lucide-upload"
                                                 :label="figureFileName(figure) ? 'Change Image' : 'Choose Image'"
-                                                @click="figureInputRefs[index]?.click()" />
+                                                @click="figureInputRefs[figure.clientKey]?.click()" />
                                             <span v-if="figureFileName(figure)" class="text-xs text-muted">{{ figureFileName(figure) }}</span>
                                         </div>
                                     </div>
@@ -809,7 +953,7 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                                         type="button"
                                         class="w-fit"
                                         size="xl"
-                                        @click="() => { state.figures!.splice(index, 1); revalidateFigures(); }">
+                                        @click="() => removeFigure(index)">
                                     </UButton>
                                 </div>
                                 <UButton
@@ -821,7 +965,7 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                                     icon="i-lucide-plus"
                                     size="xl"
                                     class="m-auto"
-                                    @click="() => { state.figures!.push({ file: null, label: '' }); revalidateFigures(); }"/>
+                                    @click="addFigure"/>
                             </UFormField>
 
                             <UFormField class="py-5 text-bold" size="xl" name="conflict" label="Conflict of Interest Declaration">
