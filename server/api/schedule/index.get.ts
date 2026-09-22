@@ -12,7 +12,7 @@ const scheduleFields = [
 	'startdate',
 	'enddate',
 	{
-		venue: ['id', 'title', { rooms: ['id', 'title'] }],
+		venue: ['id', 'title', { rooms: ['id', 'title', 'official_name', 'floor'] }],
 	},
 	{
 		days: [

@@ -3,7 +3,7 @@ import type { H3Event } from 'h3';
 
 const sectionFields = [
     'id', 'title', 'starttime', 'endtime', 'tags',
-    { rooms: [{ room: ['title'] }] },
+    { rooms: [{ room: ['title', 'official_name', 'floor'] }] },
     { organisers: ['id', { organisation: ['id', 'name', 'short_name', 'abbr', 'type'] }] },
     { section: ['*'] },
     { day: ['*'] },

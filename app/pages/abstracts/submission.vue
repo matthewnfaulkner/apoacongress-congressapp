@@ -49,11 +49,19 @@ function openGuidelines(e: Event) {
 }
 
 
-// Unauthenticated visitors only ever see the "Sign In Required" prompt (see
-// template below), so there's nothing to show them here — skip the Directus
-// round trip entirely rather than fetching data that'll never be rendered.
+// Deliberately NOT gated on isLoggedIn - the abstracts collection is
+// publicly readable (Directus's own public-role permission covers these
+// fields), so there's no need to skip the request for anonymous visitors.
+// Gating it here used to cause a real bug on every hard refresh: this fetch
+// is wrapped in useAsyncData, which Nuxt doesn't re-run on client hydration
+// (it trusts the SSR-computed result) - but isLoggedIn (from a plain,
+// un-cached top-level await elsewhere on this page) DOES correctly re-run
+// client-side and self-heal from false to true. SSR has no legitimate way
+// to know who's logged in (no cookie/localStorage forwarding into this
+// client's own requests), so it always evaluated isLoggedIn as false at
+// fetch time, permanently baking in a null result even for logged-in users,
+// with nothing to trigger a retry once the client corrected itself.
 const { data, error: abstractConfigError } = await useAsyncData<Abstract[] | null>('abstract_submit', async () => {
-      if (!isLoggedIn.value) return null;
       return await $directus.request<Abstract[]>(readItems(
         'abstracts',
         {
@@ -158,7 +166,7 @@ type Submission = {
   category: string,
   authors: string[] | { name: string; title: string; institution: string }[],
   keywords?: string[],
-  conflict?: boolean,
+  conflict?: string,
   conflictDisclosure?: string,
   figures?: { id: string; label: string; file: string | { id: string; filename_download?: string } | null }[],
 }
@@ -279,7 +287,7 @@ function getRowItems(row: TableRow<Submission>) {
               existingFilename: typeof figure.file === 'string' ? undefined : figure.file?.filename_download,
             }))
           : [];
-        state.conflict = row.original.conflict ? 'true' : 'false';
+        state.conflict = row.original.conflict === 'true' ? 'true' : 'false';
         state.conflictDisclosure = row.original.conflictDisclosure ?? '';
         state.consent = true;
       }
@@ -1004,7 +1012,6 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                                     class="m-auto"
                                     @click="addFigure"/>
                             </UFormField>
-
                             <UFormField class="py-5 text-bold" size="xl" name="conflict" label="Conflict of Interest Declaration">
                               <URadioGroup 
                                   v-model="state.conflict" 

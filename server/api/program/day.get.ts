@@ -4,7 +4,7 @@ import type { H3Event } from 'h3';
 const dayFields = [
     'title', 'id', 'key', 'starttime', 'endtime', 'time_subdivision',
     { timeslots: ['id', 'starttime', 'endtime'] },
-    { congress: ['id', { venue: [{ rooms: ['id', 'title'] }] }] },
+    { congress: ['id', { venue: [{ rooms: ['id', 'title', 'official_name', 'floor'] }] }] },
     {
         schedules: [
             'id', 'name', 'status', 'parent', 'user_created', 'preliminary',
