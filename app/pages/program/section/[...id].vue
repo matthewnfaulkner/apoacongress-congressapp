@@ -53,54 +53,70 @@ const congressTitle = computed(() => site.title ?? 'The congress');
 const congressInfo = computed(() => siteDataStore.congressInfo);
 
 useSeoMeta({
-	title: `${section.short_name ?? section.name ?? 'Section'} Schedule | ${congressInfo.value.title || congressTitle.value}`,
-	description: `Schedule for ${section.name ?? section.short_name ?? 'this section'} at ${congressTitle.value}${congressInfo.value.tagline ? ` ${congressInfo.value.tagline}` : ''}.`,
-	ogTitle: `${section.short_name ?? section.name ?? 'Section'} Schedule | ${congressInfo.value.title || congressTitle.value}`,
-	ogDescription: `Schedule for ${section.name ?? section.short_name ?? 'this section'} at ${congressTitle.value}${congressInfo.value.tagline ? ` ${congressInfo.value.tagline}` : ''}.`,
+	title: `${section?.short_name ?? section?.name ?? 'Section'} Schedule | ${congressInfo.value.title || congressTitle.value}`,
+	description: `Schedule for ${section?.name ?? section?.short_name ?? 'this section'} at ${congressTitle.value}${congressInfo.value.tagline ? ` ${congressInfo.value.tagline}` : ''}.`,
+	ogTitle: `${section?.short_name ?? section?.name ?? 'Section'} Schedule | ${congressInfo.value.title || congressTitle.value}`,
+	ogDescription: `Schedule for ${section?.name ?? section?.short_name ?? 'this section'} at ${congressTitle.value}${congressInfo.value.tagline ? ` ${congressInfo.value.tagline}` : ''}.`,
 	ogUrl: pageUrl.toString(),
 });
 
-const sessions: SessionEntry[] =
-    sectionSessions?.value?.map((session, index) => {
-		const rawTags = (session.tags as any[]) ?? []
-		const firstTagId = rawTags.length > 0 ? (rawTags[0]?.key ?? rawTags[0]?.id ?? rawTags[0]) : null
-		const tagColor = firstTagId ? (siteDataStore.scientificTags.find(t => t.id === firstTagId)?.color ?? null) : null
-		const tagName = rawTags
-			.map(raw => raw?.key ?? raw?.id ?? raw)
-			.map(id => siteDataStore.scientificTags.find(t => t.id === id)?.tag)
-			.filter(Boolean)
-			.join(', ')
-		return ({
-		id: session.id,
-		time: `${removeSeconds(session.starttime)} - ${removeSeconds(session.endtime)}`,
-		topic: { label: session.title ?? '', tagName, roomTitle: (session as any)?.room?.title ?? '' },
-        day: session?.schedule?.day,
-		roles: [''],
-		session: session.id,
-		color: tagColor,
-		room: (session?.rooms as CongressSessionRoom[]).map((room) => {
-			const venueRoom = room.room as VenueRoom;
-			return { title: venueRoom.title ?? '', subtitle: roomSubtitle(venueRoom) };
-		}),
-		children: session?.events?.map<EventEntry>(myevent => ({
-			id: myevent.id,
-			time: addMinutesToTime(session?.starttime || '', (myevent?.relative_start || 0)),
-			topic: myevent,
+// Deliberately wrapped: this does a lot of assuming (nested optional fields,
+// `as` casts) about the exact shape of Directus's response, and we can't
+// enumerate every way an unpublished/misconfigured section could deviate
+// from that shape. Any failure here means "nothing we can safely render",
+// not "crash the whole page" - same outcome as no data at all: fall
+// through to the Coming Soon state below.
+function buildSessions(): SessionEntry[] {
+	if (!sectionSessions.value?.length) return [];
+	try {
+		return sectionSessions.value.map((session) => {
+			const rawTags = (session.tags as any[]) ?? []
+			const firstTagId = rawTags.length > 0 ? (rawTags[0]?.key ?? rawTags[0]?.id ?? rawTags[0]) : null
+			const tagColor = firstTagId ? (siteDataStore.scientificTags.find(t => t.id === firstTagId)?.color ?? null) : null
+			const tagName = rawTags
+				.map(raw => raw?.key ?? raw?.id ?? raw)
+				.map(id => siteDataStore.scientificTags.find(t => t.id === id)?.tag)
+				.filter(Boolean)
+				.join(', ')
+			return ({
+			id: session.id,
+			time: `${removeSeconds(session.starttime)} - ${removeSeconds(session.endtime)}`,
+			topic: { label: session.title ?? '', tagName, roomTitle: (session as any)?.room?.title ?? '' },
+			day: session?.schedule?.day,
+			roles: [''],
+			session: session.id,
 			color: tagColor,
-			roles: myevent.assignments.flatMap(assignment => {
-				return assignment;
+			room: ((session?.rooms as CongressSessionRoom[]) ?? []).map((room) => {
+				const venueRoom = room.room as VenueRoom;
+				return { title: venueRoom?.title ?? '', subtitle: roomSubtitle(venueRoom) };
 			}),
-			children: myevent.children.map<EventEntry>(child => ({
-				id: child.id,
-				time: addMinutesToTime(session?.starttime || '', (myevent?.relative_start + child?.relative_start)),
-				topic: child,
+			children: session?.events?.map<EventEntry>(myevent => ({
+				id: myevent.id,
+				time: addMinutesToTime(session?.starttime || '', (myevent?.relative_start || 0)),
+				topic: myevent,
 				color: tagColor,
-				roles: child.assignments.flatMap(assignment => {
-					return assignment
-				})
+				roles: myevent.assignments?.flatMap(assignment => {
+					return assignment;
+				}) ?? [],
+				children: myevent.children?.map<EventEntry>(child => ({
+					id: child.id,
+					time: addMinutesToTime(session?.starttime || '', (myevent?.relative_start + child?.relative_start)),
+					topic: child,
+					color: tagColor,
+					roles: child.assignments?.flatMap(assignment => {
+						return assignment
+					}) ?? []
+				})) ?? []
 			})) ?? []
-		})) ?? []
-    })});
+		})
+		}) as SessionEntry[];
+	} catch (e) {
+		console.error('Failed to build section sessions:', e);
+		return [];
+	}
+}
+
+const sessions: SessionEntry[] = buildSessions();
 
 
 interface DaySessions {
@@ -260,7 +276,7 @@ function getRowStyle(row) {
 }
 </script>
 <template>
-	<div v-if="sessions" ref="wrapperRef">
+	<div v-if="sessions.length" ref="wrapperRef">
 		<Container class="py-3">
 		<ProgramPreliminaryBanner :preliminary="isPreliminary" />
 		<Headline :headline="`Schedule - ${section?.short_name}`" />
@@ -304,6 +320,6 @@ function getRowStyle(row) {
 		</Container>
 	</div>
 	<div v-else class="h-lvh">
-		<div class="flex text-center text-xl justify-center items-center h-full">{{ section?.short_name }} Schedule Coming Soon</div>
+		<div class="flex text-center text-xl justify-center items-center h-full">Program Coming Soon</div>
 	</div>
 </template>
