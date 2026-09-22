@@ -2032,6 +2032,8 @@ export interface VenueRoom {
 	venue?: Venue | string | null;
 	title?: string | null;
 	floor?: string | null;
+	official_name?: string | null;
+	capacity?: number | null;
 	sessions?: CongressSession[] | string[];
 }
 

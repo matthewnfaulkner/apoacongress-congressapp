@@ -4,6 +4,7 @@ import type { TabsItem } from '@nuxt/ui'
 import { h, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import { addMinutesToTime, removeSeconds } from '~/utils/time-utils';
+import { roomSubtitle } from '~/utils/room-utils';
 import BaseEventType from '~/components/eventTypes/BaseEventType.vue';
 
 const UCheckbox = resolveComponent('UCheckbox')
@@ -141,6 +142,7 @@ const tabs: TabsItem[] = rooms.map(room => {
   return {
     label: room?.title || '',
     value: room.id,
+    subtitle: roomSubtitle(room), // ✅ custom field (allowed by index signature)
     sessions, // ✅ custom field (allowed by index signature)
   }
 })
@@ -293,6 +295,7 @@ function model(event) {
 				<div :ref="el => setTabRef(el, item.value)" >{{ item.label }}</div>
 			</template>
 			<template #content="{ item,  index }">
+				<p v-if="(item as any).subtitle" class="text-lg mb-2">{{ (item as any).subtitle }}</p>
 				<UTable
 					:data="item.sessions"
 					:columns="columns"

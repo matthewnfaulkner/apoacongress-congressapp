@@ -4,6 +4,7 @@ import type { TabsItem } from '@nuxt/ui'
 import { h, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import { addMinutesToTime, removeSeconds } from '~/utils/time-utils';
+import { roomSubtitle } from '~/utils/room-utils';
 import BaseEventType from '~/components/eventTypes/BaseEventType.vue';
 
 
@@ -77,7 +78,10 @@ const sessions: SessionEntry[] =
 		roles: [''],
 		session: session.id,
 		color: tagColor,
-		room: (session?.rooms as CongressSessionRoom[]).map((room) => (room.room as VenueRoom).title),
+		room: (session?.rooms as CongressSessionRoom[]).map((room) => {
+			const venueRoom = room.room as VenueRoom;
+			return { title: venueRoom.title ?? '', subtitle: roomSubtitle(venueRoom) };
+		}),
 		children: session?.events?.map<EventEntry>(myevent => ({
 			id: myevent.id,
 			time: addMinutesToTime(session?.starttime || '', (myevent?.relative_start || 0)),
@@ -178,6 +182,15 @@ const columns: TableColumn<SessionEntry>[] = [
 	{
 		accessorKey: 'room',
 		header: 'Room',
+		cell: ({ row }) => {
+			const roomsList = row.getValue('room') as { title: string; subtitle: string | null }[];
+			return h('div', { class: 'flex flex-col gap-1' }, roomsList.map((r) =>
+				h('div', {}, [
+					h('span', r.title),
+					r.subtitle ? h('span', { class: 'block text-xs text-gray-500' }, r.subtitle) : null,
+				].filter(Boolean))
+			));
+		},
 	},
 	{
 		accessorKey: 'topic',
@@ -290,10 +303,7 @@ function getRowStyle(row) {
                 </div>
 		</Container>
 	</div>
-	<div v-else>
-		<div class="text-center text-xl mt-[20%] w-full text-center">
-			<p class="text-center m-2">{{ section?.short_name }} Schedule Coming Soon</p>
-			<UButton class="m-auto p-2" label="Get Notifed" color="accent" variant="solid" to="/register-interest" />
-		</div>
+	<div v-else class="h-lvh">
+		<div class="flex text-center text-xl justify-center items-center h-full">{{ section?.short_name }} Schedule Coming Soon</div>
 	</div>
 </template>

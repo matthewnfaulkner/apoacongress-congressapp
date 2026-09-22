@@ -44,7 +44,7 @@ label.value = props?.label || '';
 const session = ref<CongressSession>();
 session.value = props.session;
 
-const { organisationNames, firstTag } = useSessionLabel(session)
+const { organisationNames } = useSessionLabel(session)
 
 
 const toUpdate = ref(false);
@@ -348,7 +348,6 @@ function getRowItems(row: Row<EventEntry>) {
       <p class="text-2xl">
         {{ label }}
       </p>
-      <i v-if="firstTag" class="text-sm text-muted">Tag: {{ firstTag }}</i>
       <p class="text-muted">{{ startTime }} : {{ endTime }} - {{ day }}</p>
     </template>
     <template #body>

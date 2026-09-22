@@ -4,6 +4,7 @@ import AddModal from '@/components/grid/AddModal.vue';
 import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { type scheduleGridItem, GridItemTypes } from '../../types/grid-types';
 import { minutesBetween, toMinutes, removeSeconds } from "@/utils/time-utils";
+import { roomSubtitle } from "@/utils/room-utils";
 import type { CongressDay, CongressSchedule, CongressSessionRoom, VenueRoom, Site } from '#shared/types/schema';
 
 
@@ -197,6 +198,16 @@ function getTabRooms(_tab: any): VenueRoom[] {
   return rooms.value
 }
 
+// Row-height in px, proportional to the day's own time_subdivision (in
+// minutes), so a finer subdivision (e.g. 5 instead of the usual 10) means
+// more rows over the same time span but each row proportionally shorter -
+// keeping the grid's total rendered height the same instead of the row
+// count doubling at a fixed row height. 2px/minute matches what a 20px row
+// already implied at the common 10-minute subdivision.
+function rowHeightForTab(item: any): number {
+  return (item?.timeSubDivision || 10) * 2
+}
+
 const gridItemRooms = computed(() =>
   rooms.value.map<scheduleGridItem>((room, index) => ({
     y: 0, x: index + 1, w: 1, h: 1,
@@ -206,6 +217,7 @@ const gridItemRooms = computed(() =>
     isDraggable: false,
     isResizable: false,
     label: room.title || '',
+    subtitle: roomSubtitle(room),
   }))
 )
 
@@ -248,7 +260,7 @@ onMounted(async () => {
   if (gridEl) {
     gridEl.style.setProperty('--rows', String(currentTab.value?.timeHeaders?.length || 0))
     gridEl.style.setProperty('--columns', (rooms.value.length + 1).toString())
-    gridEl.style.setProperty('--row-height', '20px')
+    gridEl.style.setProperty('--row-height', `${rowHeightForTab(currentTab.value)}px`)
   }
 })
 
@@ -274,6 +286,7 @@ watch(activeTab, (newTab) => {
   gridEl.style.setProperty('--columns', String((rooms.value.length || 0) + 1))
   gridEl.style.setProperty('--grid-scale', String(tab?.timeScale))
   gridEl.style.setProperty('--rows', String((tab?.timeHeaders?.length || 0)))
+  gridEl.style.setProperty('--row-height', `${rowHeightForTab(tab)}px`)
 })
 
 const overlay = useOverlay()
@@ -332,7 +345,7 @@ function initialView() {
         }"
       >
         <template #content="{ item, index }">
-        
+
           <VueZoomable v-if="item.published"
             class="h-full"
             v-model:zoom="zoomStates[index]"
@@ -343,7 +356,7 @@ function initialView() {
             zoomOrigin="pointer"
           >
             <div class="grid-layout min-h-100 relative" ref="el">
-              <Headline class="p-2 text-accent" :headline="`Congress Program - ${item.label}`"/>
+              <Headline class="p-2 mb-6 text-accent" :headline="`Congress Program - ${item.label}`"/>
               <grid-layout
                 v-if="item.published"
                 class="w-200 grid"
@@ -351,14 +364,14 @@ function initialView() {
                 :layout.sync="[...gridItemRooms, ...item.timeHeaders, ...item.sessions, ...item.breaks]"
                 :col-num="rooms.length + 1"
                 :maxRows="item.numCols + 1"
-                :row-height="20"
+                :row-height="rowHeightForTab(item)"
                 :is-draggable="false"
                 :is-resizable="false"
                 :is-mirrored="false"
                 :margin="[0, 0]"
                 :transformScale="zoomStates[index]"
                 :autoSize="false"
-                :style="{ width: `${160 * rooms.length}px` }"
+                :style="{ width: `${220.5 * rooms.length}px` }"
                 :use-css-transforms="true"
                 :vertical-compact="false"
                 :prevent-collision="true"
@@ -379,16 +392,23 @@ function initialView() {
                   :class="{
                     'bg-gray-500/30 hover:bg-accent-300 border border-gray-600/30 cursor-zoom-in': griditem.type === GridItemTypes.Session,
                   }"
-                  :style="griditem.color ? [`background: ${griditem.color}50!important; border-color: ${griditem.color}60!important`] : []"
+                  :style="griditem.color ? [`background: ${griditem.color}!important; border-color: ${griditem.color}!important`] : []"
                   :data-grid-item-type="griditem.type"
                   @click="() => open(griditem)"
                 >
                   <p
-                    v-if="griditem.type === GridItemTypes.Header"
+                    v-if="griditem.type === GridItemTypes.Header && griditem.x === 0"
                     class="relative align-middle -top-3 font-bold"
                   >
                     {{ griditem.label }}
                   </p>
+                  <div
+                    v-else-if="griditem.type === GridItemTypes.Header"
+                    class="relative align-middle -top-8"
+                  >
+                    <p class="font-bold">{{ griditem.label }}</p>
+                    <p v-if="(griditem as any).subtitle" class="text-xs font-normal text-gray-800">{{ (griditem as any).subtitle }}</p>
+                  </div>
                   <div
                     v-else-if="griditem.type === GridItemTypes.Session || griditem.type === GridItemTypes.Break"
                     class="h-full overflow-clip font-bold flex items-center justify-center text-xl text-gray-700 text-wrap"
@@ -431,17 +451,10 @@ function initialView() {
   position: absolute;
   width: calc(100% - var(--margin));
   height: calc((var(--rows) + .1) * var(--row-height));
-  background-size: calc((100% - var(--margin)) / var(--columns)) var(--row-height);
-  background-image:
-    linear-gradient(to right, rgb(233, 230, 230) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(238, 237, 237) 1px, transparent 1px);
   --s: calc(var(--row-height) * var(--grid-scale));
-  --w: 142px;
-  --_g: #c3c3c300 90deg, rgb(213, 213, 213) 0;
-  --_h: #c3c3c300 90deg, rgb(208, 208, 208) 0;
-  background:
-    conic-gradient(from 90deg at 2px 2px, var(--_h)) 0 var(--row-height) / var(--w) var(--s),
-    conic-gradient(from 90deg at 1px 1px, var(--_g)) 0 var(--row-height) / calc(var(--w)) calc(var(--s) / var(--grid-scale));
+  --w: 196px;
+  --_h: #c3c3c300 90deg, rgb(230, 230, 230) 0;
+  background: conic-gradient(from 90deg at 2px 2px, var(--_h)) 0 var(--row-height) / var(--w) var(--s);
 }
 </style>
 
