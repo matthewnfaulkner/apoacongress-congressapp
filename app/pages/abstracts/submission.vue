@@ -158,7 +158,7 @@ type Submission = {
   category: string,
   authors: string[] | { name: string; title: string; institution: string }[],
   keywords?: string[],
-  conflict?: boolean,
+  conflict?: string,
   conflictDisclosure?: string,
   figures?: { id: string; label: string; file: string | { id: string; filename_download?: string } | null }[],
 }
@@ -279,7 +279,7 @@ function getRowItems(row: TableRow<Submission>) {
               existingFilename: typeof figure.file === 'string' ? undefined : figure.file?.filename_download,
             }))
           : [];
-        state.conflict = row.original.conflict ? 'true' : 'false';
+        state.conflict = row.original.conflict === 'true' ? 'true' : 'false';
         state.conflictDisclosure = row.original.conflictDisclosure ?? '';
         state.consent = true;
       }
@@ -1004,7 +1004,6 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                                     class="m-auto"
                                     @click="addFigure"/>
                             </UFormField>
-
                             <UFormField class="py-5 text-bold" size="xl" name="conflict" label="Conflict of Interest Declaration">
                               <URadioGroup 
                                   v-model="state.conflict" 
