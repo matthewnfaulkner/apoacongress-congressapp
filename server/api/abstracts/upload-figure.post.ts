@@ -32,6 +32,18 @@ export default defineEventHandler(async (event) => {
 		throw createError({ statusCode: 400, statusMessage: 'Invalid form submission' });
 	}
 
+	// Presence check only, not a real Turnstile verification - a token is
+	// single-use, and the actual verification against Cloudflare happens once,
+	// at the final /api/abstracts/submission call. This just stops someone
+	// calling this endpoint directly (with a valid session but having never
+	// touched the CAPTCHA widget at all) to upload arbitrary files for free;
+	// it doesn't confirm the token is genuine or still valid.
+	const turnstileTokenPart = formData.find((part) => part.name === 'turnstileToken');
+	const turnstileToken = turnstileTokenPart?.data.toString('utf-8') ?? '';
+	if (!turnstileToken) {
+		throw createError({ statusCode: 400, statusMessage: 'Missing CAPTCHA token.' });
+	}
+
 	const filePart = formData.find((part) => part.name === 'file' && part.filename);
 	if (!filePart) {
 		throw createError({ statusCode: 400, statusMessage: 'A file is required' });

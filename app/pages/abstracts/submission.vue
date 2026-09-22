@@ -522,8 +522,11 @@ const figurePreviewCache = ref<Record<string, string>>({});
 
 async function loadFigurePreview(fileId: string) {
     if (figurePreviewCache.value[fileId]) return;
-    const { $directusTokenStorage } = useNuxtApp();
-    const accessToken = config.public.isSandbox ? null : ($directusTokenStorage as any).get()?.access_token;
+    // getToken() (not a raw storage read) waits out any in-flight refresh and
+    // proactively refreshes a near-expiry token, rather than risking a stale
+    // or momentarily-cleared snapshot — see handleSubmitInner for the full
+    // reasoning; this endpoint hits the same class of failure.
+    const accessToken = config.public.isSandbox ? null : await ($directus as any).getToken();
     try {
         const response = await fetch(`/api/abstracts/figure?id=${fileId}`, {
             headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
@@ -564,7 +567,28 @@ function onFormError(event: FormErrorEvent) {
     error.value = messages.length ? messages : ['Please check the highlighted fields and try again.'];
 }
 
+// UForm's own onSubmitWrapper (see @nuxt/ui's Form.vue) has no re-entrancy
+// guard of its own - it disables the submit button via a reactive `loading`
+// flag, but that only takes effect on the next render tick, and pressing
+// Enter in any single-line input bypasses the button's disabled state
+// entirely (native form-submit-on-Enter fires regardless). Without this
+// guard, two overlapping handleSubmit calls can race: one's `catch` block
+// clears turnstileToken.value right as the other is mid-flight and about to
+// read it for its own request body, sending an empty token even though that
+// same call's own guard above passed earlier.
+const isSubmitting = ref(false);
+
 const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
+	if (isSubmitting.value) return;
+	isSubmitting.value = true;
+	try {
+		await handleSubmitInner(submission);
+	} finally {
+		isSubmitting.value = false;
+	}
+};
+
+const handleSubmitInner = async (submission: FormSubmitEvent<Schema>) => {
 	error.value = [];
 	if (!turnstileToken.value) {
 		error.value = ['Please complete the CAPTCHA before submitting.'];
@@ -605,8 +629,18 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
             value,
         });
 
-        const { $directusTokenStorage } = useNuxtApp();
-        const accessToken = config.public.isSandbox ? null : ($directusTokenStorage as any).get()?.access_token;
+        // A single accessToken snapshot captured once up here and reused across
+        // every request below used to be the actual cause of the mysterious 401s
+        // on submit: Directus's own SDK schedules a background token refresh, and
+        // if that fires while this (potentially multi-request, sequential) flow
+        // is mid-air, a request further down would still be holding the
+        // now-invalidated old value. getToken() is fetched fresh, per request,
+        // immediately before each one — it waits out any in-flight refresh and
+        // proactively refreshes a near-expiry token itself, rather than trusting
+        // a static read taken earlier.
+        async function freshAccessToken() {
+            return config.public.isSandbox ? null : await ($directus as any).getToken();
+        }
 
         // Upload any newly selected figure images before saving the submission —
         // via our own server route (upload-figure.post.ts) rather than straight
@@ -628,6 +662,8 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
             if (!pendingFile) return figure.file; // already-uploaded Directus file id
             const fd = new FormData();
             fd.append('file', pendingFile, pendingFile.name);
+            fd.append('turnstileToken', turnstileToken.value ?? '');
+            const accessToken = await freshAccessToken();
             const uploaded = await $fetch<{ id: string }>('/api/abstracts/upload-figure', {
                 method: 'POST',
                 headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
@@ -673,9 +709,10 @@ const handleSubmit = async (submission: FormSubmitEvent<Schema>) => {
             label: formData.figures?.[index]?.label ?? '',
         }));
 
+        const submitAccessToken = await freshAccessToken();
         await $fetch('/api/abstracts/submission', {
             method: 'POST',
-            headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+            headers: submitAccessToken ? { Authorization: `Bearer ${submitAccessToken}` } : {},
             body: {
                 id: state.id,
                 turnstileToken: turnstileToken.value,
@@ -817,7 +854,7 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                                 <USelect :items="categories" v-model="state.category" class="w-75 md:w-100 lg:w-100" color="secondary" variant="subtle"/>
                             </UFormField>
                             <UFormField required label="Title" name="title"  size="xl"  class="pb-5">
-                                <UInput v-model="state.title" class="w-75 md:w-100 lg:w-200" color="secondary" variant="subtle"  />
+                                <UTextarea v-model="state.title" class="w-75 md:w-100 lg:w-200" color="secondary" variant="subtle" autoresize :rows="1"  />
                             </UFormField>
                             <UFormField
                                 required
