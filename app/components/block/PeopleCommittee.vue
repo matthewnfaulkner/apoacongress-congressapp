@@ -51,13 +51,12 @@ const flatMembers = computed(() =>
 			
 			<UMarquee 
 				v-if="props.display == 'marquee'"
-				class="max-w-screen" 
+				class="max-w-screen"
 				pause-on-hover
-				
 				:overlay="false"
 				:ui="{
-					root: 'group relative flex items-start overflow-hidden gap-0',
-					content: 'flex items-start shrink-0 justify-around gap-0 [animation-delay:2.5s]',
+					root: 'group relative flex items-start overflow-hidden gap-0 [--gap:0px]',
+					content: 'flex items-start shrink-0 justify-start w-auto gap-0 [animation-delay:2.5s]',
 				}">
 					<PersonProfileCard
 						v-for="member in flatMembers"

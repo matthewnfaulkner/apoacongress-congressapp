@@ -75,7 +75,7 @@ onMounted(() => {
 		<UCarousel 
 			v-if="data.type == 'carousel'"
 			class="max-w-screen" 
-			:autoplay="{ delay: 2000 }"
+			:autoplay="visible ? { delay: 4000 } : false"
 			:overlay="false"
 			arrows
 			loop
