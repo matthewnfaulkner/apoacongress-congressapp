@@ -18,6 +18,36 @@ interface SubmissionBody {
 	submissionValues?: SubmissionValueInput[];
 }
 
+// Blocks the specific constructs that actually enable script execution
+// (tag-based injection, inline event handlers, javascript:/data: URIs),
+// rather than any HTML-special character - unlike nuxt-security's
+// xssValidator (disabled for this route - see nuxt.config.ts), this doesn't
+// reject ordinary text like "p < 0.05" or "Hip & Knee", and it rejects
+// rather than rewrites, so there's no double-escaping risk wherever this
+// data gets displayed later.
+const DANGEROUS_MARKUP_PATTERNS = [
+	/<script/i,
+	/<iframe/i,
+	/<object/i,
+	/<embed/i,
+	/on\w+\s*=/i, // onerror=, onload=, onclick=, etc.
+	/javascript:/i,
+	/data:text\/html/i,
+];
+
+function containsDangerousMarkup(value: string): boolean {
+	return DANGEROUS_MARKUP_PATTERNS.some((pattern) => pattern.test(value));
+}
+
+function bodyContainsDangerousMarkup(body: SubmissionBody): boolean {
+	const values = [
+		...(body.submissionValues ?? []).map((sv) => sv.value),
+		...(body.keywords ?? []),
+		...(body.figures ?? []).map((f) => f.label),
+	];
+	return values.some((value) => typeof value === 'string' && containsDangerousMarkup(value));
+}
+
 // Moved server-side so Turnstile can actually be enforced (the client-side
 // widget alone doesn't stop anything — see submission.vue history) and so
 // the write happens under a real, freshly-checked session rather than
@@ -43,6 +73,10 @@ export default defineEventHandler(async (event) => {
 	}
 
 	const body = await readBody<SubmissionBody>(event);
+
+	if (bodyContainsDangerousMarkup(body ?? {})) {
+		throw createError({ statusCode: 400, statusMessage: 'Submission contains disallowed content.' });
+	}
 
 	if (!body?.turnstileToken) {
 		throw createError({ statusCode: 400, statusMessage: 'Missing CAPTCHA token.' });

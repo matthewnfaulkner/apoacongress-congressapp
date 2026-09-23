@@ -30,11 +30,24 @@ export default defineNuxtConfig({
 		// that aggregate cap under genuinely high distributed traffic (that's
 		// what event.get.ts's own response caching protects instead).
 		'/api/checkout/**': { security: { rateLimiter: { tokensPerInterval: 100, interval: 300000 } } },
+		// nuxt-security's xssValidator (default config) stringifies the whole
+		// request body, runs it through an HTML sanitizer, and 400s if that
+		// changed anything at all - before this route's own handler
+		// (CAPTCHA/Directus calls) ever runs. Ordinary abstract text trips this
+		// constantly (e.g. "p < 0.05", an "&" in a keyword or institution name).
+		// escapeHtml: false (per xssValidator.js's own check for this exact
+		// value - not a function; the middleware swaps in the identity function
+		// internally) stops it rewriting/flagging loose characters like that;
+		// submission.post.ts's own containsDangerousMarkup() check is what
+		// actually blocks real injection attempts now (script tags, event
+		// handler attributes, javascript: URIs) - see that file.
+		'/api/abstracts/submission': { security: { xssValidator: { escapeHtml: false } } },
 		'/**': { isr: false },
 	} : {
 		// Never cache API routes - query params must always hit the server fresh
 		'/api/**': { isr: false },
 		'/api/checkout/**': { security: { rateLimiter: { tokensPerInterval: 100, interval: 300000 } } },
+		'/api/abstracts/submission': { security: { xssValidator: { escapeHtml: false } } },
 
 		// Auth pages must always run fresh SSR to read cookies
 		'/login': { isr: false },
