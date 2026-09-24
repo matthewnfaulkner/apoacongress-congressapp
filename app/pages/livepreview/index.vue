@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { Page, PageBlock } from '#shared/types/schema';
-import { withLeadingSlash, withoutTrailingSlash } from 'ufo';
 
 
 const route = useRoute();
@@ -20,10 +19,7 @@ const previewAccessToken = enabled.value && !config.public.isSandbox
 	: null;
 
 
-const { locale, defaultLocale } = useI18n();
-
-const path = withoutTrailingSlash(withLeadingSlash(route.path));
-const permalink = locale.value === defaultLocale ?  path : '/';
+const permalink = '/';
 
 
 // Handle Live Preview adding version=main which is not required when fetching the main version.

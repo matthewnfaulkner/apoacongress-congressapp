@@ -102,7 +102,7 @@ const pageFields = [
 						{ image: ['id', 'filename_download', 'type'] },
 						{ logo: ['id', 'filename_download', 'type'] },
 						{
-							announcements: ['headline', 'content']
+							announcements: ['id', 'headline', 'content']
 						},
 						{
 							partners: [
@@ -328,7 +328,9 @@ const pageFields = [
  *
  * Key Features:
  * - Permalink-based routing (e.g., /about, /contact, /pricing)
- * - Preview mode with token authentication
+ * - Preview mode authorized by the logged-in user's own Directus session
+ *   (no separate preview token) — the default (non-preview) route never
+ *   uses the caller's identity, it's always the plain public/published view
  * - Version support for content management workflows
  * - Dynamic content blocks with real-time data fetching
  * - SEO metadata support
@@ -344,17 +346,34 @@ async function handler(event: H3Event) {
 
 	const query = getQuery(event);
 
-	const { preview, token: rawToken, permalink: rawPermalink, id, version, languageCode } = query;
+	const { preview, permalink: rawPermalink, id, version, languageCode } = query;
 
 	const permalink = withoutTrailingSlash(withLeadingSlash(String(rawPermalink)));
-	const token = preview === 'true' && rawToken ? String(rawToken) : null;
 
 	if (NON_PAGE_PERMALINKS.has(permalink)) {
 		throw createError({ statusCode: 404, statusMessage: 'Page not found' });
 	}
 
+	// cachedEventHandler below always stamps a public, 1hr Cache-Control onto
+	// the response — even when shouldBypassCache skips the server-side cache
+	// storage — because that header gets set unconditionally before our own
+	// handler's headers are copied over. Without this override, a preview/
+	// version request fetches fresh data but tells the browser (and any CDN)
+	// to cache *that* response for an hour, so reloading just replays stale
+	// preview content instead of hitting the server again.
+	if (preview === 'true' || version) {
+		setHeader(event, 'cache-control', 'no-store');
+	}
+
 	const cookies = parseCookies(event);
-	const sessionToken = cookies[config.sessionTokenName];
+	const bearerToken = getHeader(event, 'authorization')?.replace(/^Bearer\s+/, '') || null;
+
+	// Preview mode authorizes off the logged-in user's own session (bearer
+	// header from the JSON token storage, or the session cookie for SSR) —
+	// Directus's own permissions decide what they can see. Outside of preview
+	// mode we never send the caller's identity, so the response is always the
+	// plain public/published view regardless of who's logged in.
+	const userToken = preview === 'true' ? bearerToken ?? cookies[config.sessionTokenName] ?? null : null;
 
 	try {
 		let page: Page;
@@ -373,8 +392,8 @@ async function handler(event: H3Event) {
 				fields: ['id'],
 			});
 
-			if (token && token.trim()) {
-				lookupRequest = withToken(token, lookupRequest);
+			if (userToken) {
+				lookupRequest = withToken(userToken, lookupRequest);
 			}
 
 			const pageIdLookup = (await directusServer.request(lookupRequest)) as any[];
@@ -394,7 +413,7 @@ async function handler(event: H3Event) {
 			try {
 				page = (await directusServer.request(
 					withToken(
-						token ?? sessionToken as string,
+						userToken as string,
 						readItem('pages', pageId, {
 							version: String(version),
 							fields: pageFields as any,
@@ -414,13 +433,13 @@ async function handler(event: H3Event) {
 		} else {
 			// Standard request: Use readItems with permalink filtering
 			// Filter logic:
-			// - If token exists: fetch any status (for preview mode)
-			// - If no token: only fetch published content (for public viewing)
+			// - If userToken exists: fetch any status (preview mode, logged in)
+			// - If no userToken: only fetch published content (public viewing)
 			const pageData = await directusServer.request(
 				withToken(
-					(token ?? sessionToken) as string,
+					userToken as string,
 					readItems('pages', {
-						filter: token
+						filter: userToken
 							? { permalink: { _eq: permalink }, site : {id: {_eq: config.public.siteId} }}
 							: { permalink: { _eq: permalink }, status: { _eq: 'published' }, site : {id: {_eq: config.public.siteId} } },
 						limit: 1,

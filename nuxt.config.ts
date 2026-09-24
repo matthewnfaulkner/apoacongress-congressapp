@@ -58,6 +58,14 @@ export default defineNuxtConfig({
 		'/support/**': { isr: false },
 		'/people/**': { isr: false },
 
+		// Live preview must never be prerendered — a prerendered/static response
+		// ignores the query string entirely (preview, version, id), so preview
+		// mode can only work here if it's always served dynamically.
+		// ssr: false because outside sandbox the preview auth token only lives
+		// in localStorage — an SSR fetch can't send it, and the client would
+		// then reuse that public (published-only) payload instead of refetching.
+		'/livepreview/**': { isr: false, prerender: false, ssr: false },
+
 		// Cache all page routes
 		'/**': { isr: 3600 },
 	},
@@ -342,6 +350,11 @@ export default defineNuxtConfig({
 	},
 	sitemap: {
 		sources: ['/api/sitemap'],
+		exclude: [
+			'/admin_login', '/login', '/logout', '/forgotten_password', '/reset_password',
+			'/profile', '/mydatarequests', '/no-access', '/preview',
+			'/livepreview/**', '/checkout/**', '/support/mytickets', '/program/planner',
+		],
 	},
 
 	hooks: {

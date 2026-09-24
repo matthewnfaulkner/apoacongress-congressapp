@@ -238,13 +238,23 @@ onMounted(() => {
 						leave-to-class="opacity-0 translate-y-4"
 					>
 					<div
-						v-if="openAnnouncements"
+						v-if="announcement"
+						v-show="openAnnouncements"
 						class="text-shadow-none absolute bottom-5 left-1/2 -translate-x-1/2 z-40 w-[90%] max-w-lg px-10 max-h-[80%] md:bottom-auto md:top-1/2 md:left-6 md:translate-x-0 md:-translate-y-1/2 md:w-1/2 md:px-0 lg:left-12 xl:left-50"
 					>
-						<UCard class=" bg-primary/95 shadow-2xl shadow-black ring-gray-600 ring-2">
+						<UCard class=" bg-primary/95 shadow-2xl shadow-black ring-gray-600 ring-2"
+						>
 							<div class="flex flex-col gap-2">
 								<div class="flex items-center gap-3">
-									<p class="font-semibold text-sm flex-1 text-center">{{ announcement?.headline }}</p>
+									<p class="font-semibold text-sm flex-1 text-center"
+										:data-directus="
+											setAttr({
+												collection: 'block_mainhero_announcements',
+												item: announcement?.id ?? null,
+												fields: 'headline',
+												mode: 'popover' })">
+										{{ announcement?.headline }}
+									</p>
 									<UButton
 										icon="i-lucide-x"
 										color="neutral"
@@ -254,7 +264,13 @@ onMounted(() => {
 										@click="openAnnouncements = false"
 									/>
 								</div>
-								<div class="overflow-y-auto max-h-100 prose prose-sm dark:prose-invert max-w-none">
+								<div class="overflow-y-auto max-h-100 prose prose-sm dark:prose-invert max-w-none"
+									:data-directus="
+										setAttr({
+											collection: 'block_mainhero_announcements',
+											item: announcement?.id ?? null,
+											fields: 'content',
+											mode: 'drawer' })">
 									<div v-html="announcement?.content" />
 								</div>
 							</div>
@@ -269,15 +285,17 @@ onMounted(() => {
 						<!-- tagline -->
 						<div class="tracking-tighter mt-0 lg:mt-0 transition-opacity duration-500 ease-out"
 							:class="textVisible ? 'opacity-100' : 'opacity-0'">
-							<Text class=" font-heading text-xl sm:text-xl text-right ml-10  text-black"
-							:content="data.tagline"
-							:data-directus="
-									setAttr({
-										collection: 'block_mainhero',
-										item: data.id,
-										fields: 'tagline',
-										mode: 'modal' })">{{ props.data.tagline }}
-							</Text>
+							<div class="w-full flex justify-end">
+								<Text class=" font-heading text-sm sm:text-xl text-right ml-10  text-black lg:max-w-120 right-0"
+								:content="data.tagline"
+								:data-directus="
+										setAttr({
+											collection: 'block_mainhero',
+											item: data.id,
+											fields: 'tagline',
+											mode: 'modal' })">{{ props.data.tagline }}
+								</Text>
+							</div>
 							<!-- logo + headline -->
 							<div class="flex flex-row justify-end transition-opacity duration-500 ease-out delay-150"
 								:class="textVisible ? 'opacity-100' : 'opacity-0'">

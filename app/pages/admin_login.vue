@@ -15,6 +15,7 @@ const siteDataStore = useSiteDataStore();
 const siteData = siteDataStore.siteData;
 
 const { $directus, $isAuthenticatedWithPolicy, $isAuthenticated, $directusTokenStorage } = useNuxtApp();
+const auth = useAuthStore();
 
 // $directus.logout() only clears its own (localStorage) token storage after
 // a successful round-trip to /auth/logout — if that request throws, the
@@ -61,7 +62,13 @@ const checkingAuth = ref(true)
 onMounted(async () => {
   try {
     const me = await $isAuthenticated()
-    if (me) {
+    // In non-sandbox (JSON) mode, readMe() can succeed off a leftover Directus
+    // session cookie alone (rest() sends credentials regardless of auth mode)
+    // even though this app never actually logged in and stored a token. Don't
+    // treat that as "logged in" here, or the store ends up empty on refresh.
+    const hasSession = config.public.isSandbox || !!$directusTokenStorage.get()?.access_token
+    if (me && hasSession) {
+      auth.setAuth(me, $directusTokenStorage.get()?.access_token ?? null)
       navigateTo('/')
       return
     }
@@ -177,15 +184,15 @@ async function login(data: any) {
       }
 
       const me = await $isAuthenticated();
-      console.log(me)
       if (!me) {
-        validationError.value = "You don't have permission to access this." 
+        validationError.value = "You don't have permission to access this."
         showValidationErrors.value = true
         await forceLogout()
         loading.value = false
         return
       }
 
+      auth.setAuth(me, $directusTokenStorage.get()?.access_token ?? null)
       navigateTo('/')
     } catch (error: any) {
       if (error.message === 'Invalid user OTP.') {
@@ -203,12 +210,14 @@ async function login(data: any) {
       await $directus.login({ email: emailValue.value, password: data.password}, {otp : data.otp})
       const me = await $isAuthenticated();
       if (!me) {
-        validationError.value = "You don't have permission to access this." 
+        validationError.value = "You don't have permission to access this."
         showValidationErrors.value = true
         await forceLogout()
         loading.value = false
         return
       }
+
+      auth.setAuth(me, $directusTokenStorage.get()?.access_token ?? null)
 
       navigateTo('/')
     } catch (error: any) {

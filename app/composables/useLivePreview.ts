@@ -1,19 +1,16 @@
 export function useLivePreview() {
 	return usePreviewMode({
-		// Enable preview mode when:
-		// 1. Both preview and token params exist in URL, OR
-		// 2. Version + token params exist (for versioning)
+		// Preview mode is just a ?preview=true flag — the actual authorization
+		// to see unpublished content comes from the logged-in user's own
+		// session (see one.get.ts), not a separate URL token.
 		shouldEnable: () => {
 			const route = useRoute();
-			return !!route.query.preview && !!route.query.token;
+			return !!route.query.preview;
 		},
 
-		// Store the token from the URL for use in API calls
-		getState: (currentState) => {
-			const route = useRoute();
-			return {
-				token: route.query.token || currentState.token,
-			};
-		},
+		// Without this, usePreviewMode's own default getState would still pull
+		// a `token` param out of the URL and stash it in `state.token` — dead
+		// weight now that nothing reads a URL token. Keep state empty.
+		getState: (currentState) => currentState,
 	});
 }
