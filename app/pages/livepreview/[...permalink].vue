@@ -45,9 +45,6 @@ const {
 		version,
 	},
 	watch: [permalink],
-	...(!config.public.isSandbox
-		? { getCachedData: (key: string, nuxtApp: any) => nuxtApp.payload.data[key] ?? nuxtApp.static.data[key] }
-		: {}),
 });
 
 const pageBlocks = computed(() => (page.value?.blocks as PageBlock[]) || []);

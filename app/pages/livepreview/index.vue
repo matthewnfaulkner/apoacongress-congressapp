@@ -41,9 +41,6 @@ const {
 		id: route.query.id as string,
 		version,
 	},
-	...(!config.public.isSandbox
-		? { getCachedData: (key: string, nuxtApp: any) => nuxtApp.payload.data[key] ?? nuxtApp.static.data[key] }
-		: {}),
 });
 
 
