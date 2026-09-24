@@ -1,15 +1,24 @@
 <script setup lang="ts">
 import type { Page, PageBlock } from '#shared/types/schema';
-import { withLeadingSlash, withoutTrailingSlash } from 'ufo';
-
 
 const route = useRoute();
-
 const { enabled } = useLivePreview();
 const pageUrl = useRequestURL();
 const { isVisualEditingEnabled, apply, setAttr } = useVisualEditing();
 const config = useRuntimeConfig();
 const { $directusTokenStorage } = useNuxtApp();
+
+
+
+const permalink = computed(() => {
+  	if(!route.params.permalink) return '';
+  	if(typeof route.params.permalink ===  'string') return route.params.permalink;
+ 	return  '/' + route.params.permalink.join('/')
+	}
+)
+
+// Handle Live Preview adding version=main which is not required when fetching the main version.
+const version = route.query.version === 'main' ? undefined : (route.query.version as string);
 
 // Preview mode is authorized by the logged-in user's own session, not a URL
 // token — send their Directus access token the same way submission.vue does
@@ -19,22 +28,12 @@ const previewAccessToken = enabled.value && !config.public.isSandbox
 	? ($directusTokenStorage as any).get()?.access_token
 	: null;
 
-
-const { locale, defaultLocale } = useI18n();
-
-const path = withoutTrailingSlash(withLeadingSlash(route.path));
-const permalink = locale.value === defaultLocale ?  path : '/';
-
-
-// Handle Live Preview adding version=main which is not required when fetching the main version.
-const version = route.query.version === 'main' ? undefined : (route.query.version as string);
-
 const {
 	data: page,
 	error,
 	refresh,
 } = await useFetch<Page>('/api/pages/one', {
-	key: `pages-${permalink}`,
+	key: computed(() => `pages-${permalink.value}`),
 	headers: {
 		...useRequestHeaders(['cookie']),
 		...(previewAccessToken ? { Authorization: `Bearer ${previewAccessToken}` } : {}),
@@ -45,15 +44,11 @@ const {
 		id: route.query.id as string,
 		version,
 	},
+	watch: [permalink],
 	...(!config.public.isSandbox
 		? { getCachedData: (key: string, nuxtApp: any) => nuxtApp.payload.data[key] ?? nuxtApp.static.data[key] }
 		: {}),
 });
-
-
-if (!page.value || error.value) {
-	throw createError({ statusCode: 404, statusMessage: 'Page not found', fatal: true });
-}
 
 const pageBlocks = computed(() => (page.value?.blocks as PageBlock[]) || []);
 
@@ -89,14 +84,20 @@ function applyVisualEditingButton() {
 
 onMounted(() => {
 	if (!isVisualEditingEnabled.value) return;
-	applyVisualEditingButton();
-	applyVisualEditing();
+		applyVisualEditingButton();
+		applyVisualEditing();
 });
 </script>
 
-<template>	
+<template>
 	<div class="relative">
-		<HomePageBuilder v-if="pageBlocks" :sections="pageBlocks" />
+		<UError v-if="error || !page"  :error="{
+			statusCode: 404,
+			statusMessage: 'Page not found',
+			message: 'The page you are looking for does not exist.'
+			}">
+		</UError>
+		<PageBuilder v-if="pageBlocks" :sections="pageBlocks" />
 		<div
 			v-if="isVisualEditingEnabled && page"
 			class="fixed z-50 w-full bottom-4 left-0 right-0 p-4 flex justify-center items-center gap-2"

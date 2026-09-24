@@ -2,7 +2,7 @@
 import type { Post, DirectusUser } from '#shared/types/schema';
 
 const route = useRoute();
-const { enabled, state } = useLivePreview();
+const { enabled } = useLivePreview();
 const { isVisualEditingEnabled, apply, setAttr } = useVisualEditing();
 const postUrl = useRequestURL();
 
@@ -10,22 +10,34 @@ const slug = route.params.slug as string;
 
 const wrapperRef = ref<HTMLElement | null>(null);
 
+const config = useRuntimeConfig();
 const {
 	public: { directusUrl },
-} = useRuntimeConfig();
+} = config;
+const { $directusTokenStorage } = useNuxtApp();
 
 // Handle Live Preview adding version=main which is not required when fetching the main version.
 const version = route.query.version === 'main' ? undefined : (route.query.version as string);
+
+// Preview mode is authorized by the logged-in user's own session, not a URL
+// token — send their Directus access token the same way submission.vue does
+// for upload-figure (JSON token storage in production; sandbox relies on the
+// forwarded session cookie instead, see below).
+const previewAccessToken = enabled.value && !config.public.isSandbox
+	? ($directusTokenStorage as any).get()?.access_token
+	: null;
 
 const { data, error, refresh } = await useFetch<{
 	post: Post;
 	relatedPosts: Post[];
 }>(() => `/api/posts/${slug}`, {
 	key: `posts-${slug}`,
-	headers: useRequestHeaders(['cookie']),
+	headers: {
+		...useRequestHeaders(['cookie']),
+		...(previewAccessToken ? { Authorization: `Bearer ${previewAccessToken}` } : {}),
+	},
 	query: {
 		preview: enabled.value ? true : undefined,
-		token: enabled.value ? state.token : undefined,
 		id: route.query.id as string,
 		version,
 	},
