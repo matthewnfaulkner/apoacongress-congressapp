@@ -246,7 +246,7 @@ onMounted(() => {
 						>
 							<div class="flex flex-col gap-2">
 								<div class="flex items-center gap-3">
-									<p class="font-semibold text-sm flex-1 text-center"
+									<p class="font-semibold text-3xl flex-1 text-center font-heading"
 										:data-directus="
 											setAttr({
 												collection: 'block_mainhero_announcements',
@@ -281,7 +281,7 @@ onMounted(() => {
 
 			<div class="relative z-10">
 				<div class="pl-6 mx-auto sm:px-8 lg:px-12 xl:px-50 max-w-8xl flex justify-end-safe ">
-					<div class="w-full lg:w-2/3 xl:w-2/3 p-5 text-accent sm:bg-transparent lg:p-10 text-right  rounded-b-xl sm:h-auto">
+					<div class="w-7/8 sm:w-2/3 xl:w-2/3 p-5 text-accent sm:bg-transparent lg:p-10 text-right  rounded-b-xl sm:h-auto">
 						<!-- tagline -->
 						<div class="tracking-tighter mt-0 lg:mt-0 transition-opacity duration-500 ease-out"
 							:class="textVisible ? 'opacity-100' : 'opacity-0'">
