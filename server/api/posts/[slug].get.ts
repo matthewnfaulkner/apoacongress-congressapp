@@ -20,14 +20,10 @@ async function handler(event: H3Event) {
 	const query = getQuery(event);
 	const { preview, id, version } = query;
 
-	// cachedEventHandler below always stamps a public, 1hr Cache-Control onto
-	// the response — even when shouldBypassCache skips the server-side cache
-	// storage — because that header gets set unconditionally before our own
-	// handler's headers are copied over. Without this override, a preview
-	// request fetches fresh data but tells the browser (and any CDN) to cache
-	// *that* response for an hour, so reloading just replays stale preview
-	// content instead of hitting the server again.
-	if (preview === 'true') {
+	// Preview/version responses are per-editor draft content — never let the
+	// browser or a CDN cache them (the export below keeps these requests out
+	// of cachedEventHandler, which would otherwise overwrite this header).
+	if (preview === 'true' || version) {
 		setHeader(event, 'cache-control', 'no-store');
 	}
 
@@ -108,10 +104,16 @@ async function handler(event: H3Event) {
 	}
 }
 
+// Preview/version requests skip cachedEventHandler entirely — see the
+// matching note in server/api/pages/one.get.ts.
+const cachedHandler = cachedEventHandler(handler, {
+	maxAge: 3600,
+	getKey: (event) => `post-${getRouterParam(event, 'slug')}`,
+});
+
 export default config.public.isSandbox
 	? eventHandler(handler)
-	: cachedEventHandler(handler, {
-		maxAge: 3600,
-		getKey: (event) => `post-${getRouterParam(event, 'slug')}`,
-		shouldBypassCache: (event) => getQuery(event).preview === 'true',
+	: eventHandler((event) => {
+		const { preview, version } = getQuery(event);
+		return preview || version ? handler(event) : cachedHandler(event);
 	});

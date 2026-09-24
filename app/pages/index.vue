@@ -46,7 +46,10 @@ const {
 		version,
 	},
 	...(!config.public.isSandbox
-		? { getCachedData: (key: string, nuxtApp: any) => nuxtApp.payload.data[key] ?? nuxtApp.static.data[key] }
+		// Skip the cache on an explicit refresh() (the visual editor's onSaved),
+		// otherwise it just hands back the same payload and never refetches.
+		? { getCachedData: (key: string, nuxtApp: any, ctx: { cause: string }) =>
+			ctx.cause.startsWith('refresh:') ? undefined : nuxtApp.payload.data[key] ?? nuxtApp.static.data[key] }
 		: {}),
 });
 

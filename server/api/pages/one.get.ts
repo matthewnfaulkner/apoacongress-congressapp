@@ -354,13 +354,9 @@ async function handler(event: H3Event) {
 		throw createError({ statusCode: 404, statusMessage: 'Page not found' });
 	}
 
-	// cachedEventHandler below always stamps a public, 1hr Cache-Control onto
-	// the response — even when shouldBypassCache skips the server-side cache
-	// storage — because that header gets set unconditionally before our own
-	// handler's headers are copied over. Without this override, a preview/
-	// version request fetches fresh data but tells the browser (and any CDN)
-	// to cache *that* response for an hour, so reloading just replays stale
-	// preview content instead of hitting the server again.
+	// Preview/version responses are per-editor draft content — never let the
+	// browser or a CDN cache them (the export below keeps these requests out
+	// of cachedEventHandler, which would otherwise overwrite this header).
 	if (preview === 'true' || version) {
 		setHeader(event, 'cache-control', 'no-store');
 	}
@@ -515,20 +511,22 @@ async function handler(event: H3Event) {
 	}
 }
 
+// Only cache plain, public, published-content lookups. Preview/version
+// requests skip cachedEventHandler entirely rather than via shouldBypassCache:
+// that option only skips the server-side storage, while the wrapper still
+// stamps `cache-control: max-age=3600` over our no-store, so the browser
+// would replay a stale preview response for an hour.
+const cachedHandler = cachedEventHandler(handler, {
+	maxAge: 3600,
+	getKey: (event) => {
+		const { permalink } = getQuery(event);
+		return `pages-${permalink}`;
+	},
+});
+
 export default config.public.isSandbox
 	? eventHandler(handler)
-	: cachedEventHandler(handler, {
-		maxAge: 3600,
-		getKey: (event) => {
-			const { permalink } = getQuery(event);
-			return `pages-${permalink}`;
-		},
-		// Only cache plain, public, published-content lookups. Preview/version
-		// requests carry draft content scoped to a specific editor — a plain
-		// session cookie with neither doesn't change anything: the filter
-		// above still forces status:published either way.
-		shouldBypassCache: (event) => {
-			const { preview, version } = getQuery(event);
-			return Boolean(preview) || Boolean(version);
-		},
+	: eventHandler((event) => {
+		const { preview, version } = getQuery(event);
+		return preview || version ? handler(event) : cachedHandler(event);
 	});
