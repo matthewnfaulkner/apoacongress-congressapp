@@ -285,15 +285,17 @@ onMounted(() => {
 						<!-- tagline -->
 						<div class="tracking-tighter mt-0 lg:mt-0 transition-opacity duration-500 ease-out"
 							:class="textVisible ? 'opacity-100' : 'opacity-0'">
-							<Text class=" font-heading text-xl sm:text-xl text-right ml-10  text-black"
-							:content="data.tagline"
-							:data-directus="
-									setAttr({
-										collection: 'block_mainhero',
-										item: data.id,
-										fields: 'tagline',
-										mode: 'modal' })">{{ props.data.tagline }}
-							</Text>
+							<div class="w-full flex justify-end">
+								<Text class=" font-heading text-sm sm:text-xl text-right ml-10  text-black lg:max-w-120 right-0"
+								:content="data.tagline"
+								:data-directus="
+										setAttr({
+											collection: 'block_mainhero',
+											item: data.id,
+											fields: 'tagline',
+											mode: 'modal' })">{{ props.data.tagline }}
+								</Text>
+							</div>
 							<!-- logo + headline -->
 							<div class="flex flex-row justify-end transition-opacity duration-500 ease-out delay-150"
 								:class="textVisible ? 'opacity-100' : 'opacity-0'">
