@@ -350,6 +350,11 @@ export default defineNuxtConfig({
 	},
 	sitemap: {
 		sources: ['/api/sitemap'],
+		exclude: [
+			'/admin_login', '/login', '/logout', '/forgotten_password', '/reset_password',
+			'/profile', '/mydatarequests', '/no-access', '/preview',
+			'/livepreview/**', '/checkout/**', '/support/mytickets', '/program/planner',
+		],
 	},
 
 	hooks: {
