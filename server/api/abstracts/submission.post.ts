@@ -78,6 +78,12 @@ export default defineEventHandler(async (event) => {
 		throw createError({ statusCode: 400, statusMessage: 'Submission contains disallowed content.' });
 	}
 
+	// figure labels are a varchar(255) column - anything longer makes Postgres
+	// reject the whole write with an opaque error.
+	if ((body?.figures ?? []).some((f) => typeof f.label === 'string' && f.label.length > 255)) {
+		throw createError({ statusCode: 400, statusMessage: 'Figure labels must be 255 characters or fewer.' });
+	}
+
 	if (!body?.turnstileToken) {
 		throw createError({ statusCode: 400, statusMessage: 'Missing CAPTCHA token.' });
 	}

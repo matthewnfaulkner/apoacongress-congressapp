@@ -334,7 +334,7 @@ const schema = z.object({
       clientKey: z.string(),
       id: z.union([z.string(), z.number()]).optional(),
       file: z.any().nullable(),
-      label: z.string().nonempty("Figure label is required"),
+      label: z.string().nonempty("Figure label is required").max(255, "Figure label must be 255 characters or fewer"),
       existingFilename: z.string().optional(),
     })
   ).max(3, "Maximum of 3 figures allowed").refine(figures =>
@@ -986,11 +986,10 @@ useSeoMeta({ title: 'Abstract Submission', ogTitle: 'Abstract Submission', robot
                                             <span v-if="figureFileName(figure)" class="text-xs text-muted">{{ figureFileName(figure) }}</span>
                                         </div>
                                     </div>
-                                    <UInput v-model="figure.label" placeholder="" :ui="{ base: 'peer' }"  class="flex-2 font-serif" color="secondary" variant="subtle">
+                                    <UInput v-model="figure.label" :maxlength="255" placeholder="" :ui="{ base: 'peer' }"  class="flex-2 font-serif" color="secondary" variant="subtle">
                                     <label class="pointer-events-none absolute left-0 -top-2.5 text-highlighted text-xs font-medium px-1.5 transition-all peer-focus:-top-2.5 peer-focus:text-highlighted peer-focus:text-xs peer-focus:font-medium peer-placeholder-shown:text-sm peer-placeholder-shown:text-dimmed peer-placeholder-shown:top-1.5 peer-placeholder-shown:font-normal">
                                       <span class="inline-flex bg-default px-1">Figure reference (1, 2a ...etc)</span>
-                                    </label>
-                                    </UInput>
+                                    </label>                                    </UInput>
                                     <UButton
                                         icon="i-lucide-trash"
                                         variant="solid"
