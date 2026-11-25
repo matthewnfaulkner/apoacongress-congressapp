@@ -10,7 +10,7 @@ export default defineEventHandler(async (event: H3Event) => {
 	}
 
 	try {
-		const order = await ticketTailorFetch<TTOrder>(`/orders/${orderId}`, 'orderRead');
+		const order = await fetchTicketTailorOrder<TTOrder>(orderId);
 
 		return {
 			id: order.id,

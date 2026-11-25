@@ -111,6 +111,10 @@ export interface CreateBundleRequest {
 	// Tailor's own dependency rule would just reject anyway, rather than
 	// silently trusting the client's isAddOn state.
 	orderId?: string | null;
+	// "Add tickets" for an existing registration (My registration), if any —
+	// bundle.post.ts checks the caller may (attendee or the order's buyer) and
+	// records it on the claim so the new add-ons/companions attach to it.
+	registrationId?: string | null;
 	// The form_submissions row id for the optional checkout_form (see
 	// complete.vue / FormBuilder's exposed lastSubmissionId), if it was
 	// submitted for this checkout — attached to the congress_order_owners

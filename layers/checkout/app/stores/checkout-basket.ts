@@ -8,6 +8,11 @@ interface CheckoutBasketState {
   // useCheckoutAddOn. Doesn't mean this basket edits that order: checkout
   // always creates a new, separate bundle regardless of orderId.
   orderId: string | null
+  // "Add tickets" for an existing registration (My registration), if any —
+  // set by useCheckoutAddOn from ?registrationId, sent to bundle.post.ts.
+  // addOnLabel is whose registration it is, for the banner.
+  registrationId: string | null
+  addOnLabel: string | null
   isAddOn: boolean
   // Manual "not in Taiwan?" override — null means defer to the server's
   // IP-based auto-detection. Lives here (persisted, same as the rest of the
@@ -33,6 +38,8 @@ export const useCheckoutBasketStore = defineStore('checkoutBasket', {
     lines: [],
     bundle: null,
     orderId: null,
+    registrationId: null,
+    addOnLabel: null,
     isAddOn: false,
     localityOverride: null,
     guestOrderToken: null,
@@ -73,10 +80,20 @@ export const useCheckoutBasketStore = defineStore('checkoutBasket', {
     },
     setAddOnOrder(orderId: string) {
       this.orderId = orderId
+      this.registrationId = null
+      this.addOnLabel = null
+      this.isAddOn = true
+    },
+    setAddOnRegistration(registrationId: string, label: string | null) {
+      this.orderId = null
+      this.registrationId = registrationId
+      this.addOnLabel = label
       this.isAddOn = true
     },
     clearAddOn() {
       this.orderId = null
+      this.registrationId = null
+      this.addOnLabel = null
       this.isAddOn = false
     },
     setLocalityOverride(locality: 'national' | 'international' | null) {
@@ -87,6 +104,8 @@ export const useCheckoutBasketStore = defineStore('checkoutBasket', {
       this.lines = []
       this.bundle = null
       this.orderId = null
+      this.registrationId = null
+      this.addOnLabel = null
       this.isAddOn = false
       this.guestOrderToken = null
       this.checkoutFormValues = null

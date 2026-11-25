@@ -176,6 +176,7 @@ async function proceedToPayment() {
           lines: store.lines,
           locality: store.localityOverride,
           orderId: orderId.value,
+          registrationId: store.registrationId,
           formSubmissionId: formBuilderRef.value?.lastSubmissionId ?? null,
           congressId: congressId.value,
           evidence,

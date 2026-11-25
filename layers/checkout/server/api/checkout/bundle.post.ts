@@ -85,13 +85,23 @@ export default defineEventHandler(async (event: H3Event): Promise<CreateBundleRe
 
 	const hasRegistrationTicket = lines.some((line) => registrationTicketIds.has(line.ticketTypeId));
 
+	// "Add tickets" for an existing registration (My registration): checked
+	// whenever it's sent, not only for registration-less baskets — a companion
+	// ticket counts as a registration ticket, and it still needs linking to
+	// this registration. Recorded on the claim below so the sync flow attaches
+	// the new add-ons/companions to it.
+	const addOnRegistration = body?.registrationId ? await findAddOnRegistration(event, body.registrationId) : null;
+	if (body?.registrationId && !addOnRegistration) {
+		throw createError({ statusCode: 403, statusMessage: 'You can\'t add tickets to that registration.' });
+	}
+
 	// A bundle with no registration line of its own — either rejected outright,
 	// or (for a verified add-on to an existing order) paired with the $0
 	// stand-in ticket (already fetched above, for the exclusion filter) so
 	// Ticket Tailor's own "requires a registration ticket" bundle dependency
 	// still passes without charging the customer for a second one.
 	if (!hasRegistrationTicket) {
-		const isValidAddOn = body?.orderId ? await verifyOrderOwnership(event, body.orderId) : false;
+		const isValidAddOn = addOnRegistration !== null || (body?.orderId ? await verifyOrderOwnership(event, body.orderId) : false);
 
 		if (!isValidAddOn) {
 			throw createError({
@@ -108,23 +118,19 @@ export default defineEventHandler(async (event: H3Event): Promise<CreateBundleRe
 		}
 	}
 
-	// Sandbox is a test environment that still runs real bundles/payments
-	// through Ticket Tailor — flattening every bundle to $1 (in the event's own
-	// currency, minor units) keeps that flow exercisable end-to-end without
-	// risking a real-sized test charge.
-	const price = config.public.isSandbox
-		? 100
-		: lines.reduce((sum, line) => {
-				const option = allOptions.find((candidate) => candidate.id === line.ticketTypeId)!;
-				return sum + option.price * line.quantity;
-			}, 0);
+	// Real prices in sandbox too: sandbox bundles and payments no longer go
+	// through Ticket Tailor at all (see the sandbox branch below and
+	// sandbox/pay.post.ts), so there's no real charge to protect against, and
+	// realistic totals make the fake orders and invoices worth testing.
+	const price = lines.reduce((sum, line) => {
+		const option = allOptions.find((candidate) => candidate.id === line.ticketTypeId)!;
+		return sum + option.price * line.quantity;
+	}, 0);
 
-	const bookingFee = config.public.isSandbox
-		? 0
-		: lines.reduce((sum, line) => {
-				const option = allOptions.find((candidate) => candidate.id === line.ticketTypeId)!;
-				return sum + option.bookingFee * line.quantity;
-			}, 0);
+	const bookingFee = lines.reduce((sum, line) => {
+		const option = allOptions.find((candidate) => candidate.id === line.ticketTypeId)!;
+		return sum + option.bookingFee * line.quantity;
+	}, 0);
 
 	const description = lines
 		.map((line) => {
@@ -194,11 +200,18 @@ export default defineEventHandler(async (event: H3Event): Promise<CreateBundleRe
 
 	let bundle: TTBundle;
 	try {
-		bundle = await ticketTailorFetch<TTBundle>(`/event_series/${ttEvent.event_series_id}/bundles`, 'bundleCreate', {
-			method: 'POST',
-			body: form,
-		});
+		// Sandbox never writes to Ticket Tailor: the "Ticket Tailor (sandbox)
+		// → Create bundle" flow saves the same bundle to ticket_tailor_bundles
+		// and returns it in Ticket Tailor's shape. JSON body, so the plain
+		// request object rather than the bracket-notation form.
+		bundle = config.public.isSandbox
+			? await callTicketTailorSandboxFlow<TTBundle>('bundle', { ...bundleRequest, event_series_id: ttEvent.event_series_id })
+			: await ticketTailorFetch<TTBundle>(`/event_series/${ttEvent.event_series_id}/bundles`, 'bundleCreate', {
+					method: 'POST',
+					body: form,
+				});
 	} catch (error: any) {
+		if (config.public.isSandbox) throw error;
 		// ofetch's FetchError hides the response body behind `.data` by default —
 		// surface Ticket Tailor's actual validation message instead of a bare
 		// "400 Bad Request" so failures here are diagnosable without needing to
@@ -245,6 +258,7 @@ export default defineEventHandler(async (event: H3Event): Promise<CreateBundleRe
 					user: userId,
 					token: guestToken,
 					submission: body?.formSubmissionId ?? null,
+					registration: addOnRegistration?.id ?? null,
 					// Not re-resolved server-side: the site-data store already has this
 					// from the initial page load (Site.congress), no need for a second
 					// Directus round-trip for a non-sensitive traceability field.
@@ -288,7 +302,9 @@ export default defineEventHandler(async (event: H3Event): Promise<CreateBundleRe
 	const presetDataFragment = contact
 		? `&preset_data=1#p[first_name]=${encodeURIComponent(contact.firstName)}&p[last_name]=${encodeURIComponent(contact.lastName)}&p[email]=${encodeURIComponent(contact.email)}`
 		: '';
-	const checkoutUrl = `${ttEvent.checkout_url.replace('/checkout/view-event/', '/checkout/new-session/')}?${TICKET_TAILOR_ACCESS_CODE_PARAM}=${encodeURIComponent(bundle.access_code)}${presetDataFragment}`;
+	// Sandbox has no Ticket Tailor checkout to send anyone to: payment.vue
+	// shows the sandbox payment buttons instead of the widget.
+	const checkoutUrl = config.public.isSandbox ? '' : `${ttEvent.checkout_url.replace('/checkout/view-event/', '/checkout/new-session/')}?${TICKET_TAILOR_ACCESS_CODE_PARAM}=${encodeURIComponent(bundle.access_code)}${presetDataFragment}`;
 
 	return {
 		bundle: {

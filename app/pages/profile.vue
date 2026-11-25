@@ -76,8 +76,14 @@ const quickLinkCards: QuickLinkCard[] = [
     {
         to: '/checkout/my-orders',
         title: 'My Orders',
-        description: 'View your registration orders and tickets.',
+        description: 'View your orders and choose who each ticket is for.',
         icon: 'i-lucide-receipt',
+    },
+    {
+        to: '/checkout/my-registration',
+        title: 'My Registration',
+        description: 'See your place at the congress and complete your badge details.',
+        icon: 'i-lucide-id-card',
     },
     {
         to: '/contact-us',
@@ -804,8 +810,7 @@ onMounted(async () => {
                         :icon="card.icon"
                         highlight-color="accent"
                         :highlight="card.highlight"
-                        spotlight
-                        spotlight-color="warning"
+                    
                         class="hover:ring-accent/50 transition-all"
                         :ui="{ leadingIcon: 'text-accent', title: 'text-xl' }"
                     />

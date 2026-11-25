@@ -239,6 +239,10 @@ export default defineNuxtConfig({
 		ticketTailorEventReadKey: process.env.TICKET_TAILOR_EVENT_READ_KEY,
 		ticketTailorOrderReadKey: process.env.TICKET_TAILOR_ORDER_READ_API_KEY,
 		ticketTailorBundleCreateKey: process.env.TICKET_TAILOR_BUNDLE_CREATOR_API_KEY,
+		// Sandbox only: Directus flows that stand in for Ticket Tailor's
+		// write endpoints (see fake-ticket-tailor helpers in ticket-tailor.ts).
+		ticketTailorSandboxBundleFlowId: process.env.TICKET_TAILOR_SANDBOX_BUNDLE_FLOW_ID,
+		ticketTailorSandboxOrderFlowId: process.env.TICKET_TAILOR_SANDBOX_ORDER_FLOW_ID,
 		// The event id itself now comes from Directus (congress.tt_event_id via
 		// getCongressEventId), not an env var — see checkout-locality.ts.
 		sessionTokenName: process.env.DIRECTUS_SESSION_TOKEN_NAME as string || 'directus_session_token',

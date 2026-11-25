@@ -6,7 +6,7 @@ import { randomBytes } from 'crypto';
  * token and stores it (see orders-access/verify.get.ts for step two, which
  * the emailed link points to). Actually sending the email is deliberately
  * not done here — a Directus Flow with an event-hook trigger on
- * congress_order_access_tokens' create action handles that instead, so
+ * congress_access_tokens' create action handles that instead, so
  * email delivery/templating lives in Directus, not app code.
  *
  * Always returns the same generic response regardless of whether the email
@@ -48,7 +48,7 @@ export default defineEventHandler(async (event: H3Event) => {
 		await directusServer.request(
 			withToken(
 				config.directusOrderBotToken as string,
-				createItem('congress_order_access_tokens' as any, { email, token, expires_at: expiresAt, congress }),
+				createItem('congress_access_tokens', { email, token, expires_at: expiresAt, congress }),
 			),
 		);
 	} catch (error: any) {

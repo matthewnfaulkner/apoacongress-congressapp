@@ -26,7 +26,7 @@ export default defineEventHandler(async (event: H3Event) => {
 	const rows = await directusServer.request<Array<{ id: string; email: string; expires_at: string; used_at: string | null }>>(
 		withToken(
 			config.directusOrderBotToken as string,
-			readItems('congress_order_access_tokens' as any, {
+			readItems('congress_access_tokens', {
 				filter: { token: { _eq: token } } as any,
 				fields: ['id', 'email', 'expires_at', 'used_at'],
 				limit: 1,
@@ -46,7 +46,7 @@ export default defineEventHandler(async (event: H3Event) => {
 	await directusServer.request(
 		withToken(
 			config.directusOrderBotToken as string,
-			updateItem('congress_order_access_tokens' as any, accessToken.id, { used_at: new Date().toISOString() }),
+			updateItem('congress_access_tokens', accessToken.id, { used_at: new Date().toISOString() }),
 		),
 	);
 

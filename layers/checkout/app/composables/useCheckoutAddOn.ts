@@ -33,7 +33,9 @@ export function useCheckoutAddOn() {
           // cleared here — otherwise a genuinely new registration would
           // silently inherit "add-on" behavior (skippable required-selection)
           // from that old, unrelated order.
-          if (route.path === '/checkout' && store.isAddOn) store.clearAddOn()
+          // An "Add tickets" trip (?registrationId) is handled by the watcher
+          // below, so it doesn't count as a fresh visit here.
+          if (route.path === '/checkout' && store.isAddOn && !route.query.registrationId) store.clearAddOn()
           return
         }
 
@@ -45,6 +47,31 @@ export function useCheckoutAddOn() {
           })
           .catch(() => {
             // Invalid/unauthorized/nonexistent orderId — proceed as a normal new order.
+          })
+      },
+      { immediate: true },
+    )
+
+    // "Add tickets" for an existing registration (My registration):
+    // /checkout?registrationId=X. Same idea as orderId above, but checked
+    // against the registration (attendee or the order's buyer), so comp and
+    // imported registrations — which have no order — can add tickets too.
+    // bundle.post.ts re-checks before creating anything.
+    watch(
+      () => (typeof route.query.registrationId === 'string' ? route.query.registrationId : null),
+      (registrationId) => {
+        if (!registrationId || store.registrationId === registrationId) return
+
+        const auth = useAuthStore()
+        $fetch<{ valid: boolean; label: string | null }>('/api/checkout/registration-access', {
+          query: { registrationId },
+          headers: auth.lastToken ? { Authorization: `Bearer ${auth.lastToken}` } : undefined,
+        })
+          .then((result) => {
+            if (result.valid) store.setAddOnRegistration(registrationId, result.label)
+          })
+          .catch(() => {
+            // Not allowed / not found — proceed as a normal new order.
           })
       },
       { immediate: true },

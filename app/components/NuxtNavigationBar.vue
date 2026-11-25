@@ -247,6 +247,11 @@ const items = ref<DropdownMenuItem[]>([
 	to: '/checkout/my-orders'
   },
   {
+    label: 'My Registration',
+    icon: 'i-lucide-id-card',
+	to: '/checkout/my-registration'
+  },
+  {
     label: 'Support Tickets',
     icon: 'i-lucide-message-circle-question-mark',
 	to: '/support/mytickets'

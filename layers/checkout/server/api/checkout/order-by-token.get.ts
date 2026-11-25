@@ -61,6 +61,6 @@ export default defineEventHandler(async (event: H3Event): Promise<TTOrder> => {
 				.then((files) => invoiceIds.map((id) => files.find((file) => file.id === id)).filter((file): file is { id: string; filename_download: string; uploaded_on: string } => Boolean(file)))
 		: [];
 
-	const order = await ticketTailorFetch<TTOrder>(`/orders/${orderId}`, 'orderRead');
+	const order = await fetchTicketTailorOrder<TTOrder>(orderId);
 	return await omitBypassTicket({ ...order, local_invoices: invoices });
 });
