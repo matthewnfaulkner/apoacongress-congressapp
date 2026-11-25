@@ -62,6 +62,7 @@ const pageFields = [
 												{
 													charge: [
 														'*',
+														{ pricing_period: ['name', 'starts_on', 'ends_on', 'sort'] },
 														{
 															hotel: [
 																'*',

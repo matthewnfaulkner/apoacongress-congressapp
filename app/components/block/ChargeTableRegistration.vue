@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { DirectusFile } from '@directus/sdk';
 import  ButtonGroup  from '@/components/base/ButtonGroup.vue';
-import { dateStringToHumanStringBack } from '~/utils/time-utils';
 import { readItem } from '@directus/sdk';
 import PricingCard from './PricingCard.vue';
 
@@ -31,7 +30,8 @@ const { data } = await useAsyncData <Congress>('registrationcharges', async() =>
             fields: [
 				{
 					'charges': [
-						'*'
+						'*',
+						{ pricing_period: ['name', 'starts_on', 'ends_on', 'sort'] }
 					]
 				}
 			],      
@@ -57,37 +57,44 @@ const charges = data.value?.charges as CongressCharge[] || [];
 
 const tabs = ref();
 
-const headersByDelegate: Record<string, Set<string>> = {};
+// One column per price window (pricing period, or the old details cutoff),
+// in period order.
+const headersByDelegate: Record<string, Array<{ label: string; sort: number }>> = {};
 charges.forEach(item => {
 	const delegate = item.delegate || 'International';
-	headersByDelegate[delegate] ??= new Set();
-	item.details?.forEach(detail => {
-		const d = detail as RegistrationChargeDetail;
-		const header = `${d.cutoff_description} - ${dateStringToHumanStringBack(d.cutoff_date)}`;
-		headersByDelegate[delegate].add(header);
+	const headers = (headersByDelegate[delegate] ??= []);
+	const window = chargePriceWindow(item);
+	if (window && !headers.some(header => header.label === window.label)) {
+		headers.push({ label: window.label, sort: window.sort });
+	}
+});
+Object.values(headersByDelegate).forEach(headers => headers.sort((a, b) => a.sort - b.sort));
+
+// A charge with no window applies in every column.
+const prices: Record<string, Record<string, Record<string, string | null | undefined>>> = {};
+charges.forEach(item => {
+	const delegate = item.delegate || 'International';
+	const category = item.sub_category || 'APOA Member';
+	const row = ((prices[delegate] ??= {})[category] ??= {});
+	const window = chargePriceWindow(item);
+	const labels = window ? [window.label] : (headersByDelegate[delegate] ?? []).map(header => header.label);
+	labels.forEach(label => {
+		row[label] = item.price;
 	});
 });
 
-const grouped: GroupedData = charges.reduce<GroupedData>((acc, item) => {
-	const delegate = item.delegate || 'International';
-	const category = item.sub_category || 'APOA Member';
-	acc[delegate] ??= {};
-	acc[delegate][category] ??= { category };
-
-	if (!item.details || !item.details.length) {
-		headersByDelegate[delegate]?.forEach(header => {
-			acc[delegate][category][header] = item.price;
+// Rows built in column order, since the table takes its columns from the keys.
+const grouped: GroupedData = {};
+Object.entries(prices).forEach(([delegate, categories]) => {
+	const rows: GroupedData[string] = (grouped[delegate] = {});
+	Object.entries(categories).forEach(([category, byLabel]) => {
+		const row: CategoryRow = { category };
+		(headersByDelegate[delegate] ?? []).forEach(({ label }) => {
+			row[label] = byLabel[label] ?? null;
 		});
-	} else {
-		item.details.forEach(detail => {
-			const d = detail as RegistrationChargeDetail;
-			const header = `${d.cutoff_description} - ${dateStringToHumanStringBack(d.cutoff_date)}`;
-			acc[delegate][category][header] = item.price;
-		});
-	}
-
-	return acc;
-}, {})
+		rows[category] = row;
+	});
+});
 
 
 tabs.value = Object.entries(grouped).map(([label, subObj]) => ({
