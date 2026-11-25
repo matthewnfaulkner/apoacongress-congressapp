@@ -23,15 +23,15 @@ export interface ExtensionSeoMetadata {
 export interface AbstractCriteria {
 	/** @primaryKey */
 	id: string;
-	sort?: number | null;
 	user_created?: DirectusUser | string | null;
 	date_created?: string | null;
 	user_updated?: DirectusUser | string | null;
 	date_updated?: string | null;
-	criteria?: string;
+	criteria?: string | null;
 	description?: string | null;
 	weight?: number | null;
 	grading_system?: AbstractGradingSystem | string | null;
+	sort?: number | null;
 }
 
 export interface AbstractGradingSystem {
@@ -41,10 +41,10 @@ export interface AbstractGradingSystem {
 	date_created?: string | null;
 	user_updated?: DirectusUser | string | null;
 	date_updated?: string | null;
-	aggregation_method?: 'sum';
 	name?: string | null;
-	scoring?: AbstractScoring[] | string[];
+	aggregation_method?: 'sum' | null;
 	criteria?: AbstractCriteria[] | string[];
+	scoring?: AbstractScoring[] | string[];
 }
 
 export interface AbstractReviewer {
@@ -52,7 +52,11 @@ export interface AbstractReviewer {
 	id: number;
 	abstract?: Abstract | string | null;
 	user?: DirectusUser | string | null;
-	categories?: Array<'WAVES'> | null;
+	categories?: 'json' | null;
+	email?: string | null;
+	token_hash?: string | null;
+	token_expires_at?: string | null;
+	token_sent_at?: string | null;
 }
 
 export interface AbstractReview {
@@ -63,9 +67,9 @@ export interface AbstractReview {
 	user_updated?: DirectusUser | string | null;
 	date_updated?: string | null;
 	submission?: AbstractSubmission | string | null;
-	reviewer?: DirectusUser | string | null;
-	comments?: string | null;
 	score?: number | null;
+	comments?: string | null;
+	reviewer?: AbstractReviewer | string | null;
 	scores?: AbstractReviewScore[] | string[];
 }
 
@@ -91,30 +95,29 @@ export interface Abstract {
 	congress?: Congress | string | null;
 	submission_deadline?: string | null;
 	description?: string | null;
-	word_limit?: number | null;
+	categories?: 'json' | null;
 	submission_limit?: number | null;
 	acceptance_limit?: number | null;
 	required_reviewers?: number | null;
 	/** @description Setup email notifications when forms are submitted. */
-	emails?: Array<{ to: string[]; subject: string; message: string }> | null;
+	emails?: Array<{ to: string[]; subject: string; preview: string; message: string }> | null;
 	review_method?: 'ffa' | 'assigned' | null;
-	grading_system?: AbstractGradingSystem | string | null;
 	reviewer_limit?: number | null;
-	categories?: string[] | null;
+	grading_system?: AbstractGradingSystem | string | null;
+	declaration_statement?: string | null;
+	word_limit?: number;
 	submissions?: AbstractSubmission[] | string[];
 	reviewers?: AbstractReviewer[] | string[];
-	declaration_statement?: string | null;
 }
 
 export interface AbstractScoring {
 	/** @primaryKey */
 	id: string;
-	sort?: number | null;
 	user_created?: DirectusUser | string | null;
 	date_created?: string | null;
 	user_updated?: DirectusUser | string | null;
 	date_updated?: string | null;
-	score?: number;
+	score?: number | null;
 	rating?: string | null;
 	description?: string | null;
 	grading_system?: AbstractGradingSystem | string | null;
@@ -140,8 +143,8 @@ export interface AbstractSubmission {
 	congress_abstract?: Abstract | string | null;
 	submitter?: DirectusUser | string | null;
 	keywords?: string[] | null;
-	reviews?: AbstractReview[] | string[];
 	submission_values?: AbstractSubmissionValue[] | string[];
+	reviews?: AbstractReview[] | string[];
 	figures?: AbstractSubmissionFigure[] | string[];
 }
 
@@ -153,8 +156,8 @@ export interface AbstractSubmissionValue {
 	user_updated?: DirectusUser | string | null;
 	date_updated?: string | null;
 	field?: string | null;
-	value?: string | null;
 	submission?: AbstractSubmission | string | null;
+	value?: string | null;
 }
 
 export interface AdminDocumentApproval {
@@ -179,24 +182,24 @@ export interface AdminDocumentEvent {
 	version?: string | null;
 	actor?: DirectusUser | string | null;
 	detail?: string | null;
-	document?: AdminDocument | string | null;
+	document?: AdminDocument | string;
 }
 
 export interface AdminDocument {
 	/** @primaryKey */
 	id: string;
-	status?: 'draft' | 'pending_approval' | 'approved' | 'rejected' | 'archived';
+	status?: 'published' | 'draft' | 'archived';
 	sort?: number | null;
 	user_created?: DirectusUser | string | null;
 	date_created?: string | null;
 	user_updated?: DirectusUser | string | null;
 	date_updated?: string | null;
+	site?: Site | string | null;
 	/** @required */
 	title: string;
 	category?: 'Finance' | 'Programme' | 'Governance' | 'Logistics' | 'Overview' | null;
-	file?: DirectusFile | string | null;
-	site?: Site | string | null;
 	description?: string | null;
+	file?: DirectusFile | string | null;
 	approvals?: AdminDocumentApproval[] | string[];
 }
 
@@ -259,9 +262,7 @@ export interface BlockAccordion {
 	date_created?: string | null;
 	user_updated?: DirectusUser | string | null;
 	date_updated?: string | null;
-	/** @description Larger main headline for this page section. */
 	headline?: string | null;
-	/** @description Smaller copy shown above the headline to label a section or add extra context. */
 	tagline?: string | null;
 	items?: BlockAccordionItem[] | string[];
 }
@@ -608,7 +609,7 @@ export interface BlockPricingCard {
 	/** @description Enabling this changes how the pricing card data is configured. Unchecked - completely manual. Checked - you can select from congress charges to populate the card data. */
 	use_congress_charges?: boolean;
 	category?: 'accommodation' | 'registration' | null;
-	badge?: Array<{ label: string; link: string; target?: 'blank' | 'self' | null }> | null;
+	badge?: Array<{ label: string; link: string; target: 'self' | 'blank' }> | null;
 	button_group?: BlockButtonGroup | string | null;
 	congress_charges?: BlockPricingCardsCongressCharge[] | string[];
 }
@@ -757,20 +758,55 @@ export interface Congress {
 	site?: Site | string | null;
 	timezone?: `Asia/Kuala_Lumpur` | `Asia/Taipei` | `Asia/Kolkata` | null;
 	organiser?: Organisation | string | null;
-	tt_event_id?: string | null;
 	tt_event_series_id?: string | null;
-	/** @description Ticket Type Id of special registration ticket that allows checkout without a registration ticket. */
 	tt_bypass_id?: string | null;
+	tt_event_id?: string | null;
 	days?: CongressDay[] | string[];
+	abstracts?: Abstract[] | string[];
+	privileges?: CongressPrivilege[] | string[];
+	organisations?: CongressOrganisation[] | string[];
 	hotels?: CongressHotel[] | string[];
 	sponsors?: CongressSponsor[] | string[];
-	organisations?: CongressOrganisation[] | string[];
-	abstracts?: Abstract[] | string[];
 	sponsor_tiers?: CongressSponsorTier[] | string[];
-	privileges?: CongressPrivilege[] | string[];
-	charges?: CongressCharge[] | string[];
-	congress_vouchers?: CongressVoucher[] | string[];
 	key_dates?: CongressKeyDate[] | string[];
+	congress_vouchers?: CongressVoucher[] | string[];
+	charges?: CongressCharge[] | string[];
+}
+
+export interface CongressAccessToken {
+	/** @primaryKey */
+	id: string;
+	date_created?: string | null;
+	/** @description The email the link was sent to. */
+	email?: string;
+	/** @description The secret in the link. */
+	token?: string;
+	/** @description The link stops working after this. */
+	expires_at?: string | null;
+	/** @description When the link was used. A used link can't be used again. */
+	used_at?: string | null;
+	/** @description The congress this access is for. */
+	congress?: Congress | string | null;
+}
+
+export interface CongressBadgeType {
+	/** @primaryKey */
+	id: string;
+	date_created?: string | null;
+	date_updated?: string | null;
+	/** @description The congress this badge type belongs to. @required */
+	congress: Congress | string;
+	sort?: number | null;
+	/** @description E.g. Faculty @required */
+	name: string;
+	/** @description Shown in front of the delegate number, e.g. FD + 12 shows as FD12. The numbers themselves are shared by all badge types. @required */
+	prefix: string;
+	/** @description Badge colour. */
+	color?: string | null;
+	/** @description Registrations of this kind get this badge type when nothing else sets one. Use each choice on only one badge type per congress. */
+	default_for?: 'delegate' | 'accompanying' | null;
+	/** @description What this badge type can access, until access is modelled properly */
+	access_notes?: string | null;
 }
 
 export interface CongressBreakRoom {
@@ -811,13 +847,16 @@ export interface CongressCharge {
 	details?: 'json' | null;
 	hotel?: Hotel | string | null;
 	description?: string | null;
-	members_only?: boolean;
 	tagline?: string | null;
+	members_only?: boolean;
 	short_description?: string | null;
-	tickets?: CongressTicket[] | string[];
 	details_page?: Page | string | null;
-	requires_evidence?: boolean | null;
-	evidence_details?: string | null
+	requires_evidence?: boolean;
+	evidence_details?: string | null;
+	/** @description The period this price applies in. Empty = every period. */
+	pricing_period?: CongressPricingPeriod | string | null;
+	/** @description Which kind of registration this admission creates. Set = this charge is an admission; empty = an add-on. */
+	registration_type?: 'delegate' | 'accompanying' | null;
 }
 
 export interface CongressDay {
@@ -835,9 +874,8 @@ export interface CongressDay {
 	key?: string | null;
 	congress?: Congress | string | null;
 	date?: string | null;
-	timeslots?: CongressDaySlot[] | string[];
 	schedules?: CongressSchedule[] | string[];
-	social_events?: CongressSocial[] | string[];
+	timeslots?: CongressDaySlot[] | string[];
 }
 
 export interface CongressDaySlot {
@@ -869,11 +907,11 @@ export interface CongressEvent {
 	duration?: number;
 	relative_start?: number;
 	qr_code?: DirectusFile | string | null;
+	tags?: string[] | null;
 	type?: 'symposium' | 'talk' | 'panel' | 'free_papers' | 'workshop' | 'discussion' | 'plenary';
 	topic?: string | null;
 	price?: number | null;
 	abstract_submission?: AbstractSubmission | string | null;
-	tags?: string[] | null;
 	children?: CongressEvent[] | string[];
 	assignments?: Assignment[] | string[];
 }
@@ -889,6 +927,39 @@ export interface CongressHotel {
 	booking_url?: string | null;
 }
 
+export interface CongressIssuedTicket {
+	/** @description The Ticket Tailor issued-ticket ID. @primaryKey */
+	id: string;
+	date_created?: string | null;
+	date_updated?: string | null;
+	/** @description The congress this ticket is for. */
+	congress?: Congress | string | null;
+	/** @description Empty for tickets issued directly (imports). */
+	order?: CongressOrder | string | null;
+	/** @description Its charge decides whether this is an admission or an add-on. */
+	ticket_type?: CongressTicket | string | null;
+	/** @description Whether the ticket is still valid in Ticket Tailor. */
+	status?: 'valid' | 'voided' | null;
+	/** @description When the ticket was voided. */
+	voided_at?: string | null;
+	/** @description As entered at checkout. */
+	holder_title?: string | null;
+	/** @description As entered at checkout. */
+	holder_first_name?: string | null;
+	/** @description As entered at checkout. */
+	holder_last_name?: string | null;
+	/** @description As entered at checkout. */
+	holder_email?: string | null;
+	/** @description Custom question answers. */
+	answers?: Record<string, any> | null;
+	/** @description The ticket's barcode value. */
+	barcode?: string | null;
+	/** @description The registration this ticket belongs to: its admission ticket or an add-on. */
+	registration?: CongressRegistration | string | null;
+	/** @description order = bought through a Ticket Tailor checkout (a sale). comp = given free by staff. import = paid elsewhere (partner portal). Only order counts as a sale. @required */
+	source: 'order' | 'comp' | 'import';
+}
+
 export interface CongressKeyDate {
 	/** @primaryKey */
 	id: string;
@@ -896,13 +967,13 @@ export interface CongressKeyDate {
 	date_created?: string | null;
 	user_updated?: DirectusUser | string | null;
 	date_updated?: string | null;
+	title?: string;
+	congress?: Congress | string | null;
 	date?: string;
 	time?: string | null;
-	icon?: string;
-	congress?: Congress | string;
 	description?: string | null;
-	title?: string | null;
 	public?: boolean | null;
+	icon?: string | null;
 }
 
 export interface CongressOrderAccessToken {
@@ -913,7 +984,8 @@ export interface CongressOrderAccessToken {
 	email: string;
 	/** @required */
 	token: string;
-	expires_at?: string;
+	/** @required */
+	expires_at: string;
 	used_at?: string | null;
 	congress?: Congress | string | null;
 }
@@ -922,12 +994,20 @@ export interface CongressOrderOwner {
 	/** @primaryKey */
 	id: string;
 	date_created?: string | null;
-	congress?: Congress | string | null;
 	bundle_id?: string | null;
 	user?: DirectusUser | string | null;
 	token?: string | null;
 	submission?: FormSubmission | string | null;
-	evidence?: CongressOrderEvidence[] | string[] | null;
+	congress?: Congress | string | null;
+	/** @description Set when staff made this checkout for a group. */
+	group?: CongressRegistrationGroup | string | null;
+	/** @description Set when this checkout is for an existing registration (add-ons, adding a companion). */
+	registration?: CongressRegistration | string | null;
+	/** @description Badge type for the registrations this checkout creates, e.g. a Faculty comp. */
+	badge_type?: CongressBadgeType | string | null;
+	/** @description The checkout link, so it can be re-sent. */
+	checkout_url?: string | null;
+	evidence?: CongressOrdersEvidence[] | string[];
 }
 
 export interface CongressOrder {
@@ -944,21 +1024,13 @@ export interface CongressOrder {
 	email?: string | null;
 	submission?: FormSubmission | string | null;
 	issued_tickets?: Array<{ id: string; custom_fields: Array<{ question: string; answer: string }> }> | null;
-	invoices?: CongressOrdersFile[] | string[];
-	// Customer-uploaded evidence of payment (receipt/bank transfer confirmation)
-	// for orders on a manual/offline payment method — see order/[id].get.ts and
-	// order/[id]/payment-proof.post.ts.
 	payment_proof?: DirectusFile | string | null;
-	evidence?: CongressOrderEvidence[] | string[] | null;
-}
-
-export interface CongressOrderEvidence {
-	/** @primaryKey */
-	id: string;
+	/** @description The checkout record this order came from. */
 	order_owner?: CongressOrderOwner | string | null;
-	file?: DirectusFile | string | null;
-	order?: CongressOrder | string | null;
-	ticket_type_id?: string | null;
+	invoices?: CongressOrdersFile[] | string[];
+	evidence?: CongressOrdersEvidence[] | string[];
+	/** @description Tickets issued in this order. */
+	tickets?: CongressIssuedTicket[] | string[];
 }
 
 export interface CongressOrderSession {
@@ -971,6 +1043,17 @@ export interface CongressOrderSession {
 	token: string;
 	/** @required */
 	expires_at: string;
+}
+
+export interface CongressOrdersEvidence {
+	/** @primaryKey */
+	id: number;
+	order?: CongressOrder | string | null;
+	file?: DirectusFile | string | null;
+	order_owner?: CongressOrderOwner | string | null;
+	ticket_type_id?: string | null;
+	/** @description The registration this evidence supports. */
+	registration?: CongressRegistration | string | null;
 }
 
 export interface CongressOrdersFile {
@@ -986,8 +1069,29 @@ export interface CongressOrganisation {
 	congress?: Congress | string | null;
 	organisation?: Organisation | string | null;
 	sort?: number | null;
-	description?: string | null;
 	partnership_type?: string | null;
+	description?: string | null;
+}
+
+export interface CongressPricingPeriod {
+	/** @primaryKey */
+	id: string;
+	/** @description The congress this pricing period belongs to. @required */
+	congress: Congress | string;
+	sort?: number | null;
+	/** @description E.g. Early bird @required */
+	name: string;
+	/** @description Last day of this period */
+	ends_on?: string | null;
+	/** @description First day of this period. Empty = the day after the previous period ends (or from when sales open, for the first period). */
+	starts_on?: string | null;
+}
+
+export interface CongressPrivilegePerson {
+	/** @primaryKey */
+	id: number;
+	congress_privilege?: CongressPrivilege | string | null;
+	person?: Person | string | null;
 }
 
 export interface CongressPrivilege {
@@ -995,6 +1099,93 @@ export interface CongressPrivilege {
 	id: number;
 	congress_id?: Congress | string | null;
 	privileges_id?: Privilege | string | null;
+	persons?: CongressPrivilegePerson[] | string[];
+}
+
+export interface CongressRegistrationGroup {
+	/** @primaryKey */
+	id: string;
+	user_created?: DirectusUser | string | null;
+	date_created?: string | null;
+	user_updated?: DirectusUser | string | null;
+	date_updated?: string | null;
+	/** @description The congress this group is attending. @required */
+	congress: Congress | string;
+	/** @description Cancelled means the arrangement is off. It doesn't cancel members' registrations. @required */
+	status: 'active' | 'cancelled';
+	/** @description The organisation or delegation name. @required */
+	name: string;
+	/** @description Who we deal with about this group. They don't have to attend. */
+	contact_name?: string | null;
+	/** @description Who we deal with about this group. They don't have to attend. */
+	contact_email?: string | null;
+	/** @description Badge type for every member. Empty = the usual default. */
+	badge_type?: CongressBadgeType | string | null;
+	/** @description What was agreed, e.g. rate, expected numbers, comps included. */
+	note?: string | null;
+	/** @description Checkouts staff made for this group. */
+	bundles?: CongressOrderOwner[] | string[];
+	/** @description Registrations in this group. */
+	members?: CongressRegistration[] | string[];
+}
+
+export interface CongressRegistration {
+	/** @primaryKey */
+	id: string;
+	user_created?: DirectusUser | string | null;
+	date_created?: string | null;
+	user_updated?: DirectusUser | string | null;
+	date_updated?: string | null;
+	/** @description The congress this registration is for. @required */
+	congress: Congress | string;
+	/** @description Pending until the order is paid. @required */
+	status: 'pending' | 'confirmed' | 'cancelled';
+	/** @description Set when something needs a person to look. */
+	needs_review?: boolean;
+	/** @description Why this registration needs review. */
+	review_reason?: string | null;
+	/** @description The badge this attendee gets. */
+	badge_type?: CongressBadgeType | string | null;
+	/** @description Accompanying persons are never in a group. */
+	group?: CongressRegistrationGroup | string | null;
+	/** @description Accompanying persons only: the delegate they come with. */
+	host_registration?: CongressRegistration | string | null;
+	/** @description Linked if the attendee has an account. Optional. */
+	user?: DirectusUser | string | null;
+	/** @description Their details form answers. */
+	submission?: FormSubmission | string | null;
+	/** @description The import this registration came from, if any. */
+	import_batch?: RegistrationImport | string | null;
+	/** @description Their reference or old delegate number in the imported sheet. */
+	import_ref?: string | null;
+	/** @description Attendee's email address. */
+	email?: string | null;
+	/** @description E.g. Dr, Prof. */
+	title?: string | null;
+	/** @description Attendee's first name. */
+	first_name?: string | null;
+	/** @description Attendee's last name. */
+	last_name?: string | null;
+	/** @description Name as printed on the badge. */
+	badge_name?: string | null;
+	/** @description Hospital, university or company. */
+	organisation_name?: string | null;
+	/** @description Attendee's city. */
+	city?: string | null;
+	/** @description Attendee's country. */
+	country?: string | null;
+	/** @description Assigned on confirmation, never changed. Number only: one running sequence per congress, shared by all badge types. Shown with the badge type's prefix in front, e.g. FD + 12 = FD12. */
+	delegate_no?: string | null;
+	/** @description delegate_no as a whole number, used to find the next one. */
+	delegate_seq?: number | null;
+	/** @description When the attendee checked in at the congress. */
+	checked_in_at?: string | null;
+	/** @description Staff notes about this registration. */
+	note?: string | null;
+	/** @description Issued tickets for this registration: its admission ticket and any add-ons. */
+	tickets?: CongressIssuedTicket[] | string[];
+	/** @description Accompanying persons who come with this delegate. */
+	accompanying?: CongressRegistration[] | string[];
 }
 
 export interface CongressSchedule {
@@ -1009,9 +1200,9 @@ export interface CongressSchedule {
 	day?: CongressDay | string | null;
 	name?: string | null;
 	parent?: CongressSchedule | string | null;
+	preliminary?: boolean | null;
 	sessions?: CongressSession[] | string[];
 	breaks?: CongressBreak[] | string[];
-	preliminary?: Boolean | null;
 }
 
 export interface CongressSession {
@@ -1048,23 +1239,6 @@ export interface CongressSessionsVenueRoom {
 	room?: VenueRoom | string | null;
 }
 
-export interface CongressSocial {
-	/** @primaryKey */
-	id: string;
-	sort?: number | null;
-	user_created?: DirectusUser | string | null;
-	date_created?: string | null;
-	user_updated?: DirectusUser | string | null;
-	date_updated?: string | null;
-	name?: string | null;
-	invite_only?: boolean | null;
-	location?: string | null;
-	description?: string | null;
-	day?: CongressDay | string | null;
-	starttime?: string | null;
-	endtime?: string | null;
-}
-
 export interface CongressSponsor {
 	/** @primaryKey */
 	id: number;
@@ -1095,9 +1269,9 @@ export interface CongressTicket {
 	user_updated?: DirectusUser | string | null;
 	date_updated?: string | null;
 	name?: string | null;
-	charge?: CongressCharge | string | null;
-	category?: 'registration' | 'accommodation' | `add-ons` | 'tours';
 	congress?: Congress | string | null;
+	category?: 'registration' | 'accommodation' | `add-ons` | 'tours' | 'workshops' | null;
+	charge?: CongressCharge | string | null;
 }
 
 export interface CongressVoucherCodeRedemption {
@@ -1111,17 +1285,17 @@ export interface CongressVoucherCodeRedemption {
 export interface CongressVoucherCode {
 	/** @primaryKey */
 	id: string;
-	status?: 'active' | 'expired' | 'redeemed';
 	user_created?: DirectusUser | string | null;
 	date_created?: string | null;
 	user_updated?: DirectusUser | string | null;
 	date_updated?: string | null;
-	type?: 'general' | 'personal' | null;
+	status?: 'active' | 'expired' | 'redeemed' | null;
+	code?: string;
 	redemption_limit?: number | null;
-	voucher?: CongressVoucher | string | null;
-	code?: string | null;
-	user?: DirectusUser | string | null;
+	type?: 'general' | 'personal';
 	expires?: string | null;
+	voucher?: CongressVoucher | string | null;
+	user?: DirectusUser | string | null;
 	redemptions?: CongressVoucherCodeRedemption[] | string[];
 }
 
@@ -1151,10 +1325,34 @@ export interface CountryTravelInfo {
 	date_created?: string | null;
 	user_updated?: DirectusUser | string | null;
 	date_updated?: string | null;
+	country?: Country | string | null;
 	venue?: Venue | string | null;
 	details?: string | null;
 	link?: string | null;
-	country?: Country | string | null;
+}
+
+export interface DecisionRequestDefinition {
+	/** @primaryKey */
+	id: string;
+	name?: string;
+	flow?: DirectusFlow | string;
+	expires_in?: number | null;
+	allow_change?: boolean | null;
+	options?: Array<{ value: string; label: string; message: string }> | null;
+	definition?: DecisionRequestDefinition | string | null;
+}
+
+export interface DecisionRequest {
+	/** @primaryKey */
+	id: string;
+	date_created?: string | null;
+	token_hash?: string;
+	recipient_user?: DirectusUser | string | null;
+	recipient_email?: string | null;
+	chosen_option?: string | null;
+	decided_at?: string | null;
+	expires_at?: string | null;
+	superseded_at?: string | null;
 }
 
 export interface EmailCampaign {
@@ -1195,6 +1393,7 @@ export interface EmailTemplate {
 	name?: string | null;
 	template?: string | null;
 	design?: Record<string, any> | null;
+	decisions?: DecisionRequestDefinition | string | null;
 }
 
 export interface FormField {
@@ -1203,7 +1402,7 @@ export interface FormField {
 	/** @description Unique field identifier, not shown to users (lowercase, hyphenated) */
 	name?: string | null;
 	/** @description Input type for the field */
-	type?: 'text' | 'textarea' | 'checkbox' | 'checkbox_group' | 'checkbox_group_alt' | 'radio' | 'file' | 'select' | 'hidden' | 'address' | 'phone' | 'policy' | null;
+	type?: 'text' | 'textarea' | 'checkbox' | 'checkbox_group' | 'checkbox_group_alt' | 'radio' | 'file' | 'select' | 'hidden' | 'voucher' | 'address' | 'phone' | 'policy' | null;
 	/** @description Text label shown to form users. */
 	label?: string | null;
 	/** @description Default text shown in empty input. */
@@ -1227,7 +1426,7 @@ export interface FormField {
 	user_updated?: DirectusUser | string | null;
 	/** @description Prepopulate field with logged in user data. Field name must match a field in directus user collection. */
 	use_user_data?: boolean | null;
-	policy?: Policy | null;
+	policy?: Policy | string | null;
 }
 
 export interface FormFlowField {
@@ -1243,7 +1442,7 @@ export interface FormFlowField {
 	/** @description Text label shown to form users. */
 	label?: string | null;
 	/** @description Input type for the field */
-	type?: 'text' | 'textarea' | 'checkbox' | 'checkbox_group' | 'checkbox_group_alt' | 'radio' | 'file' | 'select' | 'hidden' | 'voucher' | 'address' | null;
+	type?: 'text' | 'textarea' | 'checkbox' | 'checkbox_group' | 'checkbox_group_alt' | 'radio' | 'file' | 'select' | 'hidden' | 'voucher' | null;
 	/** @description Options for radio or select inputs */
 	choices?: Array<{ text: string; value: string }> | null;
 	/** @description Default text shown in empty input. */
@@ -1259,8 +1458,9 @@ export interface FormFlowField {
 	/** @description Prepopulate field with logged in user data. Field name must match a field in directus user collection. */
 	use_user_data?: boolean | null;
 	step?: FormFlowStep | string | null;
-	/** @description Displays a copy current value button next to field. */
+	/** @description Toggles whether to display a button to copy the field value to clipboard. */
 	copy?: boolean | null;
+	/** @description Makes the field readonly, can be used to display pre-filled values to user but prevent them from editing. */
 	readonly?: boolean | null;
 }
 
@@ -1288,9 +1488,9 @@ export interface FormFlow {
 	/** @description Destination URL after successful submission. */
 	success_redirect?: string | null;
 	show_summary?: boolean | null;
+	bot_protection?: boolean | null;
 	steps?: FormFlowStep[] | string[];
 	submissions?: FormFlowSubmission[] | string[];
-	bot_protection?: boolean | null;
 }
 
 export interface FormFlowStepCondition {
@@ -1364,31 +1564,31 @@ export interface FormFlowSubmissionValue {
 export interface Form {
 	/** @primaryKey */
 	id: string;
-	/** @description Action after successful submission. */
-	on_success?: 'redirect' | 'message' | null;
 	sort?: number | null;
-	/** @description Text shown on submit button. */
-	submit_label?: string | null;
-	/** @description Message shown after successful submission. */
-	success_message?: string | null;
 	/** @description Form name (for internal reference). */
 	title?: string | null;
-	/** @description Destination URL after successful submission. */
-	success_redirect_url?: string | null;
 	/** @description Show or hide this form from the site. */
 	is_active?: boolean | null;
-	/** @description Setup email notifications when forms are submitted. */
-	emails?: Array<{ to: string[]; subject: string; message: string }> | null;
 	date_created?: string | null;
 	user_created?: DirectusUser | string | null;
 	date_updated?: string | null;
 	user_updated?: DirectusUser | string | null;
+	/** @description Action after successful submission. */
+	on_success?: 'redirect' | 'message' | null;
+	/** @description Text shown on submit button. */
+	submit_label?: string | null;
+	/** @description Message shown after successful submission. */
+	success_message?: string | null;
+	/** @description Destination URL after successful submission. */
+	success_redirect_url?: string | null;
+	/** @description Setup email notifications when forms are submitted. */
+	emails?: Array<{ to: string[]; subject: string; message: string }> | null;
 	site?: Site | string | null;
-	/** @description Form structure and input fields */
-	fields?: FormField[] | string[];
+	bot_protection?: boolean | null;
 	/** @description Received form responses. */
 	submissions?: FormSubmission[] | string[];
-	bot_protection?: boolean | null;
+	/** @description Form structure and input fields */
+	fields?: FormField[] | string[];
 }
 
 export interface FormSubmission {
@@ -1434,10 +1634,6 @@ export interface Globals {
 	favicon?: DirectusFile | string | null;
 	/** @description Main logo shown on the site (for light mode). */
 	logo?: DirectusFile | string | null;
-	/** @description Secret OpenAI API key. Don't share with anyone outside your team. */
-	openai_api_key?: string | null;
-	/** @description The public URL for this Directus instance. Used in Flows. */
-	directus_url?: string | null;
 	/** @description Main logo shown on the site (for dark mode). */
 	logo_dark_mode?: DirectusFile | string | null;
 	/** @description Accent color for the website (used on buttons, links, etc). */
@@ -1446,6 +1642,10 @@ export interface Globals {
 	user_created?: DirectusUser | string | null;
 	date_updated?: string | null;
 	user_updated?: DirectusUser | string | null;
+	/** @description Secret OpenAI API key. Don't share with anyone outside your team. */
+	openai_api_key?: string | null;
+	/** @description The public URL for this Directus instance. Used in Flows. */
+	directus_url?: string | null;
 	current_congress?: 'json' | null;
 }
 
@@ -1466,15 +1666,7 @@ export interface Hotel {
 	phone?: string | null;
 	address?: string | null;
 	image?: DirectusFile | string | null;
-	gallery?: BlockGallery | string | null;
 	congresses?: CongressHotel[] | string[];
-}
-
-export interface HotelsFile {
-	/** @primaryKey */
-	id: number;
-	hotels_id?: Hotel | string | null;
-	directus_files_id?: DirectusFile | string | null;
 }
 
 export interface IssueComment {
@@ -1571,7 +1763,7 @@ export interface OrganisationPerson {
 	person?: Person | string | null;
 	sort?: number | null;
 	role?: string | null;
-	responsibilities?: 'json' | null;
+	responsibilities?: string[] | null;
 }
 
 export interface Organisation {
@@ -1590,19 +1782,19 @@ export interface Organisation {
 	website?: string | null;
 	address?: string | null;
 	logo?: DirectusFile | string | null;
-	type?: 'apoa_core' | 'apoa_sections' | 'sponsors' | 'noa' | 'ioa';
+	type?: `APOA Core` | 'apoa_sections' | 'sponsors' | 'noa';
 	description?: string | null;
-	users?: OrganisationsUser[] | string[];
+	people?: OrganisationPerson[] | string[];
 	sponsor_details?: Sponsor[] | string[];
 	apoa_section_details?: ApoaSection[] | string[];
-	people?: OrganisationPerson[] | string[];
+	users?: OrganisationsUser[] | string[];
 }
 
 export interface OrganisationsUser {
 	/** @primaryKey */
 	id: number;
-	organisation?: Organisation | string | null;
 	user?: DirectusUser | string | null;
+	organisation?: Organisation | string | null;
 	sort?: number | null;
 	role?: string | null;
 }
@@ -1631,6 +1823,10 @@ export interface Page {
 	/** @primaryKey */
 	id: string;
 	sort?: number | null;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
 	/** @description The title of this page. @required */
 	title: string;
 	/** @description Unique URL for this page (start with `/`, can have multiple segments `/about/me`)). @required */
@@ -1640,10 +1836,6 @@ export interface Page {
 	/** @description Publish now or schedule for later. */
 	published_at?: string | null;
 	seo?: ExtensionSeoMetadata | null;
-	date_created?: string | null;
-	user_created?: DirectusUser | string | null;
-	date_updated?: string | null;
-	user_updated?: DirectusUser | string | null;
 	site?: Site | string | null;
 	/** @description Create and arrange different content blocks (like text, images, or videos) to build your page. */
 	blocks?: PageBlock[] | string[];
@@ -1662,8 +1854,8 @@ export interface PeopleList {
 	headline?: string | null;
 	tagline?: string | null;
 	type?: 'people' | 'events' | 'assignments' | null;
-	assignments?: PeopleListAssignment[] | string[];
 	events?: PeopleListCongressEvent[] | string[];
+	assignments?: PeopleListAssignment[] | string[];
 	entry?: PeopleListEntry[] | string[];
 }
 
@@ -1719,10 +1911,10 @@ export interface Person {
 	bio?: string | null;
 	image?: DirectusFile | string | null;
 	affiliations?: Array<{ institution: string; link: string; position: string }> | null;
-	privileges?: PersonsPrivilege[] | string[];
+	email?: string | null;
+	organisations?: OrganisationPerson[] | string[];
 	committee_positions?: PersonsCommitteePosition[] | string[];
 	assignments?: Assignment[] | string[];
-	organisations?: OrganisationPerson[] | string[];
 }
 
 export interface PersonsCommitteePosition {
@@ -1730,13 +1922,6 @@ export interface PersonsCommitteePosition {
 	id: number;
 	persons_id?: Person | string | null;
 	committee_positions_id?: CommitteePosition | string | null;
-}
-
-export interface PersonsPrivilege {
-	/** @primaryKey */
-	id: number;
-	privileges_id?: Privilege | string | null;
-	persons_id?: Person | string | null;
 }
 
 export interface Policy {
@@ -1749,27 +1934,30 @@ export interface Policy {
 	date_updated?: string | null;
 	type?: 'privacy' | 'terms_of_service' | null;
 	name?: string | null;
-	/** @description Unique slug used to look up this policy's own page (see policies/[...key].vue). */
-	key?: string | null;
 	/** @description Short text displayed in privacy policy consent message. */
 	notification?: string | null;
 	content?: string | null;
 	required?: boolean | null;
 	default?: boolean | null;
+	show_on_login?: boolean;
+	key?: string;
 	sites?: SitesPolicy[] | string[];
-	show_on_login?: boolean | null;
 }
 
 export interface Post {
-	/** @description Rich text content of your blog post. */
-	content?: string | null;
 	/** @primaryKey */
 	id: string;
+	sort?: number | null;
+	date_created?: string | null;
+	user_created?: DirectusUser | string | null;
+	date_updated?: string | null;
+	user_updated?: DirectusUser | string | null;
+	/** @description Rich text content of your blog post. */
+	content?: string | null;
 	/** @description Featured image for this post. Used in cards linking to the post and in the post detail page. */
 	image?: DirectusFile | string | null;
 	/** @description Unique URL for this post (e.g., `yoursite.com/posts/{{your-slug}}`) */
 	slug?: string | null;
-	sort?: number | null;
 	/** @description Is this post published? */
 	status?: 'draft' | 'in_review' | 'published';
 	/** @description Title of the blog post (used in page title and meta tags) @required */
@@ -1781,10 +1969,6 @@ export interface Post {
 	/** @description Publish now or schedule for later. */
 	published_at?: string | null;
 	seo?: ExtensionSeoMetadata | null;
-	date_created?: string | null;
-	user_created?: DirectusUser | string | null;
-	date_updated?: string | null;
-	user_updated?: DirectusUser | string | null;
 }
 
 export interface Privilege {
@@ -1798,7 +1982,6 @@ export interface Privilege {
 	description?: string | null;
 	name?: string | null;
 	congresses?: CongressPrivilege[] | string[];
-	persons?: PersonsPrivilege[] | string[];
 }
 
 export interface Redirect {
@@ -1815,6 +1998,33 @@ export interface Redirect {
 	user_created?: DirectusUser | string | null;
 	date_updated?: string | null;
 	user_updated?: DirectusUser | string | null;
+}
+
+export interface RegistrationImport {
+	/** @primaryKey */
+	id: string;
+	user_created?: DirectusUser | string | null;
+	date_created?: string | null;
+	user_updated?: DirectusUser | string | null;
+	date_updated?: string | null;
+	/** @description The congress these registrations are for. @required */
+	congress: Congress | string;
+	/** @description The spreadsheet that was imported. */
+	file?: DirectusFile | string | null;
+	/** @description Number of rows in the imported sheet. */
+	row_count?: number | null;
+	/** @description Anything worth knowing about this import. */
+	note?: string | null;
+	/** @description Comp: everyone got the Complimentary ticket. Paid elsewhere: each row's own ticket type. */
+	kind?: 'comp' | 'paid_elsewhere' | null;
+	/** @description The group everyone in this import joined, if any. */
+	group?: CongressRegistrationGroup | string | null;
+	/** @description Name of the uploaded CSV. */
+	file_name?: string | null;
+	/** @description One entry per row in the file: what happened to it. */
+	results?: Record<string, any> | null;
+	/** @description Registrations created by this import. */
+	registrations?: CongressRegistration[] | string[];
 }
 
 export interface Role {
@@ -1872,14 +2082,31 @@ export interface SiteBranding {
 	site?: Site | string | null;
 	font_heading?: Array<{ family: string; fallback: string; weight: string; style: string; source: string; url: string }> | null;
 	font_default?: Array<{ family: string; fallback: string; weight: string; style: string; source: string; url: string }> | null;
-	logos?: SiteBrandingLogo[] | string[];
+	color_schemes?: Array<{ name: string; colors: Array<{ name: string; color: string }> }> | null;
+	assets?: SiteBrandingAsset[] | string[];
 }
 
-export interface SiteBrandingLogo {
+export interface SiteBrandingAssetFile {
 	/** @primaryKey */
 	id: number;
+	site_branding_assets_id?: SiteBrandingAsset | string | null;
+	file?: DirectusFile | string | null;
+	is_default?: boolean | null;
+	variant_label?: string | null;
+}
+
+export interface SiteBrandingAsset {
+	/** @primaryKey */
+	id: string;
+	sort?: number | null;
+	user_created?: DirectusUser | string | null;
+	date_created?: string | null;
+	user_updated?: DirectusUser | string | null;
+	date_updated?: string | null;
 	site_branding?: SiteBranding | string | null;
-	directus_files_id?: DirectusFile | string | null;
+	name?: string | null;
+	category?: 'apoa_logos' | 'congress_logos' | 'favicons' | 'banners' | 'social_media' | 'templates' | 'print' | 'icons' | null;
+	assets?: SiteBrandingAssetFile[] | string[];
 }
 
 export interface Site {
@@ -1908,11 +2135,13 @@ export interface Site {
 	header_template?: EmailTemplate | string | null;
 	footer_template?: EmailTemplate | string | null;
 	checkout_form?: Form | string | null;
+	maintenance_mode?: boolean | null;
+	maintenance_message?: string | null;
 	user_policies?: SitesPolicy[] | string[];
-	branding?: SiteBranding[] | string[];
 	navigation?: Navigation[] | string[];
 	form_flows?: FormFlow[] | string[];
 	congress?: Congress[] | string[];
+	branding?: SiteBranding[] | string[];
 	pages?: Page[] | string[];
 }
 
@@ -1955,6 +2184,129 @@ export interface SupportCase {
 	messages?: CaseMessage[] | string[];
 }
 
+export interface TicketTailorBundle {
+	/** @description Bundle ID, e.g. bu_108419. @primaryKey */
+	id: string;
+	/** @description Always "bundle". */
+	object?: string;
+	/** @description The event series the bundle was created for (the :event_series_id in Ticket Tailor's URL). */
+	event_series_id?: string | null;
+	/** @description Bundle status. */
+	status?: 'ON_SALE' | 'HIDDEN' | 'UNAVAILABLE' | 'SOLD_OUT' | 'ADMIN_ONLY' | 'LOCKED' | null;
+	/** @description Bundle name. */
+	name?: string | null;
+	/** @description Bundle description. */
+	description?: string | null;
+	/** @description Price in cents. */
+	price?: number | null;
+	/** @description Booking fee in cents. */
+	booking_fee?: number | null;
+	/** @description Code to access a bundle. */
+	access_code?: string | null;
+	/** @description Bundle group ID. */
+	group_id?: string | null;
+	/** @description Ticket types in the bundle. */
+	ticket_types?: Record<string, any> | null;
+	/** @description Products in the bundle. */
+	products?: Record<string, any> | null;
+}
+
+export interface TicketTailorIssuedTicket {
+	/** @description Issued ticket ID, e.g. it_123456789. @primaryKey */
+	id: string;
+	/** @description Always "issued_ticket". */
+	object?: string;
+	/** @description valid or voided. */
+	status?: 'valid' | 'voided';
+	/** @description Where the ticket came from; "api" for these. */
+	source?: string | null;
+	/** @description Event occurrence ID (ev_...). */
+	event_id?: string | null;
+	/** @description Event series ID (es_...). */
+	event_series_id?: string | null;
+	/** @description Ticket type ID (tt_...). */
+	ticket_type_id?: string | null;
+	/** @description Hold the ticket was created from, if any. */
+	hold_id?: string | null;
+	/** @description Always empty: tickets issued this way have no order. */
+	order_id?: string | null;
+	/** @description Ticket type name. */
+	description?: string | null;
+	/** @description The full name of the person attending the event. */
+	full_name?: string | null;
+	/** @description First part of full_name. */
+	first_name?: string | null;
+	/** @description Rest of full_name. */
+	last_name?: string | null;
+	/** @description The email of the person attending the event. */
+	email?: string | null;
+	/** @description Ticket code (given, or generated). */
+	barcode?: string | null;
+	/** @description External reference, e.g. an order number in another system. */
+	reference?: string | null;
+	/** @description Ticket type price in cents (from its charge). */
+	listed_price?: number | null;
+	/** @description What the caller asked for. The sandbox never sends email. */
+	send_email?: boolean | null;
+	/** @description Unix seconds. */
+	created_at?: number | null;
+	/** @description Unix seconds, when voided. */
+	voided_at?: number | null;
+}
+
+export interface TicketTailorOrder {
+	/** @description A unique identifier for the order (e.g. or_12345678). @primaryKey @required */
+	id: string;
+	/** @description Always "order". */
+	object?: string;
+	/** @description Possible states of the order: completed, pending, cancelled. @required */
+	status: 'completed' | 'pending' | 'cancelled';
+	/** @description Message associated with status. */
+	status_message?: string | null;
+	/** @description Order creation timestamp (Unix seconds). @required */
+	created_at: number;
+	/** @description A unique identifier for the transaction. */
+	txn_id?: string | null;
+	/** @description Buyer details object: name, first_name, last_name, email, phone, address, custom_questions. @required */
+	buyer_details: Record<string, any>;
+	/** @description Currency object, e.g. { "code": "usd", "base_multiplier": 100 }. @required */
+	currency: Record<string, any>;
+	/** @description Event summary object: id, event_id, event_series_id, name, start_date, end_date, venue. */
+	event_summary?: Record<string, any> | null;
+	/** @description Issued ticket objects (nullable). */
+	issued_tickets?: Record<string, any> | null;
+	/** @description Sold product objects (nullable). */
+	sold_products?: Record<string, any> | null;
+	/** @description Line item objects. The bundle is the one with type "bundle"; its item_id is the bundle ID. @required */
+	line_items: Record<string, any>;
+	/** @description Payment method object: id, type, name, external_id, instructions, ... @required */
+	payment_method: Record<string, any>;
+	/** @description Meta data objects. */
+	meta_data?: Record<string, any> | null;
+	/** @description Sum without tax (cents). @required */
+	subtotal: number;
+	/** @description Tax sum (cents). @required */
+	tax: number;
+	/** @description How tax was calculated: exclusive or inclusive. */
+	tax_treatment?: 'exclusive' | 'inclusive' | null;
+	/** @description Total value of order (cents). @required */
+	total: number;
+	/** @description Total amount paid for this order including tax (cents). @required */
+	total_paid: number;
+	/** @description Refunded amount in cents. @required */
+	refund_amount: number;
+	/** @description Refunded amount issued as credit in cents. */
+	credited_out_amount?: number | null;
+	/** @description The unique identifier for the existing voucher. */
+	refunded_voucher_id?: number | null;
+	/** @description A unique tag to track where sales originated. */
+	referral_tag?: string | null;
+	/** @description Whether the buyer opted in to receive marketing emails. */
+	marketing_opt_in?: string | null;
+	/** @description Notes attached to the order. */
+	notes?: string | null;
+}
+
 export interface TTAHtmltemplate {
 	/** @primaryKey */
 	id: number;
@@ -1972,40 +2324,6 @@ export interface TTAHtmltemplate {
 	input_fixed?: string | null;
 }
 
-export interface UserAddresse {
-	/** @primaryKey */
-	id: string;
-	user_created?: DirectusUser | string | null;
-	date_created?: string | null;
-	user_updated?: DirectusUser | string | null;
-	date_updated?: string | null;
-	compnay_name?: string | null;
-	address_line_1?: string | null;
-	street_number?: string | null;
-	address_line_2?: string | null;
-	city?: string | null;
-	state?: string | null;
-	postcode?: string | null;
-	country?: Country | string | null;
-	user?: DirectusUser | string | null;
-}
-
-export interface UserDevice {
-	/** @primaryKey */
-	id: string;
-	date_created?: string | null;
-	date_updated?: string | null;
-	appid?: string | null;
-	name?: string | null;
-	model?: string | null;
-	platform?: 'ios' | 'android' | null;
-	version?: string | null;
-	pushid?: string | null;
-	uuid?: string | null;
-	publickey?: string | null;
-	user?: DirectusUser | string | null;
-}
-
 export interface UserPolicyAgreement {
 	/** @primaryKey */
 	id: string;
@@ -2015,7 +2333,6 @@ export interface UserPolicyAgreement {
 	date_updated?: string | null;
 	consent?: boolean | null;
 	user?: DirectusUser | string | null;
-	email?: string | null;
 	policy?: Policy | string | null;
 	active?: boolean | null;
 	version?: DirectusVersion | string | null;
@@ -2032,8 +2349,8 @@ export interface VenueRoom {
 	venue?: Venue | string | null;
 	title?: string | null;
 	floor?: string | null;
-	official_name?: string | null;
 	capacity?: number | null;
+	official_name?: string | null;
 	sessions?: CongressSession[] | string[];
 }
 
@@ -2052,10 +2369,10 @@ export interface Venue {
 	visa_general_info?: string | null;
 	travel_general_info?: string | null;
 	airport_codes?: Array<'TPE'> | null;
-	rooms?: VenueRoom[] | string[];
-	congress?: Congress[] | string[];
 	visa_info_by_country?: VenueVisaInfo[] | string[];
 	travel_info_by_country?: CountryTravelInfo[] | string[];
+	congress?: Congress[] | string[];
+	rooms?: VenueRoom[] | string[];
 }
 
 export interface VenueVisaInfo {
@@ -2344,18 +2661,11 @@ export interface DirectusSettings {
 	mcp_prompts_collection?: string | null;
 	mcp_system_prompt_enabled?: boolean;
 	mcp_system_prompt?: string | null;
-	/** @description Settings for the Command Palette Module. */
-	command_palette_settings?: Record<string, any> | null;
 	project_owner?: string | null;
 	project_usage?: string | null;
 	org_name?: string | null;
 	product_updates?: boolean | null;
 	project_status?: string | null;
-	TTA_KEY?: string | null;
-	TTA_KEY_VIRUS?: string | null;
-	TTA_VIRUSSCANNER_MODE?: string | null;
-	TTA_VIRUSSCANNER_FLOW_ID?: string | null;
-	TTA_VIRUSSCANNER_ENABLED?: boolean | null;
 	ai_openai_api_key?: string | null;
 	ai_anthropic_api_key?: string | null;
 	ai_system_prompt?: string | null;
@@ -2369,6 +2679,13 @@ export interface DirectusSettings {
 	ai_anthropic_allowed_models?: Array<`claude-haiku-4-5` | `claude-sonnet-4-5` | `claude-opus-4-5`> | null;
 	ai_google_allowed_models?: Array<`gemini-3-pro-preview` | `gemini-3-flash-preview` | `gemini-2.5-pro` | `gemini-2.5-flash`> | null;
 	collaborative_editing_enabled?: boolean;
+	/** @description Settings for the Command Palette Module. */
+	command_palette_settings?: Record<string, any> | null;
+	TTA_KEY?: string | null;
+	TTA_KEY_VIRUS?: string | null;
+	TTA_VIRUSSCANNER_MODE?: string | null;
+	TTA_VIRUSSCANNER_FLOW_ID?: string | null;
+	TTA_VIRUSSCANNER_ENABLED?: boolean | null;
 }
 
 export interface DirectusUser {
@@ -2390,7 +2707,7 @@ export interface DirectusUser {
 	token?: string | null;
 	last_access?: string | null;
 	last_page?: string | null;
-	provider?: 'moodle';
+	provider?: 'apoa';
 	external_identifier?: string | null;
 	auth_data?: 'json' | null;
 	email_notifications?: boolean | null;
@@ -2404,15 +2721,11 @@ export interface DirectusUser {
 	person?: Person | string | null;
 	membership_number?: string | null;
 	country?: 'json' | null;
-	membership_expires?: string | null;
-	tt_membership_code?: string | null;
+	voucher_codes?: CongressVoucherCode[] | string[];
+	organisations?: OrganisationsUser[] | string[];
+	user_policy_agreements?: UserPolicyAgreement[] | string[];
 	/** @description Blog posts this user has authored. */
 	posts?: Post[] | string[];
-	user_policy_agreements?: UserPolicyAgreement[] | string[];
-	organisations?: OrganisationsUser[] | string[];
-	addresses?: UserAddresse[] | string[];
-	voucher_codes?: CongressVoucherCode[] | string[];
-	devices?: UserDevice[] | string[];
 	policies?: DirectusAccess[] | string[];
 }
 
@@ -2588,7 +2901,7 @@ export interface DirectusDeploymentRun {
 
 export interface Schema {
 	abstract_criteria: AbstractCriteria[];
-	abstract_grading_systems: AbstractGradingSystem[];
+	abstract_grading_system: AbstractGradingSystem[];
 	abstract_reviewers: AbstractReviewer[];
 	abstract_reviews: AbstractReview[];
 	abstract_review_scores: AbstractReviewScore[];
@@ -2639,6 +2952,8 @@ export interface Schema {
 	committee: Committee[];
 	committee_positions: CommitteePosition[];
 	congress: Congress[];
+	congress_access_tokens: CongressAccessToken[];
+	congress_badge_types: CongressBadgeType[];
 	congress_break_room: CongressBreakRoom[];
 	congress_breaks: CongressBreak[];
 	congress_charges: CongressCharge[];
@@ -2646,19 +2961,24 @@ export interface Schema {
 	congress_day_slots: CongressDaySlot[];
 	congress_events: CongressEvent[];
 	congress_hotels: CongressHotel[];
+	congress_issued_tickets: CongressIssuedTicket[];
 	congress_key_dates: CongressKeyDate[];
 	congress_order_access_tokens: CongressOrderAccessToken[];
 	congress_order_owners: CongressOrderOwner[];
 	congress_orders: CongressOrder[];
 	congress_order_sessions: CongressOrderSession[];
+	congress_orders_evidence: CongressOrdersEvidence[];
 	congress_orders_files: CongressOrdersFile[];
 	congress_organisations: CongressOrganisation[];
+	congress_pricing_periods: CongressPricingPeriod[];
+	congress_privilege_persons: CongressPrivilegePerson[];
 	congress_privileges: CongressPrivilege[];
+	congress_registration_groups: CongressRegistrationGroup[];
+	congress_registrations: CongressRegistration[];
 	congress_schedules: CongressSchedule[];
 	congress_sessions: CongressSession[];
 	congress_sessions_organisations: CongressSessionsOrganisation[];
 	congress_sessions_venue_rooms: CongressSessionsVenueRoom[];
-	congress_socials: CongressSocial[];
 	congress_sponsors: CongressSponsor[];
 	congress_sponsor_tiers: CongressSponsorTier[];
 	congress_tickets: CongressTicket[];
@@ -2667,6 +2987,8 @@ export interface Schema {
 	congress_vouchers: CongressVoucher[];
 	countries: Country[];
 	country_travel_info: CountryTravelInfo[];
+	decision_request_definitions: DecisionRequestDefinition[];
+	decision_requests: DecisionRequest[];
 	email_campaigns: EmailCampaign[];
 	email_campaign_sends: EmailCampaignSend[];
 	email_templates: EmailTemplate[];
@@ -2683,7 +3005,6 @@ export interface Schema {
 	form_submission_values: FormSubmissionValue[];
 	globals: Globals;
 	hotels: Hotel[];
-	hotels_files: HotelsFile[];
 	issue_comments: IssueComment[];
 	issues: Issue[];
 	languages: Language[];
@@ -2702,24 +3023,26 @@ export interface Schema {
 	people_list_persons: PeopleListPerson[];
 	persons: Person[];
 	persons_committee_positions: PersonsCommitteePosition[];
-	persons_privileges: PersonsPrivilege[];
 	policies: Policy[];
 	posts: Post[];
 	privileges: Privilege[];
 	redirects: Redirect[];
+	registration_imports: RegistrationImport[];
 	roles: Role[];
 	schedule_changes: ScheduleChange[];
 	schedule_changes_type: ScheduleChangesType[];
 	scientific_tags: ScientificTag[];
 	site_branding: SiteBranding[];
-	site_branding_logos: SiteBrandingLogo[];
+	site_branding_asset_files: SiteBrandingAssetFile[];
+	site_branding_assets: SiteBrandingAsset[];
 	sites: Site[];
 	sites_policies: SitesPolicy[];
 	sponsors: Sponsor[];
 	support_cases: SupportCase[];
+	ticket_tailor_bundles: TicketTailorBundle[];
+	ticket_tailor_issued_tickets: TicketTailorIssuedTicket[];
+	ticket_tailor_orders: TicketTailorOrder[];
 	TTA_htmltemplates: TTAHtmltemplate[];
-	user_addresses: UserAddresse[];
-	user_devices: UserDevice[];
 	user_policy_agreements: UserPolicyAgreement[];
 	venue_rooms: VenueRoom[];
 	venues: Venue[];
@@ -2758,7 +3081,7 @@ export interface Schema {
 
 export enum CollectionNames {
 	abstract_criteria = 'abstract_criteria',
-	abstract_grading_systems = 'abstract_grading_systems',
+	abstract_grading_system = 'abstract_grading_system',
 	abstract_reviewers = 'abstract_reviewers',
 	abstract_reviews = 'abstract_reviews',
 	abstract_review_scores = 'abstract_review_scores',
@@ -2809,6 +3132,8 @@ export enum CollectionNames {
 	committee = 'committee',
 	committee_positions = 'committee_positions',
 	congress = 'congress',
+	congress_access_tokens = 'congress_access_tokens',
+	congress_badge_types = 'congress_badge_types',
 	congress_break_room = 'congress_break_room',
 	congress_breaks = 'congress_breaks',
 	congress_charges = 'congress_charges',
@@ -2816,19 +3141,24 @@ export enum CollectionNames {
 	congress_day_slots = 'congress_day_slots',
 	congress_events = 'congress_events',
 	congress_hotels = 'congress_hotels',
+	congress_issued_tickets = 'congress_issued_tickets',
 	congress_key_dates = 'congress_key_dates',
 	congress_order_access_tokens = 'congress_order_access_tokens',
 	congress_order_owners = 'congress_order_owners',
 	congress_orders = 'congress_orders',
 	congress_order_sessions = 'congress_order_sessions',
+	congress_orders_evidence = 'congress_orders_evidence',
 	congress_orders_files = 'congress_orders_files',
 	congress_organisations = 'congress_organisations',
+	congress_pricing_periods = 'congress_pricing_periods',
+	congress_privilege_persons = 'congress_privilege_persons',
 	congress_privileges = 'congress_privileges',
+	congress_registration_groups = 'congress_registration_groups',
+	congress_registrations = 'congress_registrations',
 	congress_schedules = 'congress_schedules',
 	congress_sessions = 'congress_sessions',
 	congress_sessions_organisations = 'congress_sessions_organisations',
 	congress_sessions_venue_rooms = 'congress_sessions_venue_rooms',
-	congress_socials = 'congress_socials',
 	congress_sponsors = 'congress_sponsors',
 	congress_sponsor_tiers = 'congress_sponsor_tiers',
 	congress_tickets = 'congress_tickets',
@@ -2837,6 +3167,8 @@ export enum CollectionNames {
 	congress_vouchers = 'congress_vouchers',
 	countries = 'countries',
 	country_travel_info = 'country_travel_info',
+	decision_request_definitions = 'decision_request_definitions',
+	decision_requests = 'decision_requests',
 	email_campaigns = 'email_campaigns',
 	email_campaign_sends = 'email_campaign_sends',
 	email_templates = 'email_templates',
@@ -2853,7 +3185,6 @@ export enum CollectionNames {
 	form_submission_values = 'form_submission_values',
 	globals = 'globals',
 	hotels = 'hotels',
-	hotels_files = 'hotels_files',
 	issue_comments = 'issue_comments',
 	issues = 'issues',
 	languages = 'languages',
@@ -2872,24 +3203,26 @@ export enum CollectionNames {
 	people_list_persons = 'people_list_persons',
 	persons = 'persons',
 	persons_committee_positions = 'persons_committee_positions',
-	persons_privileges = 'persons_privileges',
 	policies = 'policies',
 	posts = 'posts',
 	privileges = 'privileges',
 	redirects = 'redirects',
+	registration_imports = 'registration_imports',
 	roles = 'roles',
 	schedule_changes = 'schedule_changes',
 	schedule_changes_type = 'schedule_changes_type',
 	scientific_tags = 'scientific_tags',
 	site_branding = 'site_branding',
-	site_branding_logos = 'site_branding_logos',
+	site_branding_asset_files = 'site_branding_asset_files',
+	site_branding_assets = 'site_branding_assets',
 	sites = 'sites',
 	sites_policies = 'sites_policies',
 	sponsors = 'sponsors',
 	support_cases = 'support_cases',
+	ticket_tailor_bundles = 'ticket_tailor_bundles',
+	ticket_tailor_issued_tickets = 'ticket_tailor_issued_tickets',
+	ticket_tailor_orders = 'ticket_tailor_orders',
 	TTA_htmltemplates = 'TTA_htmltemplates',
-	user_addresses = 'user_addresses',
-	user_devices = 'user_devices',
 	user_policy_agreements = 'user_policy_agreements',
 	venue_rooms = 'venue_rooms',
 	venues = 'venues',
