@@ -114,6 +114,15 @@ function handleProofUploaded(proof: NonNullable<TTOrder['local_payment_proof']>)
       <div
         class="gap-2 flex">
         <UButton
+          v-if="order.status !== 'cancelled'"
+          :to="`/checkout/manage-tickets/${order.id}`"
+          variant="subtle"
+          color="secondary"
+          size="xl"
+          icon="i-lucide-users"
+          label="Manage Tickets"
+        />
+        <UButton
           :to="`/checkout?orderId=${order.id}`"
           variant="outline"
           color="accent"

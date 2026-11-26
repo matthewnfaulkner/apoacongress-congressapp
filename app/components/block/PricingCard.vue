@@ -58,8 +58,6 @@ watchEffect(() => {
 		)
 	);
 
-	const now = new Date();
-
 	const localCharges = [...charges.value]; // mutable copy
 	if (props.card.category === 'accommodation') {
 
@@ -92,34 +90,28 @@ watchEffect(() => {
 
 	} else if (props.card.category === 'registration') {
 
-		const filteredCharges = localCharges.filter(charge => {
-			if (!charge.charge.details || !charge.charge.details.length) return true;
-			const details = charge.charge.details[0] as RegistrationChargeDetail;
-			const cutoff = new Date(details.cutoff_date);
-			return now <= cutoff;
-		});
+		// Drop prices whose period has ended; the first remaining (by period
+		// order) is the current price, the rest are listed as upcoming.
+		const filteredCharges = localCharges
+			.map(entry => ({ ...entry, window: chargePriceWindow(entry.charge) }))
+			.filter(entry => !priceWindowHasEnded(entry.window))
+			.sort((a, b) => (a.window?.sort ?? 0) - (b.window?.sort ?? 0));
 		const top = filteredCharges.shift();
 		topCharge.value = top?.charge;
-
-		const details =
-		top?.charge.details as RegistrationChargeDetail[];
-
-		const detail = details?.[0] as RegistrationChargeDetail;
 
 		card.value = {
 			id: props.card.id,
 			category: 'registration',
 			title: props.card.title ? props.card.title : top?.charge.sub_category || '',
 			price: top?.charge.price || '',
-			description: detail ? `${detail.cutoff_description} ${dateStringToHumanStringBack(detail.cutoff_date)}` : undefined,
+			description: top?.window?.label,
 			badge: props.card.badge,
 			button_group: props.card.button_group,
 			use_congress_charges: true,
 			is_highlighted: props.card.is_highlighted,
 			features: filteredCharges.flatMap(c => {
-				const d = (c.charge.details as RegistrationChargeDetail[])?.[0];
-				return d
-					? `<b class="text-accent text-lg">${c.charge.price}</b> - ${d.cutoff_description} ${dateStringToHumanStringBack(d.cutoff_date)}`
+				return c.window
+					? `<b class="text-accent text-lg">${c.charge.price}</b> - ${c.window.label}`
 					: c.charge.price || '';
 			}),
 		};

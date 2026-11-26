@@ -81,7 +81,7 @@ async function resolveOrders(event: H3Event): Promise<TTOrder[]> {
 		return [];
 	}
 
-	const orders = await Promise.all(rows.map((row) => ticketTailorFetch<TTOrder>(`/orders/${row.id}`, 'orderRead')));
+	const orders = await Promise.all(rows.map((row) => fetchTicketTailorOrder<TTOrder>(row.id)));
 	return await Promise.all(orders.map(omitBypassTicket));
 }
 

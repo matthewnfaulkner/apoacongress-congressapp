@@ -42,6 +42,9 @@ export default defineNuxtConfig({
 		// actually blocks real injection attempts now (script tags, event
 		// handler attributes, javascript: URIs) - see that file.
 		'/api/abstracts/submission': { security: { xssValidator: { escapeHtml: false } } },
+		// Decision links (see pages/a/[token]/[option].vue): client-only, so a
+		// prefetching mail scanner only ever gets the empty app shell.
+		'/a/**': { isr: false, ssr: false },
 		'/**': { isr: false },
 	} : {
 		// Never cache API routes - query params must always hit the server fresh
@@ -65,6 +68,10 @@ export default defineNuxtConfig({
 		// in localStorage — an SSR fetch can't send it, and the client would
 		// then reuse that public (published-only) payload instead of refetching.
 		'/livepreview/**': { isr: false, prerender: false, ssr: false },
+
+		// Decision links - never cached, never server-rendered (see the sandbox
+		// rules above).
+		'/a/**': { isr: false, prerender: false, ssr: false },
 
 		// Cache all page routes
 		'/**': { isr: 3600 },
@@ -219,12 +226,23 @@ export default defineNuxtConfig({
 		voyageApiKey: process.env.VOYAGE_API_KEY,
 		rebuildIndexSecret: process.env.REBUILD_INDEX_SECRET,
 		dataRequestFlowId: process.env.DIRECTUS_DATA_REQUEST_FLOW_ID,
+		// Same value as Directus's FLOW_SIGNING_SECRET - signs calls to decision
+		// request Flows, which check them with Utils -> Verify Webhook.
+		flowSigningSecret: process.env.DIRECTUS_FLOW_SIGNING_SECRET,
+		// Dedicated, non-admin bot for the decisions API - its policy only grants
+		// what server/api/decisions needs (read decision_requests/definitions/
+		// flows, update decision_requests' chosen_option and decided_at).
+		directusDecisionBotToken: process.env.DIRECTUS_DECISION_BOT_TOKEN,
 		// Capability-scoped Ticket Tailor keys — each server call uses the
 		// narrowest one that covers what it actually does, rather than one
 		// all-access key everywhere.
 		ticketTailorEventReadKey: process.env.TICKET_TAILOR_EVENT_READ_KEY,
 		ticketTailorOrderReadKey: process.env.TICKET_TAILOR_ORDER_READ_API_KEY,
 		ticketTailorBundleCreateKey: process.env.TICKET_TAILOR_BUNDLE_CREATOR_API_KEY,
+		// Sandbox only: Directus flows that stand in for Ticket Tailor's
+		// write endpoints (see fake-ticket-tailor helpers in ticket-tailor.ts).
+		ticketTailorSandboxBundleFlowId: process.env.TICKET_TAILOR_SANDBOX_BUNDLE_FLOW_ID,
+		ticketTailorSandboxOrderFlowId: process.env.TICKET_TAILOR_SANDBOX_ORDER_FLOW_ID,
 		// The event id itself now comes from Directus (congress.tt_event_id via
 		// getCongressEventId), not an env var — see checkout-locality.ts.
 		sessionTokenName: process.env.DIRECTUS_SESSION_TOKEN_NAME as string || 'directus_session_token',
@@ -353,7 +371,7 @@ export default defineNuxtConfig({
 		exclude: [
 			'/admin_login', '/login', '/logout', '/forgotten_password', '/reset_password',
 			'/profile', '/mydatarequests', '/no-access', '/preview',
-			'/livepreview/**', '/checkout/**', '/support/mytickets', '/program/planner',
+			'/livepreview/**', '/checkout/**', '/support/mytickets', '/program/planner', '/a/**',
 		],
 	},
 

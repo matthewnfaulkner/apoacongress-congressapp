@@ -19,6 +19,67 @@ function basicAuthHeader(apiKey: string): string {
 	return `Basic ${Buffer.from(`${apiKey}:`).toString('base64')}`;
 }
 
+/**
+ * Sandbox only: calls one of the Directus flows that stand in for Ticket
+ * Tailor's write endpoints ("Ticket Tailor (sandbox) → …"), as the Order
+ * Bot. The sandbox never writes to the real Ticket Tailor.
+ */
+export async function callTicketTailorSandboxFlow<T>(
+	flow: 'bundle' | 'order',
+	body: Record<string, unknown>,
+): Promise<T> {
+	const config = useRuntimeConfig();
+
+	if (!config.public.isSandbox) {
+		throw createError({ statusCode: 500, statusMessage: 'Sandbox Ticket Tailor flows are only available in sandbox' });
+	}
+
+	const flowId = (flow === 'bundle' ? config.ticketTailorSandboxBundleFlowId : config.ticketTailorSandboxOrderFlowId) as string | undefined;
+	if (!flowId) {
+		throw createError({ statusCode: 500, statusMessage: `Sandbox ${flow} flow id is not configured` });
+	}
+
+	try {
+		return await $fetch<T>(`${config.public.directusUrl}/flows/trigger/${flowId}`, {
+			method: 'POST',
+			headers: { Authorization: `Bearer ${config.directusOrderBotToken}` },
+			body,
+		});
+	} catch (error: any) {
+		// The flows refuse with throw-error operations (TT_SANDBOX code,
+		// status + message), which Directus returns as errors[0].
+		const detail = error?.data?.errors?.[0];
+		throw createError({
+			statusCode: Number(detail?.extensions?.status ?? error?.statusCode ?? 502) || 502,
+			statusMessage: detail?.message ?? `Sandbox ${flow} flow failed`,
+		});
+	}
+}
+
+/**
+ * One Ticket Tailor order (GET /v1/orders/:id).
+ *
+ * Sandbox reads the fake `ticket_tailor_orders` collection instead — the
+ * sandbox's stand-in for Ticket Tailor, holding orders in the same shape as
+ * the API's order object (seed data included, whose ids don't exist in the
+ * real Ticket Tailor). A missing row is a 404, same as Ticket Tailor's own.
+ */
+export async function fetchTicketTailorOrder<T>(orderId: string): Promise<T> {
+	const config = useRuntimeConfig();
+
+	if (!config.public.isSandbox) {
+		return ticketTailorFetch<T>(`/orders/${orderId}`, 'orderRead');
+	}
+
+	try {
+		return await directusServer.request<T>(
+			withToken(config.directusOrderBotToken as string, readItem('ticket_tailor_orders', orderId, { fields: ['*'] })),
+		);
+	} catch {
+		throw createError({ statusCode: 404, statusMessage: 'Order not found' });
+	}
+}
+
 export function ticketTailorFetch<T>(
 	path: string,
 	capability: TicketTailorCapability,

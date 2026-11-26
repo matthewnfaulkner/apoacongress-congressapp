@@ -42,7 +42,7 @@ async function handler(event: H3Event) {
 				sessionToken
 					? withToken(sessionToken, readItem('sites', config.public.siteId, {
 						fields: [
-							'title', 'description', 'social_links', 'preview',
+							'title', 'description', 'social_links', 'preview', 'maintenance_mode', 'maintenance_message',
 							{ logo: ['id', 'filename_download', 'type'] },
 							{ logo_dark_mode: ['id', 'filename_download', 'type'] },
 							{ favicon: ['id', 'filename_download', 'type'] },
@@ -74,7 +74,7 @@ async function handler(event: H3Event) {
 					}))
 					: readItem('sites', config.public.siteId, {
 						fields: [
-							'title', 'description', 'social_links', 'preview',
+							'title', 'description', 'social_links', 'preview', 'maintenance_mode', 'maintenance_message',
 							{ logo: ['id', 'filename_download', 'type'] },
 							{ logo_dark_mode: ['id', 'filename_download', 'type'] },
 							{ favicon: ['id', 'filename_download', 'type'] },

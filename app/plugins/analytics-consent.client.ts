@@ -6,6 +6,7 @@
 export default defineNuxtPlugin(() => {
 	const config = useRuntimeConfig();
 	const { cookiesEnabledIds } = useCookieControl();
+	const route = useRoute();
 
 	let loaded = false;
 
@@ -13,6 +14,11 @@ export default defineNuxtPlugin(() => {
 		cookiesEnabledIds,
 		(ids) => {
 			if (loaded || !ids?.includes('ga') || !config.public.googleAnalyticsId) return;
+			// Decision links (pages/a/[token]/[option].vue) carry a working token
+			// in the URL - GA's page_view would send it to Google. These pages are
+			// only ever opened straight from an email (a full page load), so not
+			// loading GA here keeps it off them entirely.
+			if (route.path.startsWith('/a/')) return;
 			loaded = true;
 			useScriptGoogleAnalytics({ id: config.public.googleAnalyticsId as string });
 		},

@@ -12,6 +12,7 @@ export default defineEventHandler(async (event) => {
 			event.path.startsWith('/login') ||
 			event.path.startsWith('/no-access') ||
             event.path.startsWith('/logout') ||
+			event.path.startsWith('/maintenance') ||
 			event.path.startsWith('/preview')
 		) {
 			return
@@ -46,16 +47,20 @@ export default defineEventHandler(async (event) => {
 				return sendRedirect(event, '/no-access', 302)
 			}
 
-			// Sandbox access confirmed — check preview bypass
-			let site: { preview?: boolean } | null = null
+			// Sandbox access confirmed — check maintenance/preview bypass
+			let site: { preview?: boolean, maintenance_mode?: boolean } | null = null
 			try {
 				site = await directusServer.request(
-					readItem('sites', config.public.siteId, { fields: ['preview'] })
+					readItem('sites', config.public.siteId, { fields: ['preview', 'maintenance_mode'] })
 				)
 			} catch {
 				// Directus unreachable — skip preview-redirect logic and let the page load,
 				// where the layout's own site-data fetch will surface the outage properly.
 				return
+			}
+			// Maintenance takes precedence over preview
+			if (site?.maintenance_mode && !userPolicies.includes('Admin - Bypass Maintenance')) {
+				return sendRedirect(event, '/maintenance', 302)
 			}
 			if (!site?.preview || event.path === '/preview') return
 			if (userPolicies.includes('Admin - Bypass Preview')) return
@@ -63,15 +68,42 @@ export default defineEventHandler(async (event) => {
 		}
 
 		// Non-sandbox: existing preview redirect logic
-		let site: { preview?: boolean } | null = null
+		let site: { preview?: boolean, maintenance_mode?: boolean } | null = null
 		try {
 			site = await directusServer.request(
-				readItem('sites', config.public.siteId, { fields: ['preview'] })
+				readItem('sites', config.public.siteId, { fields: ['preview', 'maintenance_mode'] })
 			)
 		} catch {
 			// Directus unreachable — skip preview-redirect logic and let the page load,
 			// where the layout's own site-data fetch will surface the outage properly.
 			return
+		}
+
+		// Maintenance takes precedence over preview
+		if (site?.maintenance_mode) {
+			if (sessionToken) {
+				try {
+					const me = await directusServer.request(withToken(sessionToken, readMe({
+						fields: [
+							'id',
+							{ policies: [{ policy: ['name'] }] },
+							{ role: [{ policies: [{ policy: ['name'] }] }] }
+						],
+						filter: {
+							_or: [
+								{ policies: { policy: { name: { _eq: 'Admin - Bypass Maintenance' } } } },
+								{ role: { policies: { policy: { name: { _eq: 'Admin - Bypass Maintenance' } } } } }
+							]
+						}
+					})))
+					if (!me.policies) return sendRedirect(event, '/maintenance', 302)
+				} catch (error) {
+					console.log(error)
+					return sendRedirect(event, '/maintenance', 302)
+				}
+			} else {
+				return sendRedirect(event, '/maintenance', 302)
+			}
 		}
 
 		if (!site?.preview || event.path === '/preview') return

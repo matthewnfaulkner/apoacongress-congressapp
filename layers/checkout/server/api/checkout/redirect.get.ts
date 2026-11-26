@@ -122,7 +122,7 @@ function escapeHtml(value: string): string {
 
 async function getTicketTailorOrder(orderId: string): Promise<TTOrder> {
 	try {
-		return await ticketTailorFetch<TTOrder>(`/orders/${orderId}`, 'orderRead');
+		return await fetchTicketTailorOrder<TTOrder>(orderId);
 	} catch {
 		throw createError({ statusCode: 404, statusMessage: `Order ${orderId} not found` });
 	}

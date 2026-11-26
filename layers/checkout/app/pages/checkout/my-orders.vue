@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { z } from 'zod'
-import type { FormSubmitEvent } from '@nuxt/ui'
 import type { TTOrder } from '../../types/ticket-tailor'
 
 // Sourced from the auth store (reactive Pinia state — see
@@ -14,13 +12,6 @@ import type { TTOrder } from '../../types/ticket-tailor'
 // `ready` flag) and only ever runs once the browser has a real token.
 const auth = useAuthStore()
 const requestCookieHeaders = useRequestHeaders(['cookie'])
-
-// Same site-data source ChargeTableRegistration.vue etc. already use — the
-// page already knows which congress it's for, so that's passed straight
-// through with the access-token request rather than looked up again server
-// side.
-const siteData = useSiteDataStore().siteData as Site
-const congressId = siteData.congress?.[0]?.id ?? null
 
 // Always fetched — a guest with a verified email session (see
 // getCheckoutEmailSession) has no Directus account at all, so gating on
@@ -36,76 +27,22 @@ const { data: orders, status, error } = useFetch<TTOrder[]>('/api/checkout/my-or
   })),
 })
 
+// A 401 means neither an account nor an email-login session covers this
+// request — show the "get a link by email" card (CheckoutEmailLoginCard).
 const isUnauthenticated = computed(() => (error.value as any)?.statusCode === 401)
-
-// "Get a link to your orders" — the guest equivalent of logging in, see
-// orders-access/request.post.ts. Only relevant once we already know there's
-// no session/email-session covering this request at all.
-const emailSchema = z.object({
-  email: z.string().email('Invalid email'),
-})
-type EmailSchema = z.output<typeof emailSchema>
-const emailState = reactive<Partial<EmailSchema>>({ email: undefined })
-const requesting = ref(false)
-const requestSent = ref(false)
-
-const turnstileToken = ref<string>()
-const turnstileRef = ref<{ reset: () => void } | null>(null)
-const captchaError = ref<string | null>(null)
-
-async function requestAccessLink(submitEvent: FormSubmitEvent<EmailSchema>) {
-  if (!turnstileToken.value) {
-    captchaError.value = 'Please complete the CAPTCHA before submitting.'
-    return
-  }
-  captchaError.value = null
-
-  requesting.value = true
-  try {
-    await $fetch('/api/checkout/orders-access/request', {
-      method: 'POST',
-      body: { email: submitEvent.data.email, congress: congressId, turnstileToken: turnstileToken.value },
-    })
-    requestSent.value = true
-  } catch {
-    // A Turnstile token is single-use, so a failed attempt needs a fresh one
-    // — same handling as DynamicForm.vue's own onSubmitForm.
-    turnstileToken.value = undefined
-    turnstileRef.value?.reset()
-  } finally {
-    requesting.value = false
-  }
-}
 </script>
 
 <template>
 
 <Container class="my-8 max-w-2xl">
     <template v-if="isUnauthenticated">
-      <UCard class="lg:w-[50%] m-auto h-full mt-30">
-        <h1 class="text-2xl font-semibold text-foreground mb-6 font-heading">My Orders</h1>
-
-        <div v-if="requestSent" class="text-description text-lg">
-          If that email has any orders, we've sent a link to view them — check your inbox.
-        </div>
-        <div v-else class="space-y-6">
-          <UForm :schema="emailSchema" :state="emailState" class="space-y-4" @submit="requestAccessLink">
-            <UFormField label="Email" name="email" description="Enter the email you used at checkout to receive a link to your orders." size="xl">
-              <UInput v-model="emailState.email" class="w-80" />
-            </UFormField>
-            <div class="flex flex-col items-start gap-2">
-              <NuxtTurnstile ref="turnstileRef" v-model="turnstileToken" />
-              <p v-if="captchaError" class="text-sm text-red-500">{{ captchaError }}</p>
-            </div>
-            <UButton color="accent" size="xl" type="submit" :loading="requesting" label="Send me a link" />
-          </UForm>
-
-          <p class="text-description text-sm">
-            Have an account? <NuxtLink to="/login?redirect=/checkout/my-orders" class="text-accent underline">Log in</NuxtLink> instead.
-          </p>
-        </div>
-      </UCard>
-      
+      <CheckoutEmailLoginCard
+        heading="My Orders"
+        email-description="Enter the email you used at checkout to receive a link to your orders."
+        sent-message="If that email has any orders, we've sent a link to view them — check your inbox."
+        login-redirect="/checkout/my-orders"
+        purpose="orders"
+      />
     </template>
     <template v-else>
     <h1 class="text-2xl font-semibold text-foreground mb-6 font-heading">My Orders</h1>
@@ -157,6 +94,15 @@ async function requestAccessLink(submitEvent: FormSubmitEvent<EmailSchema>) {
             color="secondary"
             size="xl"
             label="View Details"
+          />
+          <UButton
+            v-if="order.status !== 'cancelled'"
+            :to="`/checkout/manage-tickets/${order.id}`"
+            variant="subtle"
+            color="secondary"
+            size="xl"
+            icon="i-lucide-users"
+            label="Manage Tickets"
           />
           <UButton
           v-if="order.status === 'completed'"

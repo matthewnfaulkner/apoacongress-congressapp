@@ -111,7 +111,7 @@ export default defineEventHandler(async (event: H3Event): Promise<TTOrder> => {
 				.catch(() => null)
 		: null;
 
-	const order = await ticketTailorFetch<TTOrder>(`/orders/${orderId}`, 'orderRead');
+	const order = await fetchTicketTailorOrder<TTOrder>(orderId);
 	return await omitBypassTicket({
 		...order,
 		local_issued_tickets: congressOrder?.issued_tickets,
